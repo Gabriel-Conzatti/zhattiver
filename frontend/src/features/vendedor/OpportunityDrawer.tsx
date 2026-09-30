@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Clock, MessageSquare, Phone, StickyNote, Reply, X } from 'lucide-react';
 
-import { opportunities, type OpportunityDetail } from '@/lib/api';
+import { opportunities } from '@/lib/api';
 import { SaleFormDialog } from './SaleFormDialog';
 
 interface Props {

@@ -269,7 +269,7 @@ function EditDialog({
           <select
             className="input"
             value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
+            onChange={(e) => setForm({ ...form, role: e.target.value as AdminUser['role'] })}
           >
             <option value="vendedor">Vendedor</option>
             <option value="sdr">SDR</option>
