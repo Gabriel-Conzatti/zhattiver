@@ -105,7 +105,7 @@ services:
         condition: service_completed_successfully
     command: ["celery", "-A", "app.jobs.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
     healthcheck:
-      test: ["CMD", "celery", "-A", "app.jobs.celery_app", "inspect", "ping", "-d", "celery@$${HOSTNAME}"]
+      test: ["CMD-SHELL", "celery -A app.jobs.celery_app inspect ping -d celery@$${HOSTNAME}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -120,6 +120,8 @@ services:
     env_file: [.env]
     environment:
       LYNK_ENV: production
+    healthcheck:
+      disable: true
     depends_on:
       redis:
         condition: service_healthy
