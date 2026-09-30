@@ -18,10 +18,18 @@ def uuid_pk() -> Mapped[str]:
     )
 
 
-def uuid_fk(target: str, *, nullable: bool = False, ondelete: str | None = None):
+def uuid_fk(
+    target: str,
+    *,
+    nullable: bool = False,
+    ondelete: str | None = None,
+    use_alter: bool = False,
+):
     return mapped_column(
         UUID(as_uuid=False),
-        ForeignKey(target, ondelete=ondelete) if ondelete else ForeignKey(target),
+        ForeignKey(target, ondelete=ondelete, use_alter=use_alter)
+        if ondelete
+        else ForeignKey(target, use_alter=use_alter),
         nullable=nullable,
     )
 

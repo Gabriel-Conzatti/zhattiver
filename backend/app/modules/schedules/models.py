@@ -33,8 +33,9 @@ class Schedule(db.Model, TimestampMixin, ArchivableMixin):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     previous_schedule_id: Mapped[str | None] = uuid_fk("schedules.id", nullable=True)
+    # use_alter quebra o ciclo schedules<->opportunities (opportunities referencia schedules)
     contacted_opportunity_id: Mapped[str | None] = uuid_fk(
-        "opportunities.id", nullable=True
+        "opportunities.id", nullable=True, use_alter=True
     )
 
     __table_args__ = (
