@@ -1,0 +1,46 @@
+{
+  admin off
+  auto_https disable_redirects
+  servers {
+    trusted_proxies static private_ranges
+  }
+}
+
+{$LYNK_DOMAIN} {
+  encode gzip zstd
+
+  log {
+    output stdout
+    format json
+  }
+
+  # API
+  handle /api/* {
+    reverse_proxy api:5000 {
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-For {remote}
+      header_up X-Request-ID {http.request.header.X-Request-ID}
+      transport http {
+        response_header_timeout 60s
+        read_timeout 60s
+      }
+    }
+  }
+
+  # SPA
+  handle {
+    root * /srv
+    file_server
+    try_files {path} /index.html
+  }
+
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-Frame-Options "DENY"
+    Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+    Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    -Server
+  }
+}

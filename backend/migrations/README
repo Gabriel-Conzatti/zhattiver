@@ -1,0 +1,12 @@
+Generic single-database configuration.
+
+Este projeto usa Flask-Migrate (Alembic).
+
+Comandos:
+
+    flask db migrate -m "descrição"
+    flask db upgrade
+    flask db downgrade -1
+    flask db history
+
+`flask db init` NÃO é necessário — o bootstrap já está feito neste diretório.

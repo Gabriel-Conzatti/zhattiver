@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: #050b1f;
+    background-image: radial-gradient(
+        60% 40% at 50% -10%,
+        rgba(0, 121, 255, 0.18) 0%,
+        transparent 60%
+      ),
+      radial-gradient(50% 40% at 100% 0%, rgba(0, 203, 255, 0.1) 0%, transparent 70%);
+    color: #e9f2ff;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  *:focus-visible {
+    outline: 2px solid #00cbff;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-border bg-surface shadow-card;
+  }
+  .card-strong {
+    @apply rounded-2xl border border-border bg-surface-2 shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill px-4 py-2 font-medium transition
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-brand-cyan to-brand-blue text-black hover:shadow-glow;
+  }
+  .btn-orange {
+    @apply btn bg-brand-orange text-black hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-border bg-transparent text-text-primary hover:bg-surface-2;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-text-primary
+           placeholder:text-text-muted focus:border-brand-cyan;
+  }
+  .label {
+    @apply mb-1 block text-sm text-text-secondary;
+  }
+  .nav-pill {
+    @apply flex items-center gap-1 rounded-pill border border-border bg-surface p-1;
+  }
+  .nav-pill-item {
+    @apply rounded-pill px-4 py-1.5 text-sm text-text-secondary transition hover:text-text-primary;
+  }
+  .nav-pill-item[data-active='true'] {
+    @apply bg-gradient-to-r from-brand-cyan to-brand-blue text-black;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  }
+}

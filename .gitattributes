@@ -1,0 +1,12 @@
+# Normalização de fim de linha para o repositório.
+* text=auto eol=lf
+
+# Scripts shell precisam de LF sempre — rodam em Linux (VPS).
+*.sh text eol=lf
+scripts/**/*.sh text eol=lf
+
+# Arquivos binários preservados.
+*.png binary
+*.svg binary
+*.jpg binary
+*.pdf binary

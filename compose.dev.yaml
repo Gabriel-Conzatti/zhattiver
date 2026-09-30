@@ -1,0 +1,50 @@
+# Override para desenvolvimento local.
+# Uso: docker compose -f compose.yaml -f compose.dev.yaml up --build
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  api:
+    environment:
+      LYNK_ENV: development
+      FLASK_DEBUG: "1"
+    command: ["flask", "run", "--host", "0.0.0.0", "--port", "5000", "--debug"]
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+
+  worker:
+    environment:
+      LYNK_ENV: development
+    volumes:
+      - ./backend:/app
+
+  scheduler:
+    environment:
+      LYNK_ENV: development
+    volumes:
+      - ./backend:/app
+
+  # Em desenvolvimento usamos o dev server do Vite em vez do Caddy.
+  web:
+    build:
+      context: ./frontend
+      target: dev
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    environment:
+      VITE_API_PROXY: http://api:5000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      api:
+        condition: service_started

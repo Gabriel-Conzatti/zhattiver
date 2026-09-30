@@ -1,0 +1,47 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Docker volumes locais
+data/
+volumes/
+*.pid
+
+# IDE
+.vscode/*
+!.vscode/settings.json.example
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backups locais (ao rodar scripts localmente)
+backups/
