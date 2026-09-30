@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, CHAR, Date, Index, String, Text
+from sqlalchemy import Boolean, CHAR, Date, ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ...extensions import db
@@ -71,10 +72,10 @@ class LeadTag(db.Model):
     __tablename__ = "lead_tags"
 
     lead_id: Mapped[str] = mapped_column(
-        db.String(36), db.ForeignKey("leads.id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=False), ForeignKey("leads.id", ondelete="CASCADE"), primary_key=True
     )
     tag_id: Mapped[str] = mapped_column(
-        db.String(36), db.ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=False), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True
     )
     organization_id: Mapped[str] = uuid_fk("organizations.id")
 

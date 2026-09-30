@@ -5,7 +5,7 @@ from typing import Iterable
 
 from flask_login import UserMixin
 from sqlalchemy import Boolean, DateTime, Index, String, and_, or_, select
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ...extensions import db
@@ -41,8 +41,8 @@ class Product(db.Model, TimestampMixin, ArchivableMixin):
 
 user_products = db.Table(
     "user_products",
-    db.Column("user_id", db.String(36), db.ForeignKey("users.id"), primary_key=True),
-    db.Column("product_id", db.String(36), db.ForeignKey("products.id"), primary_key=True),
+    db.Column("user_id", UUID(as_uuid=False), db.ForeignKey("users.id"), primary_key=True),
+    db.Column("product_id", UUID(as_uuid=False), db.ForeignKey("products.id"), primary_key=True),
 )
 
 
