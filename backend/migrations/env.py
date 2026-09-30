@@ -63,14 +63,17 @@ def run_migrations_online() -> None:
     if conf_args.get("process_revision_directives") is None:
         conf_args["process_revision_directives"] = process_revision_directives
 
+    # Flask-Migrate >=4 já injeta "compare_type"/"render_as_batch" em conf_args por
+    # padrão; mescla com nossos defaults em vez de passar como kwargs duplicados.
+    configure_kwargs = {"compare_type": True, "compare_server_default": True}
+    configure_kwargs.update(conf_args)
+
     connectable = get_engine()
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
-            compare_type=True,
-            compare_server_default=True,
-            **conf_args,
+            **configure_kwargs,
         )
         with context.begin_transaction():
             context.run_migrations()
