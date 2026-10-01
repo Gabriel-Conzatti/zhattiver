@@ -269,6 +269,14 @@ function ReleaseButton({
     },
     onError: (err) => onFeedback({ tone: 'error', text: (err as Error).message }),
   });
+  const archiveMut = useMutation({
+    mutationFn: () => leads.archive(leadId),
+    onSuccess: () => {
+      onFeedback({ tone: 'success', text: 'Lead arquivado' });
+      qc.invalidateQueries({ queryKey: ['leads'] });
+    },
+    onError: (err) => onFeedback({ tone: 'error', text: (err as Error).message }),
+  });
   return (
     <div className="flex justify-end gap-2">
       <button
@@ -280,7 +288,17 @@ function ReleaseButton({
       >
         <Send className="h-4 w-4" /> Disponibilizar
       </button>
-      <button type="button" className="btn-ghost" aria-label="Arquivar">
+      <button
+        type="button"
+        className="btn-ghost"
+        aria-label="Arquivar"
+        disabled={archiveMut.isPending}
+        onClick={() => {
+          if (window.confirm('Arquivar este lead? Ele sai da lista de prospecção ativa.')) {
+            archiveMut.mutate();
+          }
+        }}
+      >
         <Archive className="h-4 w-4" />
       </button>
     </div>
