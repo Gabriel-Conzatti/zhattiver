@@ -4,9 +4,11 @@ set -euo pipefail
 # Backup consistente do PostgreSQL rodando via Docker Compose.
 # Uso: BACKUP_DIR=/opt/lynk/backups RETENTION_DAYS=14 ./scripts/backup.sh
 
+REPO_DIR="${REPO_DIR:-/opt/lynk/app}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/lynk/backups}"
 RETENTION_DAYS="${RETENTION_DAYS:-14}"
 
+cd "$REPO_DIR"
 mkdir -p "$BACKUP_DIR"
 STAMP="$(date +%F-%H%M)"
 OUT="$BACKUP_DIR/lynk-$STAMP.dump"
