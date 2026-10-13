@@ -2,7 +2,7 @@ import os
 
 import pytest
 from cachelib import FileSystemCache
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.compiler import compiles
 
@@ -51,4 +51,9 @@ def app(monkeypatch, tmp_path):
 
     with application.app_context():
         db.session.remove()
-        db.drop_all()
+        if db.engine.dialect.name == "postgresql":
+            db.session.execute(text("DROP SCHEMA public CASCADE"))
+            db.session.execute(text("CREATE SCHEMA public"))
+            db.session.commit()
+        else:
+            db.drop_all()
