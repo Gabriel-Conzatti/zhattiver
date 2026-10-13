@@ -163,6 +163,16 @@ def test_sdr_cannot_list_or_read_sales(client, seeded_data):
     assert detail_response.status_code == 403
 
 
+def test_sdr_cannot_list_or_read_opportunities(client, seeded_data):
+    _login(client, seeded_data["sdr_a"])
+
+    list_response = client.get("/api/v1/opportunities?scope=all")
+    detail_response = client.get("/api/v1/opportunities/00000000-0000-0000-0000-000000000000")
+
+    assert list_response.status_code == 403
+    assert detail_response.status_code == 403
+
+
 def test_seller_cannot_read_another_seller_financial_data(client, seeded_data):
     _login(client, seeded_data["seller_a"])
 

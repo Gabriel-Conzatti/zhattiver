@@ -152,10 +152,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 - Backend: `pytest` executado em `backend/` — 29 testes aprovados.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
-  SDR não acessa vendas; vendedor só vê as próprias vendas; organização externa não
-  localiza vendas; bônus sem concessão não expõe valor; listagem administrativa de bônus
-  é isolada por organização; mutações autenticadas sem CSRF recebem `403` e, com token
-  válido, são aceitas.
+  SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
+  externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
+  de bônus é isolada por organização; mutações autenticadas sem CSRF recebem `403` e, com
+  token válido, são aceitas.
 - Lint dos arquivos backend alterados aprovado com `ruff check`.
 - Validação com PostgreSQL/Redis continua pendente: o Docker Desktop não estava
   disponível neste ambiente.

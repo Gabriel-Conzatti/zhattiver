@@ -288,6 +288,8 @@ def mark_next_action_done(na_id: str):
 @login_required
 def list_opportunities():
     ctx = load_context()
+    if ctx.role == ROLE_SDR:
+        raise BusinessError("forbidden", "SDR não acessa oportunidades", status=403)
     state = request.args.get("state", STATE_OPEN)
     scope = request.args.get("scope", "mine")
     stmt = select(Opportunity).where(
@@ -504,6 +506,8 @@ def list_next_action_types():
 
 
 def _load_owned_opportunity(opp_id: str, ctx) -> Opportunity:
+    if ctx.role == ROLE_SDR:
+        raise BusinessError("forbidden", "SDR não acessa oportunidades", status=403)
     opp = db.session.get(Opportunity, opp_id)
     if opp is None or opp.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Oportunidade não encontrada", status=404)
