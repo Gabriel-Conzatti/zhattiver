@@ -162,6 +162,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - Lint dos arquivos backend alterados aprovado com `ruff check`.
 - Verificador local único: `scripts/verify.ps1` executado com sucesso — pytest backend,
   typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.
+- CI do backend provisiona PostgreSQL 16, valida a migração inicial e executa os testes
+  HTTP com `TEST_DATABASE_URL`; fora da CI, a fixture mantém fallback SQLite para
+  desenvolvimento local.
 - Validação com PostgreSQL/Redis continua pendente: o Docker Desktop não estava
   disponível neste ambiente.
 

@@ -21,10 +21,11 @@ def _compile_big_integer_for_sqlite(element, compiler, **kwargs):
 
 @pytest.fixture()
 def app(monkeypatch, tmp_path):
-    """Aplicação efêmera para validar contratos HTTP sem serviços externos."""
+    """Aplicação efêmera; usa PostgreSQL quando TEST_DATABASE_URL estiver configurada."""
+    database_url = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
     monkeypatch.setenv("LYNK_ENV", "testing")
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    monkeypatch.setenv("TEST_DATABASE_URL", "sqlite:///:memory:")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("TEST_DATABASE_URL", database_url)
 
     from importlib import reload
 

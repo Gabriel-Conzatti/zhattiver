@@ -13,6 +13,23 @@ jobs:
   backend:
     name: Backend (pytest)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: lynk_test
+          POSTGRES_USER: lynk
+          POSTGRES_PASSWORD: lynk_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lynk -d lynk_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      LYNK_ENV: testing
+      TEST_DATABASE_URL: postgresql+psycopg://lynk:lynk_test_password@localhost:5432/lynk_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,10 +40,11 @@ jobs:
       - name: Install
         working-directory: backend
         run: pip install -r requirements.txt
+      - name: Validate migrations
+        working-directory: backend
+        run: flask --app wsgi:app db upgrade
       - name: Run tests
         working-directory: backend
-        env:
-          LYNK_ENV: testing
         run: pytest -q
 
   frontend:
