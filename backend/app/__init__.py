@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import get_config
-from .extensions import db, login_manager, migrate, session_ext
 from .core.logging import configure_logging
+from .extensions import db, login_manager, migrate, session_ext
 
 
 def create_app(config_name: str | None = None, overrides: dict[str, Any] | None = None) -> Flask:
@@ -64,8 +63,8 @@ def _init_extensions(app: Flask) -> None:
 
 
 def _register_blueprints(app: Flask) -> None:
-    from .modules.audit.routes import bp as audit_bp
     from .modules.admin.routes import bp as admin_bp
+    from .modules.audit.routes import bp as audit_bp
     from .modules.auth.routes import bp as auth_bp
     from .modules.bonus.routes import bp as bonus_bp
     from .modules.catalog.routes import bp as catalog_bp
@@ -77,6 +76,7 @@ def _register_blueprints(app: Flask) -> None:
     from .modules.management.routes import bp as management_bp
     from .modules.notifications.routes import bp as notifications_bp
     from .modules.opportunities.routes import bp as opportunities_bp
+    from .modules.reports.routes import bp as reports_bp
     from .modules.sales.routes import bp as sales_bp
     from .modules.schedules.routes import bp as schedules_bp
 
@@ -87,6 +87,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(leads_bp, url_prefix="/api/v1")
     app.register_blueprint(imports_bp, url_prefix="/api/v1")
     app.register_blueprint(opportunities_bp, url_prefix="/api/v1")
+    app.register_blueprint(reports_bp, url_prefix="/api/v1")
     app.register_blueprint(schedules_bp, url_prefix="/api/v1")
     app.register_blueprint(sales_bp, url_prefix="/api/v1")
     app.register_blueprint(bonus_bp, url_prefix="/api/v1")

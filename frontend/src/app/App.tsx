@@ -5,6 +5,7 @@ import { AdminLayout } from '@/features/admin/AdminLayout';
 import { AdminDashboard } from '@/features/admin/AdminDashboard';
 import { AdminLeadsPage } from '@/features/admin/AdminLeadsPage';
 import { AdminProducaoPage } from '@/features/admin/AdminProducaoPage';
+import { AdminRelatoriosPage } from '@/features/admin/AdminRelatoriosPage';
 import { AdminBonusPage } from '@/features/admin/AdminBonusPage';
 import { AdminUsuariosPage } from '@/features/admin/AdminUsuariosPage';
 import { AdminAusenciasPage } from '@/features/admin/AdminAusenciasPage';
@@ -66,6 +67,7 @@ export function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="prospeccao" element={<AdminLeadsPage />} />
           <Route path="producao" element={<AdminProducaoPage />} />
+          <Route path="relatorios" element={<AdminRelatoriosPage />} />
           <Route path="bonus" element={<AdminBonusPage />} />
           <Route path="equipe" element={<AdminUsuariosPage />} />
           <Route path="ausencias" element={<AdminAusenciasPage />} />

@@ -582,6 +582,35 @@ export interface ConfigurableName {
   is_active: boolean;
 }
 
+export interface ProductionReport {
+  year: number;
+  month: number;
+  filters: {
+    seller_user_id: string | null;
+    product_id: string | null;
+  };
+  state_counts: {
+    registered: number;
+    revision_pending: number;
+    validated: number;
+    cancelled: number;
+  };
+  totals: {
+    validated_count: number;
+    net_premium: string;
+    commission_amount: string;
+  };
+  items: Array<{
+    seller_user_id: string;
+    seller_name: string;
+    product_id: string;
+    product_name: string;
+    validated_count: number;
+    net_premium: string;
+    commission_amount: string;
+  }>;
+}
+
 export const admin = {
   dashboard: () =>
     api<{
@@ -591,6 +620,20 @@ export const admin = {
       active_schedules: number;
       active_users: number;
     }>('/admin/dashboard'),
+  productionReport: (params: {
+    year: number;
+    month: number;
+    seller_user_id?: string;
+    product_id?: string;
+  }) => {
+    const qs = new URLSearchParams({
+      year: String(params.year),
+      month: String(params.month),
+    });
+    if (params.seller_user_id) qs.set('seller_user_id', params.seller_user_id);
+    if (params.product_id) qs.set('product_id', params.product_id);
+    return api<ProductionReport>(`/admin/reports/production?${qs.toString()}`);
+  },
   users: () => api<{ items: AdminUser[] }>('/admin/users'),
   createUser: (input: {
     email: string;
