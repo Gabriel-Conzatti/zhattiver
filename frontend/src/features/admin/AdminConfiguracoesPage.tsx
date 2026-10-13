@@ -9,6 +9,7 @@ import {
   type FunnelConfig,
   type FunnelStageConfig,
 } from '@/lib/api';
+import { AdminCatalogsSection } from './AdminCatalogsSection';
 
 export function AdminConfiguracoesPage() {
   const funnels = useQuery({ queryKey: ['admin', 'funnels'], queryFn: admin.funnels });
@@ -21,7 +22,13 @@ export function AdminConfiguracoesPage() {
     queryKey: ['admin', 'next-action-types'],
     queryFn: admin.nextActionTypes,
   });
-  const failed = [funnels, products, lossReasons, nextActionTypes].find((query) => query.isError);
+  const catalogs = useQuery({
+    queryKey: ['admin', 'catalogs'],
+    queryFn: admin.catalogs,
+  });
+  const failed = [funnels, products, lossReasons, nextActionTypes, catalogs].find(
+    (query) => query.isError,
+  );
 
   return (
     <div className="space-y-6">
@@ -89,6 +96,7 @@ export function AdminConfiguracoesPage() {
               update={admin.updateNextActionType}
             />
           </section>
+          <AdminCatalogsSection catalogs={catalogs.data} loading={catalogs.isLoading} />
         </>
       )}
     </div>

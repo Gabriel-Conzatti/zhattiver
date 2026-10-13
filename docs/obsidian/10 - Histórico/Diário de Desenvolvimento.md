@@ -1,5 +1,33 @@
 # Diário de Desenvolvimento
 
+## 2026-10-13 - Catálogos administrativos
+
+### Realizado
+
+- Gestão de produtos, origens, tipos de cliente e seguradoras.
+- Gestão de categorias de tag, tags e cores.
+- Edição, arquivamento e restauração sem exclusão de histórico.
+- Auditoria e validação multiempresa em todas as mutações.
+
+### Testes executados
+
+- Ruff e 61 testes backend.
+- Typecheck, ESLint, 8 testes Vitest e build frontend.
+- Playwright com 10 de 10 cenários aprovados em base limpa.
+
+### Resultado
+
+- Catálogos administrativos aprovados.
+
+### Versionamento
+
+- PR #6: manutenção completa dos catálogos administrativos.
+
+### Próximos passos
+
+- Recuperação segura de senha.
+- Homologação e restauração de backup na VPS.
+
 ## 2026-10-13 - Relatórios administrativos e RN-072
 
 ### Realizado
@@ -26,7 +54,7 @@
 
 ### Próximos passos
 
-- Configurações administrativas restantes.
+- Recuperação segura de senha.
 - Homologação e restauração de backup na VPS.
 
 ## 2026-10-13 - Verificação da RN-038

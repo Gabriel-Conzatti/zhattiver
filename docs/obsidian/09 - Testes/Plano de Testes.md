@@ -14,3 +14,4 @@
 - Cadastro, duplicidade e disponibilização de lead pelo SDR.
 - Primeiro contato e metas do vendedor.
 - Validação administrativa de venda e conferência do relatório financeiro.
+- Criação e arquivamento administrativo de produto.

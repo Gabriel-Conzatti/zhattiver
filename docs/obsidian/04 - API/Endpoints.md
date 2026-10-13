@@ -12,3 +12,13 @@ fornece `organization_id`.
   - filtros: `year`, `month`, `seller_user_id` e `product_id`;
   - retorna contagem por estado, totais validados e agrupamento por vendedor/produto;
   - valores financeiros consideram somente vendas validadas.
+
+## Catálogos administrativos
+
+- `GET /api/v1/admin/catalogs`
+- `POST /api/v1/admin/catalogs/{tipo}`
+- `PATCH /api/v1/admin/catalogs/{tipo}/{id}`
+
+Tipos: `products`, `origins`, `client-types`, `insurers`, `tag-categories` e
+`tags`. As mutações são exclusivas de administrador, auditadas e usam arquivamento
+reversível em vez de exclusão.

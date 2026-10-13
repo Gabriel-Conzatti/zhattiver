@@ -611,6 +611,25 @@ export interface ProductionReport {
   }>;
 }
 
+export interface AdminCatalogItem {
+  id: string;
+  name: string;
+  slug?: string;
+  is_active?: boolean;
+  archived: boolean;
+  category_id?: string | null;
+  color?: string | null;
+}
+
+export interface AdminCatalogs {
+  products: AdminCatalogItem[];
+  origins: AdminCatalogItem[];
+  client_types: AdminCatalogItem[];
+  insurers: AdminCatalogItem[];
+  tag_categories: AdminCatalogItem[];
+  tags: AdminCatalogItem[];
+}
+
 export const admin = {
   dashboard: () =>
     api<{
@@ -634,6 +653,29 @@ export const admin = {
     if (params.product_id) qs.set('product_id', params.product_id);
     return api<ProductionReport>(`/admin/reports/production?${qs.toString()}`);
   },
+  catalogs: () => api<AdminCatalogs>('/admin/catalogs'),
+  createCatalogItem: (
+    kind: string,
+    input: { name: string; category_id?: string | null; color?: string | null },
+  ) =>
+    api<AdminCatalogItem>(`/admin/catalogs/${kind}`, {
+      method: 'POST',
+      body: input,
+    }),
+  updateCatalogItem: (
+    kind: string,
+    id: string,
+    changes: {
+      name?: string;
+      category_id?: string | null;
+      color?: string | null;
+      archived?: boolean;
+    },
+  ) =>
+    api<AdminCatalogItem>(`/admin/catalogs/${kind}/${id}`, {
+      method: 'PATCH',
+      body: changes,
+    }),
   users: () => api<{ items: AdminUser[] }>('/admin/users'),
   createUser: (input: {
     email: string;
