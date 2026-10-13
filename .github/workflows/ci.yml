@@ -45,7 +45,7 @@ jobs:
         run: flask --app wsgi:app db upgrade
       - name: Run tests
         working-directory: backend
-        run: pytest -q
+        run: python -m pytest -q
 
   frontend:
     name: Frontend (typecheck + build)
