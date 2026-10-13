@@ -17,6 +17,10 @@
 
 - RN-038 aprovada nos testes direcionados.
 
+### Versionamento
+
+- PR #4: verificação da elegibilidade de vendas validadas.
+
 ### Próximos passos
 
 - Relatórios administrativos e RN-072.
