@@ -8,6 +8,7 @@ from app.extensions import db
 from app.modules.audit.models import AuditLog
 from app.modules.bonus.models import METRIC_NET_PREMIUM, BonusPayment
 from app.modules.catalog.models import ClientType, Insurer, Origin
+from app.modules.funnel.models import Funnel
 from app.modules.leads.models import Lead
 from app.modules.notifications.models import Notification
 from app.modules.orgs.models import Organization
@@ -163,6 +164,8 @@ def seeded_data(app):
         db.session.add_all([sale_a, sale_b, bonus_b, notification_b, audit_a, audit_b])
         db.session.commit()
         return {
+            "org_a": {"id": str(org_a.id)},
+            "org_b": {"id": str(org_b.id)},
             "admin_a": {"id": str(admin_a.id), "email": admin_a.email},
             "admin_b": {"id": str(admin_b.id), "email": admin_b.email},
             "sdr_a": {"id": str(sdr_a.id), "email": sdr_a.email},
@@ -287,6 +290,120 @@ def test_audit_logs_are_admin_only_and_organization_scoped(app, client, seeded_d
     assert own_response.status_code == 200
     assert own_response.get_json()["total"] == 1
     assert own_response.get_json()["items"][0]["entity_type"] == "sale"
+
+
+def test_admin_configures_funnel_without_crossing_organization(app, seeded_data):
+    seller_client = app.test_client()
+    _login(seller_client, seeded_data["seller_a"])
+    forbidden = seller_client.post(
+        "/api/v1/admin/funnels",
+        json={"product_id": seeded_data["product_a"]["id"], "name": "Funil bloqueado"},
+        headers=_csrf_headers(seller_client),
+    )
+    assert forbidden.status_code == 403
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    headers = _csrf_headers(admin_client)
+    external_product = admin_client.post(
+        "/api/v1/admin/funnels",
+        json={"product_id": seeded_data["product_b"]["id"], "name": "Funil externo"},
+        headers=headers,
+    )
+    assert external_product.status_code == 422
+
+    created = admin_client.post(
+        "/api/v1/admin/funnels",
+        json={
+            "product_id": seeded_data["product_a"]["id"],
+            "name": "Funil renovação",
+            "is_default": True,
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201
+    funnel_id = created.get_json()["id"]
+
+    first_stage = admin_client.post(
+        f"/api/v1/admin/funnels/{funnel_id}/stages",
+        json={
+            "name": "Contato",
+            "order_index": 0,
+            "is_initial": True,
+            "message_template": "Olá {nome_cliente}",
+        },
+        headers=headers,
+    )
+    second_stage = admin_client.post(
+        f"/api/v1/admin/funnels/{funnel_id}/stages",
+        json={"name": "Cotação", "order_index": 1, "is_initial": True},
+        headers=headers,
+    )
+    assert first_stage.status_code == 201
+    assert second_stage.status_code == 201
+
+    response = admin_client.get("/api/v1/admin/funnels")
+    configured = next(item for item in response.get_json()["items"] if item["id"] == funnel_id)
+    assert [stage["name"] for stage in configured["stages"]] == ["Contato", "Cotação"]
+    assert [stage["is_initial"] for stage in configured["stages"]] == [False, True]
+
+    with app.app_context():
+        external_funnel = Funnel(
+            organization_id=seeded_data["org_b"]["id"],
+            product_id=seeded_data["product_b"]["id"],
+            name="Funil externo",
+        )
+        db.session.add(external_funnel)
+        db.session.commit()
+        external_funnel_id = str(external_funnel.id)
+    hidden = admin_client.patch(
+        f"/api/v1/admin/funnels/{external_funnel_id}",
+        json={"name": "Tentativa"},
+        headers=headers,
+    )
+    assert hidden.status_code == 404
+
+
+def test_admin_manages_configurable_activity_catalogs(app, seeded_data):
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    headers = _csrf_headers(admin_client)
+
+    created = admin_client.post(
+        "/api/v1/loss-reasons",
+        json={"name": "Sem orçamento"},
+        headers=headers,
+    )
+    assert created.status_code == 201
+    reason_id = created.get_json()["id"]
+
+    duplicate = admin_client.post(
+        "/api/v1/loss-reasons",
+        json={"name": "Sem orçamento"},
+        headers=headers,
+    )
+    assert duplicate.status_code == 409
+
+    disabled = admin_client.patch(
+        f"/api/v1/loss-reasons/{reason_id}",
+        json={"is_active": False},
+        headers=headers,
+    )
+    assert disabled.status_code == 200
+    assert disabled.get_json()["is_active"] is False
+    assert admin_client.get("/api/v1/loss-reasons").get_json()["items"] == []
+    inactive_items = admin_client.get(
+        "/api/v1/loss-reasons?include_inactive=true"
+    ).get_json()["items"]
+    assert inactive_items[0]["is_active"] is False
+
+    action_type = admin_client.post(
+        "/api/v1/next-action-types",
+        json={"name": "Enviar documentos"},
+        headers=headers,
+    )
+    assert action_type.status_code == 201
+    assert action_type.get_json()["slug"] == "enviar-documentos"
 
 
 def test_user_cannot_read_or_mark_another_users_notification(client, seeded_data):

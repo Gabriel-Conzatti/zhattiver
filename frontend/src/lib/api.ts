@@ -390,7 +390,7 @@ export const sales = {
     api<SaleSummary>(`/sales/${id}/cancel`, { method: 'POST', body: { reason } }),
 };
 
-export interface DailyGoalsWithProduction extends DailyGoals {}
+export type DailyGoalsWithProduction = DailyGoals;
 
 export interface ProductionSummary {
   year: number;
@@ -555,6 +555,32 @@ export interface AuditLogListResponse {
   total: number;
 }
 
+export interface FunnelStageConfig {
+  id: string;
+  name: string;
+  order_index: number;
+  is_initial: boolean;
+  is_final: boolean;
+  message_template: string | null;
+  archived: boolean;
+}
+
+export interface FunnelConfig {
+  id: string;
+  product_id: string;
+  name: string;
+  is_default: boolean;
+  archived: boolean;
+  stages: FunnelStageConfig[];
+}
+
+export interface ConfigurableName {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+}
+
 export const admin = {
   dashboard: () =>
     api<{
@@ -650,6 +676,45 @@ export const admin = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return api<AuditLogListResponse>(`/audit${suffix}`);
   },
+  funnels: () => api<{ items: FunnelConfig[] }>('/admin/funnels'),
+  createFunnel: (input: { product_id: string; name: string; is_default: boolean }) =>
+    api<{ id: string }>('/admin/funnels', { method: 'POST', body: input }),
+  updateFunnel: (
+    id: string,
+    changes: Partial<{ name: string; is_default: boolean; archived: boolean }>,
+  ) => api(`/admin/funnels/${id}`, { method: 'PATCH', body: changes }),
+  createFunnelStage: (
+    funnelId: string,
+    input: {
+      name: string;
+      order_index: number;
+      is_initial: boolean;
+      is_final: boolean;
+      message_template?: string | null;
+    },
+  ) =>
+    api<FunnelStageConfig>(`/admin/funnels/${funnelId}/stages`, {
+      method: 'POST',
+      body: input,
+    }),
+  updateFunnelStage: (
+    id: string,
+    changes: Partial<Omit<FunnelStageConfig, 'id'>>,
+  ) => api<FunnelStageConfig>(`/admin/funnel-stages/${id}`, { method: 'PATCH', body: changes }),
+  lossReasons: () =>
+    api<{ items: ConfigurableName[] }>('/loss-reasons?include_inactive=true'),
+  createLossReason: (name: string) =>
+    api<ConfigurableName>('/loss-reasons', { method: 'POST', body: { name } }),
+  updateLossReason: (id: string, changes: Partial<Pick<ConfigurableName, 'name' | 'is_active'>>) =>
+    api<ConfigurableName>(`/loss-reasons/${id}`, { method: 'PATCH', body: changes }),
+  nextActionTypes: () =>
+    api<{ items: ConfigurableName[] }>('/next-action-types?include_inactive=true'),
+  createNextActionType: (name: string) =>
+    api<ConfigurableName>('/next-action-types', { method: 'POST', body: { name } }),
+  updateNextActionType: (
+    id: string,
+    changes: Partial<Pick<ConfigurableName, 'name' | 'is_active'>>,
+  ) => api<ConfigurableName>(`/next-action-types/${id}`, { method: 'PATCH', body: changes }),
   crossSell: {
     list: () =>
       api<{

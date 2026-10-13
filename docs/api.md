@@ -45,6 +45,24 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
   - Cada item inclui o ator, entidade, ação, valores anteriores/novos permitidos, motivo e
     instante UTC.
 
+## Configurações administrativas
+
+Todas as mutações abaixo são exclusivas de administrador, exigem CSRF e geram auditoria.
+IDs vinculados precisam pertencer à organização da sessão.
+
+- `GET /admin/funnels` — lista funis ativos com suas etapas ativas.
+- `POST /admin/funnels` — cria funil com `{ product_id, name, is_default }`.
+- `PATCH /admin/funnels/{id}` — altera `{ name, is_default, archived }`.
+- `POST /admin/funnels/{id}/stages` — cria etapa com nome, ordem, estado inicial/final e
+  mensagem opcional.
+- `PATCH /admin/funnel-stages/{id}` — altera a etapa ou a arquiva.
+- `GET /loss-reasons?include_inactive=true` — administrador pode incluir itens inativos.
+- `POST /loss-reasons` e `PATCH /loss-reasons/{id}` — cria, renomeia, desativa ou reativa
+  motivo de perda.
+- `GET /next-action-types?include_inactive=true` — administrador pode incluir itens inativos.
+- `POST /next-action-types` e `PATCH /next-action-types/{id}` — cria, renomeia, desativa ou
+  reativa tipo de próxima ação.
+
 ## Endpoints planejados (etapas seguintes)
 
 - `POST /orgs/bootstrap` (setup inicial via CLI, não pela API pública).

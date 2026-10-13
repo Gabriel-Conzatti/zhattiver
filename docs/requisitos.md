@@ -61,13 +61,13 @@ Estados:
 | RN-019 | Lista de atualizações relevantes | 🟨 |
 | RN-020 | Follow-up atrasado permanece, sem duplicar | 🟨 |
 | RN-021 | Meta = 100% previstos + atrasados abertos | 🟨 |
-| RN-022 | Tipos de próxima ação configuráveis | 🟨 |
+| RN-022 | Tipos de próxima ação configuráveis | ✅ (API e tela administrativa; criação, desativação e reativação testadas) |
 
 ### Funil / mensagens
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-023 | Funis, etapas, ordem, mensagens configuráveis | 🟨 |
+| RN-023 | Funis, etapas, ordem, mensagens configuráveis | ✅ (API e tela administrativa com isolamento multiempresa testado) |
 | RN-024 | Movimentação livre entre etapas permitidas | 🟨 |
 | RN-025 | Encerramento (ganho/perda) a partir de qualquer etapa | 🟨 |
 | RN-026..RN-029 | Mensagens com variáveis, fallback e registro por cópia | 🟨 |
@@ -96,7 +96,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-053..RN-055 | Motivo + justificativa obrigatórios | 🟨 |
+| RN-053..RN-055 | Motivo + justificativa obrigatórios | 🟨 (motivos configuráveis via API/tela; fluxo de perda já implementado) |
 | RN-056..RN-059 | Reagendamento preservando histórico | 🟨 |
 
 ### Cross-sell

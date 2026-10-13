@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timezone
 
 from flask import Blueprint, g, jsonify, request
@@ -7,21 +8,22 @@ from flask_login import login_required
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
+from ...core.audit import record
 from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...extensions import db
 from ..funnel.models import FunnelStage
 from ..leads.models import Lead
-from ..users.models import ROLE_SDR, ROLE_VENDEDOR
+from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
 from . import services
 from .models import (
+    NA_STATE_OPEN,
+    STATE_OPEN,
     Activity,
     LossReason,
     NextAction,
     NextActionType,
     Opportunity,
-    STATE_OPEN,
-    NA_STATE_OPEN,
 )
 
 bp = Blueprint("opportunities", __name__)
@@ -485,24 +487,161 @@ def my_goals():
 @login_required
 def list_loss_reasons():
     ctx = load_context()
-    rows = db.session.execute(
-        select(LossReason)
-        .where(LossReason.organization_id == ctx.organization_id, LossReason.is_active.is_(True))
-        .order_by(LossReason.name)
-    ).scalars().all()
-    return jsonify({"items": [{"id": str(r.id), "name": r.name} for r in rows]})
+    stmt = select(LossReason).where(LossReason.organization_id == ctx.organization_id)
+    if ctx.role != ROLE_ADMIN or request.args.get("include_inactive") != "true":
+        stmt = stmt.where(LossReason.is_active.is_(True))
+    rows = db.session.execute(stmt.order_by(LossReason.name)).scalars().all()
+    return jsonify(
+        {
+            "items": [
+                {"id": str(r.id), "name": r.name, "slug": r.slug, "is_active": r.is_active}
+                for r in rows
+            ]
+        }
+    )
 
 
 @bp.get("/next-action-types")
 @login_required
 def list_next_action_types():
     ctx = load_context()
-    rows = db.session.execute(
-        select(NextActionType)
-        .where(NextActionType.organization_id == ctx.organization_id, NextActionType.is_active.is_(True))
-        .order_by(NextActionType.name)
-    ).scalars().all()
-    return jsonify({"items": [{"id": str(r.id), "name": r.name, "slug": r.slug} for r in rows]})
+    stmt = select(NextActionType).where(NextActionType.organization_id == ctx.organization_id)
+    if ctx.role != ROLE_ADMIN or request.args.get("include_inactive") != "true":
+        stmt = stmt.where(NextActionType.is_active.is_(True))
+    rows = db.session.execute(stmt.order_by(NextActionType.name)).scalars().all()
+    return jsonify(
+        {
+            "items": [
+                {"id": str(r.id), "name": r.name, "slug": r.slug, "is_active": r.is_active}
+                for r in rows
+            ]
+        }
+    )
+
+
+class ConfigurableNameCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class ConfigurableNameUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    is_active: bool | None = None
+
+
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^\w]+", "-", value.strip().lower(), flags=re.UNICODE).strip("-")[:60]
+    if not slug:
+        raise BusinessError("invalid_name", "Nome inválido", status=422)
+    return slug
+
+
+def _require_admin(ctx) -> None:
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente administrador", status=403)
+
+
+def _create_configurable(model, entity_type: str):
+    ctx = load_context()
+    _require_admin(ctx)
+    payload = ConfigurableNameCreate.model_validate(request.get_json(silent=True) or {})
+    name = payload.name.strip()
+    if not name:
+        raise BusinessError("invalid_name", "Nome inválido", status=422)
+    slug = _slug(name)
+    existing = db.session.execute(
+        select(model).where(model.organization_id == ctx.organization_id, model.slug == slug)
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise BusinessError(
+            "duplicate_name",
+            "Já existe uma configuração com esse nome",
+            status=409,
+        )
+    item = model(organization_id=ctx.organization_id, name=name, slug=slug)
+    db.session.add(item)
+    db.session.flush()
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type=entity_type,
+        entity_id=str(item.id),
+        action="create",
+        after={"name": name, "is_active": True},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify(
+        {"id": str(item.id), "name": item.name, "slug": item.slug, "is_active": True}
+    ), 201
+
+
+def _update_configurable(model, entity_type: str, item_id: str):
+    ctx = load_context()
+    _require_admin(ctx)
+    item = db.session.get(model, item_id)
+    if item is None or item.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Configuração não encontrada", status=404)
+    payload = ConfigurableNameUpdate.model_validate(request.get_json(silent=True) or {})
+    before = {"name": item.name, "is_active": item.is_active}
+    if payload.name is not None:
+        name = payload.name.strip()
+        if not name:
+            raise BusinessError("invalid_name", "Nome inválido", status=422)
+        slug = _slug(name)
+        duplicate = db.session.execute(
+            select(model).where(
+                model.organization_id == ctx.organization_id,
+                model.slug == slug,
+                model.id != item.id,
+            )
+        ).scalar_one_or_none()
+        if duplicate is not None:
+            raise BusinessError(
+                "duplicate_name",
+                "Já existe uma configuração com esse nome",
+                status=409,
+            )
+        item.name = name
+        item.slug = slug
+    if payload.is_active is not None:
+        item.is_active = payload.is_active
+    after = {"name": item.name, "is_active": item.is_active}
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type=entity_type,
+        entity_id=str(item.id),
+        action="update",
+        before=before,
+        after=after,
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"id": str(item.id), "name": item.name, "slug": item.slug, **after})
+
+
+@bp.post("/loss-reasons")
+@login_required
+def create_loss_reason():
+    return _create_configurable(LossReason, "loss_reason")
+
+
+@bp.patch("/loss-reasons/<item_id>")
+@login_required
+def update_loss_reason(item_id: str):
+    return _update_configurable(LossReason, "loss_reason", item_id)
+
+
+@bp.post("/next-action-types")
+@login_required
+def create_next_action_type():
+    return _create_configurable(NextActionType, "next_action_type")
+
+
+@bp.patch("/next-action-types/<item_id>")
+@login_required
+def update_next_action_type(item_id: str):
+    return _update_configurable(NextActionType, "next_action_type", item_id)
 
 
 def _load_owned_opportunity(opp_id: str, ctx) -> Opportunity:
