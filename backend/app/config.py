@@ -76,6 +76,20 @@ class BaseConfig:
     LYNK_SMTP_USERNAME = os.getenv("LYNK_SMTP_USERNAME", "")
     LYNK_SMTP_PASSWORD = os.getenv("LYNK_SMTP_PASSWORD", "")
     LYNK_SMTP_FROM = os.getenv("LYNK_SMTP_FROM", "")
+    LYNK_PUBLIC_URL = (
+        os.getenv("LYNK_PUBLIC_URL")
+        or (
+            f"https://{os.getenv('LYNK_DOMAIN')}"
+            if os.getenv("LYNK_DOMAIN")
+            else "http://localhost:5173"
+        )
+    ).rstrip("/")
+    LYNK_PASSWORD_RESET_TTL_MINUTES = int(
+        os.getenv("LYNK_PASSWORD_RESET_TTL_MINUTES", "30")
+    )
+    LYNK_PASSWORD_RESET_COOLDOWN_SECONDS = int(
+        os.getenv("LYNK_PASSWORD_RESET_COOLDOWN_SECONDS", "60")
+    )
 
 
 class DevelopmentConfig(BaseConfig):

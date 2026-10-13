@@ -11,6 +11,17 @@ test.describe('Login e roteamento por perfil', () => {
     await expect(page.getByRole('heading', { name: 'Funil Sustentare' })).toBeVisible();
   });
 
+  test('solicita recuperação sem revelar se a conta existe', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByRole('link', { name: 'Esqueci minha senha' }).click();
+    await expect(page).toHaveURL(/\/recuperar-senha/);
+    await page.getByLabel('Email').fill(`ausente+${runId}@example.com`);
+    await page.getByRole('button', { name: 'Enviar link de recuperação' }).click();
+    await expect(
+      page.getByText(/Se existir uma conta ativa para este e-mail/),
+    ).toBeVisible();
+  });
+
   test('admin loga e vai para /admin', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill(email);

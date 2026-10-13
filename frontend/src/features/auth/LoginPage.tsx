@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -94,6 +94,12 @@ export function LoginPage() {
           <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Entrando…' : 'Entrar'}
           </button>
+          <Link
+            className="block text-center text-sm text-brand-cyan hover:underline"
+            to="/recuperar-senha"
+          >
+            Esqueci minha senha
+          </Link>
         </form>
         <p className="mt-4 text-xs text-text-muted">
           Uso interno. Todas as ações são auditadas. Se você não possui acesso, contate a

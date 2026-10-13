@@ -21,10 +21,13 @@ raiz do repositório clonado em `/opt/lynk/app`.
 1. Clonar o repositório em `/opt/lynk/app`.
 2. `cp .env.example .env` e preencher:
    - `LYNK_DOMAIN` — domínio HTTPS público.
+   - `LYNK_PUBLIC_URL` — origem HTTPS confiável usada nos links de recuperação.
    - `LYNK_SECRET_KEY` e `LYNK_CSRF_SECRET` (gere valores aleatórios de 64+ chars).
    - `POSTGRES_PASSWORD` com senha forte (32+ chars sem espaço).
    - `LYNK_GUNICORN_WORKERS` conforme CPU (≈ `2 × núcleos + 1`).
-   - `LYNK_SMTP_*` se recuperação de senha por email for necessária.
+   - `LYNK_SMTP_*` — host, porta, credenciais e remetente da recuperação de senha.
+   - `LYNK_PASSWORD_RESET_TTL_MINUTES` e
+     `LYNK_PASSWORD_RESET_COOLDOWN_SECONDS` conforme a política operacional.
 3. `chmod 600 .env`.
 4. `docker compose config` — valida a composição sem subir nada.
 
@@ -118,8 +121,9 @@ docker compose up -d --build api worker scheduler web
 
 - O rate limiting de `/auth/login` depende do Redis. Validar respostas `429`, o header
   `Retry-After` e o comportamento fail-closed `503` antes de liberar tráfego externo.
-- O painel administrativo já mantém funis, etapas, mensagens, motivos de perda e tipos de
-  próxima ação. Produtos, tags e demais catálogos ainda não possuem UI completa.
+- Antes de liberar o fluxo de recuperação, solicitar um link em homologação, conferir
+  remetente, HTTPS e domínio, consumir o link uma vez e confirmar que as sessões anteriores
+  recebem `401 session_invalidated`.
 - A migration `8f28a73b9c11` invalida sessões criadas antes do deploy. Comunique a
   necessidade de novo login e valide a troca de senha com duas sessões simultâneas.
 - Job `generate_daily_followups` roda uma vez às 6h local — no primeiro dia execute manualmente para popular:

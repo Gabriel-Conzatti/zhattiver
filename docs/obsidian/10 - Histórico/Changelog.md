@@ -9,6 +9,7 @@
 - Vault de documentação do projeto.
 - Relatório mensal de produção por vendedor e produto.
 - Manutenção administrativa de produtos, origens, tipos de cliente, seguradoras e tags.
+- Recuperação de senha por email com token expirável de uso único.
 
 ### Alterado
 
@@ -28,3 +29,4 @@
 - Rate limiting distribuído no login.
 - Invalidação de sessões após troca ou reset de senha.
 - Relatórios financeiros restritos a administradores e isolados por organização.
+- Tokens de recuperação persistidos somente como hash e sessões invalidadas após uso.

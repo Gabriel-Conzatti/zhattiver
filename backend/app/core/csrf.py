@@ -33,7 +33,11 @@ def init_csrf(app: Flask) -> None:
             return None
         cookie_value = request.cookies.get(cookie_name)
         header_value = request.headers.get(HEADER_NAME)
-        if request.path == "/api/v1/auth/login":
+        if request.path in {
+            "/api/v1/auth/login",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+        }:
             # No login o cookie pode ainda não ter sido lido; se veio, precisa bater.
             if header_value and cookie_value and not verify_token(cookie_value, header_value):
                 return api_error("csrf_invalid", "Token CSRF inválido", status=403)

@@ -11,7 +11,22 @@ from ...core.login_rate_limit import LoginRateLimiter
 from ...core.time import now_utc
 from ...extensions import db
 from ..users.models import PermissionGrant, User
-from .schemas import LoginRequest, PasswordChangeRequest, ProfileUpdateRequest, UserPublic
+from .password_recovery import (
+    GENERIC_REQUEST_MESSAGE,
+    PasswordResetDeliveryError,
+    consume_user_password_reset_tokens,
+    find_valid_password_reset_token,
+    issue_password_reset_token,
+    send_password_reset_email,
+)
+from .schemas import (
+    LoginRequest,
+    PasswordChangeRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
+    ProfileUpdateRequest,
+    UserPublic,
+)
 
 bp = Blueprint("auth", __name__)
 
@@ -63,6 +78,95 @@ def _rate_limited(retry_after: int):
     )
     response.headers["Retry-After"] = str(retry_after)
     return response
+
+
+@bp.post("/forgot-password")
+def forgot_password():
+    payload = PasswordResetRequest.model_validate(
+        request.get_json(silent=True) or {}
+    )
+    user = db.session.scalar(
+        select(User).where(
+            User.email == payload.email.lower(),
+            User.is_active.is_(True),
+        )
+    )
+    if user is None:
+        return jsonify({"message": GENERIC_REQUEST_MESSAGE}), 202
+
+    raw_token = issue_password_reset_token(user)
+    if raw_token is None:
+        return jsonify({"message": GENERIC_REQUEST_MESSAGE}), 202
+
+    try:
+        send_password_reset_email(user, raw_token)
+    except PasswordResetDeliveryError:
+        token = find_valid_password_reset_token(raw_token)
+        if token is not None:
+            token.used_at = now_utc()
+            db.session.commit()
+        current_app.logger.exception(
+            "Falha no envio de recuperação de senha para user_id=%s",
+            user.id,
+        )
+        return jsonify({"message": GENERIC_REQUEST_MESSAGE}), 202
+
+    audit_record(
+        organization_id=str(user.organization_id),
+        actor_user_id=str(user.id),
+        entity_type="user",
+        entity_id=str(user.id),
+        action="password_reset_requested",
+        after={"delivery": "email"},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"message": GENERIC_REQUEST_MESSAGE}), 202
+
+
+@bp.post("/reset-password")
+def reset_password():
+    payload = PasswordResetConfirmRequest.model_validate(
+        request.get_json(silent=True) or {}
+    )
+    token = find_valid_password_reset_token(payload.token)
+    if token is None:
+        return api_error(
+            "invalid_password_reset_token",
+            "Link de redefinição inválido ou expirado",
+            status=422,
+        )
+
+    user = db.session.get(User, token.user_id)
+    if user is None or not user.is_active:
+        return api_error(
+            "invalid_password_reset_token",
+            "Link de redefinição inválido ou expirado",
+            status=422,
+        )
+    if verify_password(user.password_hash, payload.new_password):
+        return api_error(
+            "password_unchanged",
+            "A nova senha deve ser diferente da senha atual",
+            status=422,
+        )
+
+    now = now_utc()
+    consume_user_password_reset_tokens(str(user.id), now)
+    user.password_hash = hash_password(payload.new_password)
+    user.session_version += 1
+    audit_record(
+        organization_id=str(user.organization_id),
+        actor_user_id=str(user.id),
+        entity_type="user",
+        entity_id=str(user.id),
+        action="password_reset_completed",
+        after={"sessions_invalidated": True},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    session.clear()
+    return ("", 204)
 
 
 @bp.post("/logout")
