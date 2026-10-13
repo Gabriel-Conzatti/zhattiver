@@ -12,14 +12,13 @@ from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import today_local
 from ...extensions import db
-from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
+from ..users.models import ROLE_ADMIN, ROLE_SDR
 from . import services
 from .models import (
     BONUS_KIND_FIXED,
     BONUS_KIND_PERCENT,
     METRIC_COUNT,
     METRIC_NET_PREMIUM,
-    PAY_STATE_PAID,
     BonusPayment,
     BonusRule,
     MonthlyGoal,
@@ -212,7 +211,11 @@ def my_bonus():
         current=result.metric_value,
         on=services.month_bounds(year, month)[1],
     )
-    can_see_amount = ctx.role == ROLE_ADMIN or "sales.view_commission_amount" in ctx.grants or "bonus.view_own" in ctx.grants
+    can_see_amount = (
+        ctx.role == ROLE_ADMIN
+        or "sales.view_commission_amount" in ctx.grants
+        or "bonus.view_own" in ctx.grants
+    )
     return jsonify(
         {
             "available": True,
@@ -325,21 +328,11 @@ def refresh_bonus():
     month = int(request.args.get("month", today_local().month))
     base = request.args.get("base", METRIC_NET_PREMIUM)
 
-    # Descobre pares (user, product) com venda validada no mês.
-    from ..sales.models import STATE_VALIDATED, Sale
-
-    start, end = services.month_bounds(year, month)
-    stmt = (
-        select(Sale.seller_user_id, Sale.product_id)
-        .where(
-            Sale.organization_id == ctx.organization_id,
-            Sale.state == STATE_VALIDATED,
-            Sale.closed_on >= start,
-            Sale.closed_on <= end,
-        )
-        .distinct()
+    pairs = services.eligible_seller_product_pairs(
+        organization_id=ctx.organization_id,
+        year=year,
+        month=month,
     )
-    pairs = db.session.execute(stmt).all()
     created = 0
     for user_id, product_id in pairs:
         services.get_or_create_prediction(
