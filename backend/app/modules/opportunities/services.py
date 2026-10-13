@@ -80,7 +80,7 @@ def _initial_stage(funnel_id: str) -> FunnelStage:
         .where(FunnelStage.funnel_id == funnel_id, FunnelStage.archived_at.is_(None))
         .order_by(FunnelStage.is_initial.desc(), FunnelStage.order_index.asc())
     )
-    stage = db.session.execute(stmt).scalar_one_or_none()
+    stage = db.session.execute(stmt).scalars().first()
     if stage is None:
         raise BusinessError(
             "no_initial_stage", "Funil sem etapas configuradas", status=422
@@ -153,7 +153,9 @@ def copy_message(
             reused=True,
         )
 
-    lead = db.session.get(Lead, lead_id)
+    lead = db.session.execute(
+        select(Lead).where(Lead.id == lead_id).with_for_update()
+    ).scalar_one_or_none()
     if lead is None or lead.organization_id != organization_id:
         raise BusinessError("not_found", "Lead não encontrado", status=404)
     if lead.archived_at is not None:
@@ -198,38 +200,56 @@ def copy_message(
             .with_for_update()
         ).scalar_one_or_none()
 
-        if schedule_id:
-            schedule = db.session.get(Schedule, schedule_id)
-            if schedule is None or schedule.organization_id != organization_id:
-                raise BusinessError("not_found", "Agendamento não encontrado", status=404)
+        # Outra transação pode ter criado a oportunidade enquanto aguardávamos
+        # o lock da disponibilidade.
+        opportunity = db.session.execute(
+            select(Opportunity)
+            .where(
+                Opportunity.organization_id == organization_id,
+                Opportunity.lead_id == lead_id,
+                Opportunity.product_id == product_id,
+                Opportunity.state == STATE_OPEN,
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
 
-        opportunity = Opportunity(
-            organization_id=organization_id,
-            lead_id=lead_id,
-            product_id=product_id,
-            funnel_id=funnel.id,
-            current_stage_id=stage.id,
-            owner_user_id=actor_user_id,
-            state=STATE_OPEN,
-            origin=origin or (availability.origin_id if availability and availability.origin_id else None) or (
-                "schedule" if schedule else None
-            ),
-            source_availability_id=availability.id if availability else None,
-            source_schedule_id=schedule.id if schedule else None,
-            opened_at=now_utc(),
-            last_relevant_at=now_utc(),
-        )
-        db.session.add(opportunity)
-        db.session.flush()
-        is_new_opportunity = True
+        if opportunity is None:
+            if schedule_id:
+                schedule = db.session.get(Schedule, schedule_id)
+                if schedule is None or schedule.organization_id != organization_id:
+                    raise BusinessError("not_found", "Agendamento não encontrado", status=404)
 
-        if availability is not None:
-            availability.claimed_by = actor_user_id
-            availability.claimed_at = now_utc()
+            opportunity = Opportunity(
+                organization_id=organization_id,
+                lead_id=lead_id,
+                product_id=product_id,
+                funnel_id=funnel.id,
+                current_stage_id=stage.id,
+                owner_user_id=actor_user_id,
+                state=STATE_OPEN,
+                origin=origin
+                or (
+                    availability.origin_id
+                    if availability and availability.origin_id
+                    else None
+                )
+                or ("schedule" if schedule else None),
+                source_availability_id=availability.id if availability else None,
+                source_schedule_id=schedule.id if schedule else None,
+                opened_at=now_utc(),
+                last_relevant_at=now_utc(),
+            )
+            db.session.add(opportunity)
+            db.session.flush()
+            is_new_opportunity = True
 
-        if schedule is not None:
-            schedule.state = STATE_CONTACTED
-            schedule.contacted_opportunity_id = opportunity.id
+            if availability is not None:
+                availability.claimed_by = actor_user_id
+                availability.claimed_at = now_utc()
+
+            if schedule is not None:
+                schedule.state = STATE_CONTACTED
+                schedule.contacted_opportunity_id = opportunity.id
 
     message = render_message_for_opportunity(opportunity, stage, actor=actor, lead=lead)
 

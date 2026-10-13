@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 from getpass import getpass
 
 import click
@@ -7,13 +9,14 @@ from flask import Flask
 from sqlalchemy import select
 
 from ..core.auth import hash_password
+from ..core.time import now_utc
 from ..extensions import db
 from ..modules.catalog.models import ClientType, Insurer, Origin
 from ..modules.funnel.models import Funnel, FunnelStage
+from ..modules.leads.models import Availability, Lead, LeadPhone
 from ..modules.opportunities.models import LossReason, NextActionType
 from ..modules.orgs.models import Organization
-from ..modules.users.models import ROLE_ADMIN, Product, User
-
+from ..modules.users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, User
 
 DEFAULT_ORIGINS = ["Placas", "Indicação", "Renovação", "Prospecção", "Cliente ativo", "Novo"]
 DEFAULT_CLIENT_TYPES = ["Novo", "Recuperado", "Cliente ativo"]
@@ -39,7 +42,13 @@ DEFAULT_NEXT_ACTION_TYPES = [
 ]
 
 DEFAULT_STAGES = [
-    ("Mensagem inicial", True, False, "Olá {nome_cliente}, aqui é {nome_vendedor} da corretora. Podemos falar sobre seu seguro?"),
+    (
+        "Mensagem inicial",
+        True,
+        False,
+        "Olá {nome_cliente}, aqui é {nome_vendedor} da corretora. "
+        "Podemos falar sobre seu seguro?",
+    ),
     ("Questionário", False, False, None),
     ("Negociação", False, False, None),
     ("Reengajamento", False, False, None),
@@ -100,7 +109,116 @@ def register(app: Flask) -> None:
             raise click.ClickException("Somente disponível em desenvolvimento")
         click.echo("Seed de desenvolvimento ainda não implementado (Etapa 3+).")
 
-    @group.command("set-prospecting-quota", help="Define quota diária de prospecção do vendedor (RN-005)")
+    @group.command("seed-e2e", help="Popula dados determinísticos para testes E2E")
+    def seed_e2e():
+        if app.config["LYNK_ENV"] not in {"development", "testing"}:
+            raise click.ClickException("Somente disponível em desenvolvimento ou testes")
+
+        run_id = _e2e_run_id()
+        password = os.getenv("LYNK_E2E_PASSWORD", "")
+        if len(password) < 10:
+            raise click.ClickException(
+                "Defina LYNK_E2E_PASSWORD com pelo menos 10 caracteres"
+            )
+
+        org_slug = f"e2e-{run_id}"[:60]
+        org = db.session.execute(
+            select(Organization).where(Organization.slug == org_slug)
+        ).scalar_one_or_none()
+        if org is None:
+            org = Organization(name=f"Organização E2E {run_id}", slug=org_slug)
+            db.session.add(org)
+            db.session.flush()
+
+        _seed_defaults(org.id)
+        product = db.session.execute(
+            select(Product).where(
+                Product.organization_id == org.id,
+                Product.slug == "auto",
+            )
+        ).scalar_one()
+
+        users = {}
+        for role, name in (
+            (ROLE_ADMIN, "Administrador E2E"),
+            (ROLE_SDR, "SDR E2E"),
+            (ROLE_VENDEDOR, "Vendedor E2E"),
+        ):
+            email = f"{role}+{run_id}@example.com"
+            user = db.session.execute(
+                select(User).where(User.email == email)
+            ).scalar_one_or_none()
+            if user is None:
+                user = User(
+                    organization_id=org.id,
+                    email=email,
+                    name=name,
+                    role=role,
+                    is_active=True,
+                )
+                db.session.add(user)
+            user.password_hash = hash_password(password)
+            if role in {ROLE_SDR, ROLE_VENDEDOR} and product not in user.products:
+                user.products.append(product)
+            users[role] = user
+        db.session.flush()
+
+        seller_lead_name = f"Lead vendedor E2E {run_id}"
+        seller_lead = db.session.execute(
+            select(Lead).where(
+                Lead.organization_id == org.id,
+                Lead.name == seller_lead_name,
+            )
+        ).scalar_one_or_none()
+        if seller_lead is None:
+            seller_lead = Lead(
+                organization_id=org.id,
+                name=seller_lead_name,
+                city="Porto Alegre",
+                state="RS",
+                created_by=users[ROLE_SDR].id,
+            )
+            db.session.add(seller_lead)
+            db.session.flush()
+            db.session.add(
+                LeadPhone(
+                    organization_id=org.id,
+                    lead_id=seller_lead.id,
+                    phone_e164=_e2e_phone(run_id, 1),
+                    original=_e2e_phone(run_id, 1),
+                    is_primary=True,
+                )
+            )
+
+        open_availability = db.session.execute(
+            select(Availability).where(
+                Availability.organization_id == org.id,
+                Availability.lead_id == seller_lead.id,
+                Availability.product_id == product.id,
+                Availability.claimed_at.is_(None),
+                Availability.archived_at.is_(None),
+            )
+        ).scalar_one_or_none()
+        if open_availability is None:
+            db.session.add(
+                Availability(
+                    organization_id=org.id,
+                    lead_id=seller_lead.id,
+                    product_id=product.id,
+                    released_by=users[ROLE_SDR].id,
+                    released_at=now_utc(),
+                )
+            )
+
+        db.session.commit()
+        click.echo(f"Seed E2E preparado para run_id={run_id}")
+        for role in (ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR):
+            click.echo(f"{role}: {users[role].email}")
+
+    @group.command(
+        "set-prospecting-quota",
+        help="Define quota diária de prospecção do vendedor (RN-005)",
+    )
     @click.option("--email", required=True)
     @click.option("--quota", required=True, type=int)
     @click.option("--effective-from", default=None, help="ISO date; padrão hoje")
@@ -135,6 +253,19 @@ def register(app: Flask) -> None:
         click.echo(f"Quota diária de {email} = {quota} a partir de {start}")
 
     app.cli.add_command(group)
+
+
+def _e2e_run_id() -> str:
+    raw = os.getenv("LYNK_E2E_RUN_ID", "").strip().lower()
+    run_id = re.sub(r"[^a-z0-9-]+", "-", raw).strip("-")
+    if not run_id:
+        raise click.ClickException("Defina LYNK_E2E_RUN_ID para isolar a execução")
+    return run_id[:40]
+
+
+def _e2e_phone(run_id: str, discriminator: int) -> str:
+    digits = re.sub(r"\D", "", run_id)[-7:].rjust(7, "0")
+    return f"+55519{digits}{discriminator}"
 
 
 def _seed_defaults(organization_id: str) -> None:

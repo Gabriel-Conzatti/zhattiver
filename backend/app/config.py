@@ -44,6 +44,19 @@ class BaseConfig:
         minutes=int(os.getenv("LYNK_SESSION_LIFETIME_MINUTES", "720"))
     )
     LYNK_SESSION_IDLE_MINUTES = int(os.getenv("LYNK_SESSION_IDLE_MINUTES", "120"))
+    LYNK_LOGIN_RATE_LIMIT_ENABLED = _bool(
+        os.getenv("LYNK_LOGIN_RATE_LIMIT_ENABLED"),
+        default=True,
+    )
+    LYNK_LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(
+        os.getenv("LYNK_LOGIN_RATE_LIMIT_WINDOW_SECONDS", "900")
+    )
+    LYNK_LOGIN_RATE_LIMIT_IP_ATTEMPTS = int(
+        os.getenv("LYNK_LOGIN_RATE_LIMIT_IP_ATTEMPTS", "20")
+    )
+    LYNK_LOGIN_RATE_LIMIT_ACCOUNT_ATTEMPTS = int(
+        os.getenv("LYNK_LOGIN_RATE_LIMIT_ACCOUNT_ATTEMPTS", "8")
+    )
     SESSION_COOKIE_NAME = os.getenv("LYNK_SESSION_COOKIE_NAME", "lynk_session")
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
@@ -80,6 +93,7 @@ class TestingConfig(BaseConfig):
     DEBUG = False
     SESSION_COOKIE_SECURE = False
     SESSION_TYPE = "filesystem"
+    LYNK_LOGIN_RATE_LIMIT_ENABLED = False
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "TEST_DATABASE_URL",
         "postgresql+psycopg://lynk:lynk@localhost:5432/lynk_test",

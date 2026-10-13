@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+flask_session/
 .mypy_cache/
 .ruff_cache/
 .coverage

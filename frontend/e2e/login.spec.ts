@@ -1,14 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-/**
- * Requer stack de produção/staging levantada e um administrador criado por:
- *   docker compose exec api flask lynk create-admin
- * Variáveis:
- *   LYNK_E2E_ADMIN_EMAIL, LYNK_E2E_ADMIN_PASSWORD
- */
-
-const email = process.env.LYNK_E2E_ADMIN_EMAIL ?? 'admin@example.com';
-const password = process.env.LYNK_E2E_ADMIN_PASSWORD ?? 'change-me-please';
+const runId = process.env.LYNK_E2E_RUN_ID ?? 'local';
+const email = process.env.LYNK_E2E_ADMIN_EMAIL ?? `admin+${runId}@example.com`;
+const password = process.env.LYNK_E2E_PASSWORD ?? 'change-me-please';
 
 test.describe('Login e roteamento por perfil', () => {
   test('admin loga e vai para /admin', async ({ page }) => {

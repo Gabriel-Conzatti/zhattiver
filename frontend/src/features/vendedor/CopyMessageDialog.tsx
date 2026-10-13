@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, X } from 'lucide-react';
 
 import { opportunities, type CopyMessageResponse } from '@/lib/api';
@@ -38,6 +38,7 @@ export function CopyMessageDialog({
     | { kind: 'error'; message: string }
     | { kind: 'copied'; message: string }
   >({ kind: 'loading' });
+  const started = useRef(false);
 
   const run = async () => {
     try {
@@ -62,6 +63,8 @@ export function CopyMessageDialog({
   };
 
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     void run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

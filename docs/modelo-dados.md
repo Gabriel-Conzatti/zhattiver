@@ -34,6 +34,7 @@ Convenções gerais:
 | password_hash | TEXT | argon2id |
 | role | ENUM('admin', 'vendedor', 'sdr') | perfil base |
 | is_active | BOOLEAN | |
+| session_version | INTEGER | incrementada em troca/reset de senha para invalidar sessões antigas |
 | last_login_at | TIMESTAMPTZ NULL | |
 | created_at, updated_at, archived_at | | |
 

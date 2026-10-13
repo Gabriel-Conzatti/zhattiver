@@ -8,10 +8,9 @@ Regras-chave:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
 from functools import wraps
-from typing import Callable, Iterable
 
 from flask import g
 from flask_login import current_user
@@ -38,7 +37,7 @@ def load_context() -> AccessContext:
 
     # Cache por request
     ctx: AccessContext | None = getattr(g, "access_context", None)
-    if ctx is not None:
+    if ctx is not None and ctx.user_id == str(user.id):
         return ctx
 
     from ..modules.users.models import PermissionGrant

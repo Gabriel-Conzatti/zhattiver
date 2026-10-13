@@ -61,13 +61,13 @@ Estados:
 | RN-019 | Lista de atualizações relevantes | 🟨 |
 | RN-020 | Follow-up atrasado permanece, sem duplicar | 🟨 |
 | RN-021 | Meta = 100% previstos + atrasados abertos | 🟨 |
-| RN-022 | Tipos de próxima ação configuráveis | 🟨 |
+| RN-022 | Tipos de próxima ação configuráveis | ✅ (API e tela administrativa; criação, desativação e reativação testadas) |
 
 ### Funil / mensagens
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-023 | Funis, etapas, ordem, mensagens configuráveis | 🟨 |
+| RN-023 | Funis, etapas, ordem, mensagens configuráveis | ✅ (API e tela administrativa com isolamento multiempresa testado) |
 | RN-024 | Movimentação livre entre etapas permitidas | 🟨 |
 | RN-025 | Encerramento (ganho/perda) a partir de qualquer etapa | 🟨 |
 | RN-026..RN-029 | Mensagens com variáveis, fallback e registro por cópia | 🟨 |
@@ -96,7 +96,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-053..RN-055 | Motivo + justificativa obrigatórios | 🟨 |
+| RN-053..RN-055 | Motivo + justificativa obrigatórios | 🟨 (motivos configuráveis via API/tela; fluxo de perda já implementado) |
 | RN-056..RN-059 | Reagendamento preservando histórico | 🟨 |
 
 ### Cross-sell
@@ -117,7 +117,7 @@ Estados:
 |---|---|---|
 | RN-070 | Perfis padrão (admin, vendedor, SDR) | 🟨 |
 | RN-071 | Permissões individuais | 🟨 |
-| RN-072 | Dados financeiros restritos | ⬜ |
+| RN-072 | Dados financeiros restritos | 🟨 (cobertura parcial) |
 | RN-073..RN-075 | Arquivamento em vez de exclusão | 🟨 |
 | RN-076..RN-078 | Duplicidade por telefone normalizado | 🟨 |
 
@@ -125,7 +125,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-079..RN-080 | Auditoria de ações relevantes | 🟨 |
+| RN-079..RN-080 | Auditoria de ações relevantes | 🟨 (consulta administrativa paginada, filtrável e isolada por organização; cobertura de autorização adicionada) |
 | RN-081..RN-085 | Notificações internas | 🟨 |
 | RN-086..RN-087 | Preservação histórica e linha do tempo | 🟨 |
 
@@ -133,16 +133,28 @@ Estados:
 
 ### Vendedor
 
-- Dashboard, Prospecção, Agendamentos, Funil, Perfil (via avatar) — imagens 1 a 4.
+- Dashboard, Prospecção, Agendamentos, Funil, Perfil (via avatar) — perfil e troca de senha verificados.
 
 ### SDR
 
-- Dashboard, Prospecção, Agendamentos, Importações, Perfil.
+- Dashboard, Prospecção, Agendamentos, Importações, Perfil — perfil e troca de senha verificados.
 
 ### Administrador
 
-- Dashboard, Comercial (Prospecção/Agendamentos/Funil/Cross-Sell), Gestão (Produção/Metas/Bônus/Equipe/Ausências), Relatórios, Configurações, Auditoria.
+- Dashboard, Comercial (Prospecção/Agendamentos/Funil/Cross-Sell), Gestão (Produção/Metas/Bônus/Equipe/Ausências), Relatórios, Configurações, Auditoria e Perfil.
 
 ## Critérios de aceite mínimos
 
 Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste automatizado nas etapas seguintes.
+
+## Evidência parcial de segurança
+
+- RN-072: `backend/tests/test_authorization_boundaries.py` verifica que SDR não lista
+  nem detalha vendas ou oportunidades, vendedor não acessa venda de outro vendedor,
+  valores de comissão não aparecem na listagem do vendedor, bônus próprio sem concessão
+  não expõe valor, listagem administrativa de bônus é isolada por organização e outra
+  organização recebe `404` ao buscar venda. Transferências, concessões e criação de
+  agendamentos rejeitam IDs de outra organização.
+- A cobertura ainda não valida todos os caminhos financeiros, incluindo relatórios,
+  bônus, notificações e cache de cliente. RN-072 permanece pendente de verificação
+  completa antes de receber o estado `✅`.

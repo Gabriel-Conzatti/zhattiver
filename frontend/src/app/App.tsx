@@ -10,6 +10,8 @@ import { AdminUsuariosPage } from '@/features/admin/AdminUsuariosPage';
 import { AdminAusenciasPage } from '@/features/admin/AdminAusenciasPage';
 import { AdminConcessoesPage } from '@/features/admin/AdminConcessoesPage';
 import { AdminCrossSellPage } from '@/features/admin/AdminCrossSellPage';
+import { AdminAuditPage } from '@/features/admin/AdminAuditPage';
+import { AdminConfiguracoesPage } from '@/features/admin/AdminConfiguracoesPage';
 import { SdrLayout } from '@/features/sdr/SdrLayout';
 import { SdrDashboard } from '@/features/sdr/SdrDashboard';
 import { SdrProspeccaoPage } from '@/features/sdr/SdrProspeccaoPage';
@@ -21,6 +23,7 @@ import { ProspeccaoPage } from '@/features/vendedor/ProspeccaoPage';
 import { AgendamentosPage } from '@/features/vendedor/AgendamentosPage';
 import { FunilPage } from '@/features/vendedor/FunilPage';
 import { FollowupsPage } from '@/features/vendedor/FollowupsPage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
 
 import { RequireAuth } from './RequireAuth';
 import { useAuth } from './AuthProvider';
@@ -46,6 +49,7 @@ export function App() {
           <Route path="/agendamentos" element={<AgendamentosPage />} />
           <Route path="/funil" element={<FunilPage />} />
           <Route path="/followups" element={<FollowupsPage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route element={<RequireAuth roles={['sdr']} />}>
@@ -54,6 +58,7 @@ export function App() {
           <Route path="prospeccao" element={<SdrProspeccaoPage />} />
           <Route path="agendamentos" element={<SdrAgendamentosPage />} />
           <Route path="importacoes" element={<SdrImportacoesPage />} />
+          <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route element={<RequireAuth roles={['admin']} />}>
@@ -66,6 +71,9 @@ export function App() {
           <Route path="ausencias" element={<AdminAusenciasPage />} />
           <Route path="concessoes" element={<AdminConcessoesPage />} />
           <Route path="cross-sell" element={<AdminCrossSellPage />} />
+          <Route path="auditoria" element={<AdminAuditPage />} />
+          <Route path="configuracoes" element={<AdminConfiguracoesPage />} />
+          <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />

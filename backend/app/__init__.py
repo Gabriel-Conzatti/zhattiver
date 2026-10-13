@@ -64,11 +64,13 @@ def _init_extensions(app: Flask) -> None:
 
 
 def _register_blueprints(app: Flask) -> None:
+    from .modules.audit.routes import bp as audit_bp
     from .modules.admin.routes import bp as admin_bp
     from .modules.auth.routes import bp as auth_bp
     from .modules.bonus.routes import bp as bonus_bp
     from .modules.catalog.routes import bp as catalog_bp
     from .modules.cross_sell.routes import bp as cross_sell_bp
+    from .modules.funnel.routes import bp as funnel_bp
     from .modules.health.routes import bp as health_bp
     from .modules.imports.routes import bp as imports_bp
     from .modules.leads.routes import bp as leads_bp
@@ -79,6 +81,7 @@ def _register_blueprints(app: Flask) -> None:
     from .modules.schedules.routes import bp as schedules_bp
 
     app.register_blueprint(health_bp, url_prefix="/api/v1")
+    app.register_blueprint(audit_bp, url_prefix="/api/v1")
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(catalog_bp, url_prefix="/api/v1")
     app.register_blueprint(leads_bp, url_prefix="/api/v1")
@@ -90,6 +93,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(admin_bp, url_prefix="/api/v1")
     app.register_blueprint(management_bp, url_prefix="/api/v1")
     app.register_blueprint(cross_sell_bp, url_prefix="/api/v1")
+    app.register_blueprint(funnel_bp, url_prefix="/api/v1")
     app.register_blueprint(notifications_bp, url_prefix="/api/v1")
 
 
@@ -108,8 +112,10 @@ def _register_cli(app: Flask) -> None:
 def _register_request_hooks(app: Flask) -> None:
     from .core.csrf import init_csrf
     from .core.request_context import init_request_context
+    from .core.session_security import init_session_security
 
     init_request_context(app)
+    init_session_security(app)
     init_csrf(app)
 
 

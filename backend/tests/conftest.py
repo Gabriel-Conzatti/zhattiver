@@ -1,5 +1,59 @@
 import os
 
+import pytest
+from cachelib import FileSystemCache
+from sqlalchemy import BigInteger, text
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
+
 os.environ.setdefault("LYNK_ENV", "testing")
-# TEST_DATABASE_URL deve apontar para um PostgreSQL real; testes de banco são marcados
-# como `integration` e podem ser pulados quando a env não está disponível.
+
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_for_sqlite(element, compiler, **kwargs):
+    return "JSON"
+
+
+@compiles(BigInteger, "sqlite")
+def _compile_big_integer_for_sqlite(element, compiler, **kwargs):
+    return "INTEGER"
+
+
+@pytest.fixture()
+def app(monkeypatch, tmp_path):
+    """Aplicação efêmera; usa PostgreSQL quando TEST_DATABASE_URL estiver configurada."""
+    database_url = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
+    monkeypatch.setenv("LYNK_ENV", "testing")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("TEST_DATABASE_URL", database_url)
+
+    from importlib import reload
+
+    from app import config as app_config
+
+    reload(app_config)
+    from app import create_app
+    from app.extensions import db
+
+    application = create_app(
+        "testing",
+        overrides={
+            "SESSION_TYPE": "filesystem",
+            "SESSION_CACHELIB": FileSystemCache(str(tmp_path / "sessions")),
+        },
+    )
+    application.config["TESTING"] = True
+
+    with application.app_context():
+        db.create_all()
+
+    yield application
+
+    with application.app_context():
+        db.session.remove()
+        if db.engine.dialect.name == "postgresql":
+            db.session.execute(text("DROP SCHEMA public CASCADE"))
+            db.session.execute(text("CREATE SCHEMA public"))
+            db.session.commit()
+        else:
+            db.drop_all()

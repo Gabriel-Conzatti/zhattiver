@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 from flask_login import UserMixin
-from sqlalchemy import Boolean, DateTime, Index, String, and_, or_, select
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, or_, select, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -56,6 +56,12 @@ class User(db.Model, TimestampMixin, ArchivableMixin, UserMixin):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    session_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+        server_default=text("1"),
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     products = relationship("Product", secondary=user_products, backref="users")
@@ -88,7 +94,7 @@ class PermissionGrant(db.Model, TimestampMixin):
     )
 
     @classmethod
-    def active_for_user(cls, user_id: str, at: datetime) -> Iterable["PermissionGrant"]:
+    def active_for_user(cls, user_id: str, at: datetime) -> Iterable[PermissionGrant]:
         stmt = select(cls).where(
             cls.user_id == user_id,
             cls.revoked_at.is_(None),

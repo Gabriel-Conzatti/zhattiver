@@ -64,6 +64,15 @@ npm run dev
 
 ## Testes
 
+Da raiz do repositório no Windows, execute toda a validação local:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+Use `.\scripts\verify.ps1 -SkipFrontend` ou `-SkipCompose` para executar apenas a
+parte necessária durante o desenvolvimento.
+
 Backend:
 
 ```powershell
@@ -80,15 +89,30 @@ npm run build
 npm run typecheck
 ```
 
-Testes E2E (Playwright) — exigem a stack rodando:
+Testes E2E (Playwright) — exigem a stack rodando em modo `development` ou
+`testing`. Use um identificador novo em cada execução para manter os dados
+isolados e reproduzíveis:
 
 ```powershell
+cd backend
+$env:LYNK_E2E_RUN_ID = "local-001"
+$env:LYNK_E2E_PASSWORD = "senha-e2e-com-10-ou-mais"
+flask --app wsgi:app db upgrade
+flask --app wsgi:app lynk seed-e2e
+
 cd frontend
 npm run test:e2e:install   # apenas na primeira vez
-$env:LYNK_E2E_ADMIN_EMAIL = "admin@example.com"
-$env:LYNK_E2E_ADMIN_PASSWORD = "..."
 npm run test:e2e
 ```
+
+Se o download do Chromium estiver indisponível, use um canal já instalado, como
+`$env:LYNK_E2E_BROWSER_CHANNEL = "chrome"`.
+
+O seed cria uma organização exclusiva, administrador, SDR, vendedor, catálogos
+e uma disponibilidade inicial. Os emails são derivados de
+`LYNK_E2E_RUN_ID` (por exemplo, `admin+local-001@example.com`). O comando é
+bloqueado em produção. A CI executa esse fluxo contra PostgreSQL 16, Redis 7 e
+Chromium.
 
 ## Produção (VPS)
 

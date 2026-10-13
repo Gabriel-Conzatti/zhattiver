@@ -1,4 +1,5 @@
 import { api } from './http';
+import type { CurrentUser } from './types';
 
 export interface CatalogItem {
   id: string;
@@ -390,7 +391,7 @@ export const sales = {
     api<SaleSummary>(`/sales/${id}/cancel`, { method: 'POST', body: { reason } }),
 };
 
-export interface DailyGoalsWithProduction extends DailyGoals {}
+export type DailyGoalsWithProduction = DailyGoals;
 
 export interface ProductionSummary {
   year: number;
@@ -536,6 +537,51 @@ export interface AdminUser {
   product_ids: string[];
 }
 
+export interface AuditLogEntry {
+  id: number;
+  actor_user_id: string | null;
+  entity_type: string;
+  entity_id: string | null;
+  action: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  reason: string | null;
+  occurred_at: string;
+}
+
+export interface AuditLogListResponse {
+  items: AuditLogEntry[];
+  page: number;
+  per_page: number;
+  total: number;
+}
+
+export interface FunnelStageConfig {
+  id: string;
+  name: string;
+  order_index: number;
+  is_initial: boolean;
+  is_final: boolean;
+  message_template: string | null;
+  archived: boolean;
+}
+
+export interface FunnelConfig {
+  id: string;
+  product_id: string;
+  name: string;
+  is_default: boolean;
+  archived: boolean;
+  stages: FunnelStageConfig[];
+}
+
+export interface ConfigurableName {
+  id: string;
+  name: string;
+  slug: string;
+  is_active: boolean;
+}
+
 export const admin = {
   dashboard: () =>
     api<{
@@ -614,6 +660,62 @@ export const admin = {
       '/admin/transfers',
       { method: 'POST', body: input },
     ),
+  audit: (
+    params: {
+      page?: number;
+      per_page?: number;
+      actor_user_id?: string;
+      entity_type?: string;
+      entity_id?: string;
+      action?: string;
+    } = {},
+  ) => {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== '') qs.set(key, String(value));
+    }
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return api<AuditLogListResponse>(`/audit${suffix}`);
+  },
+  funnels: () => api<{ items: FunnelConfig[] }>('/admin/funnels'),
+  createFunnel: (input: { product_id: string; name: string; is_default: boolean }) =>
+    api<{ id: string }>('/admin/funnels', { method: 'POST', body: input }),
+  updateFunnel: (
+    id: string,
+    changes: Partial<{ name: string; is_default: boolean; archived: boolean }>,
+  ) => api(`/admin/funnels/${id}`, { method: 'PATCH', body: changes }),
+  createFunnelStage: (
+    funnelId: string,
+    input: {
+      name: string;
+      order_index: number;
+      is_initial: boolean;
+      is_final: boolean;
+      message_template?: string | null;
+    },
+  ) =>
+    api<FunnelStageConfig>(`/admin/funnels/${funnelId}/stages`, {
+      method: 'POST',
+      body: input,
+    }),
+  updateFunnelStage: (
+    id: string,
+    changes: Partial<Omit<FunnelStageConfig, 'id'>>,
+  ) => api<FunnelStageConfig>(`/admin/funnel-stages/${id}`, { method: 'PATCH', body: changes }),
+  lossReasons: () =>
+    api<{ items: ConfigurableName[] }>('/loss-reasons?include_inactive=true'),
+  createLossReason: (name: string) =>
+    api<ConfigurableName>('/loss-reasons', { method: 'POST', body: { name } }),
+  updateLossReason: (id: string, changes: Partial<Pick<ConfigurableName, 'name' | 'is_active'>>) =>
+    api<ConfigurableName>(`/loss-reasons/${id}`, { method: 'PATCH', body: changes }),
+  nextActionTypes: () =>
+    api<{ items: ConfigurableName[] }>('/next-action-types?include_inactive=true'),
+  createNextActionType: (name: string) =>
+    api<ConfigurableName>('/next-action-types', { method: 'POST', body: { name } }),
+  updateNextActionType: (
+    id: string,
+    changes: Partial<Pick<ConfigurableName, 'name' | 'is_active'>>,
+  ) => api<ConfigurableName>(`/next-action-types/${id}`, { method: 'PATCH', body: changes }),
   crossSell: {
     list: () =>
       api<{
@@ -687,4 +789,20 @@ export const notifications = {
   read: (id: string) =>
     api<NotificationRow>(`/notifications/${id}/read`, { method: 'POST', body: {} }),
   readAll: () => api<void>('/notifications/read-all', { method: 'POST', body: {} }),
+};
+
+export const profile = {
+  update: (name: string) =>
+    api<CurrentUser>('/auth/profile', {
+      method: 'PATCH',
+      body: { name },
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<void>('/auth/change-password', {
+      method: 'POST',
+      body: {
+        current_password: currentPassword,
+        new_password: newPassword,
+      },
+    }),
 };

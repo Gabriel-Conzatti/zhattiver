@@ -1,4 +1,5 @@
 import { LogOut, Search, Settings, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/app/AuthProvider';
 import { NotificationBell } from './NotificationBell';
@@ -34,21 +35,23 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
         +
       </button>
       <NotificationBell />
-      <button
-        type="button"
+      <Link
+        to={profilePath(user?.role)}
         className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface"
         aria-label="Perfil"
         title={user?.name ?? ''}
       >
         <User className="h-4 w-4 text-brand-cyan" />
-      </button>
-      <button
-        type="button"
-        className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface"
-        aria-label="Configurações"
-      >
-        <Settings className="h-4 w-4 text-brand-cyan" />
-      </button>
+      </Link>
+      {user?.role === 'admin' && (
+        <Link
+          to="/admin/configuracoes"
+          className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface"
+          aria-label="Configurações"
+        >
+          <Settings className="h-4 w-4 text-brand-cyan" />
+        </Link>
+      )}
       <button
         type="button"
         onClick={() => void logout()}
@@ -59,4 +62,10 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
       </button>
     </header>
   );
+}
+
+function profilePath(role?: string) {
+  if (role === 'admin') return '/admin/perfil';
+  if (role === 'sdr') return '/sdr/perfil';
+  return '/perfil';
 }

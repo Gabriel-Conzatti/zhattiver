@@ -318,8 +318,10 @@ function Field({
 }) {
   return (
     <div>
-      <label className="label">{label}</label>
-      {children}
+      <label>
+        <span className="label">{label}</span>
+        {children}
+      </label>
       {hint && !error && <p className="mt-1 text-xs text-text-muted">{hint}</p>}
       {error && <p className="mt-1 text-xs text-state-danger">{error}</p>}
     </div>
