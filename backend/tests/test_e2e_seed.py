@@ -15,6 +15,7 @@ def test_seed_e2e_creates_isolated_users_and_seller_availability(app, monkeypatc
     from app.modules.leads.models import Availability
     from app.modules.opportunities.services import _initial_stage
     from app.modules.orgs.models import Organization
+    from app.modules.sales.models import STATE_REGISTERED, Sale
     from app.modules.users.models import User
 
     with app.app_context():
@@ -33,11 +34,16 @@ def test_seed_e2e_creates_isolated_users_and_seller_availability(app, monkeypatc
             select(Funnel).where(Funnel.organization_id == organization.id)
         ).scalar_one()
         initial_stage = _initial_stage(funnel.id)
+        pending_sale = db.session.execute(
+            select(Sale).where(Sale.organization_id == organization.id)
+        ).scalar_one()
 
         assert {user.role for user in users} == {"admin", "sdr", "vendedor"}
         assert all(user.products for user in users if user.role != "admin")
         assert availability_count == 1
         assert initial_stage.is_initial is True
+        assert pending_sale.state == STATE_REGISTERED
+        assert str(pending_sale.commission_amount) == "300.00"
 
 
 def test_seed_e2e_requires_run_id_and_password(app, monkeypatch):

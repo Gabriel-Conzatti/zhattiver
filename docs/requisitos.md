@@ -82,7 +82,8 @@ Estados:
 | RN-033 | Comissão = prêmio líquido × percentual | 🟨 |
 | RN-034 | Prazo de edição pelo vendedor até 23h59 próximo dia útil | 🟨 |
 | RN-035 | Permissão especial para editar após prazo | 🟨 |
-| RN-036..RN-038 | Validação administrativa e produção oficial | 🟨 |
+| RN-036..RN-037 | Validação administrativa da venda | ✅ (Playwright valida a transição de pendente para validada) |
+| RN-038 | Somente vendas validadas compõem produção, metas e bônus | 🟨 |
 | RN-039..RN-042 | Cancelamento antes/depois do pagamento do bônus | 🟨 |
 
 ### Metas mensais / bônus

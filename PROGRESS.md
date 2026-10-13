@@ -165,6 +165,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - Playwright: sete cenários aprovados em execução local isolada (login/logout,
   credencial inválida, cadastro/disponibilização/duplicidade SDR, cópia de
   mensagem e metas do vendedor).
+- A CI do PR #1 confirmou os mesmos fluxos com PostgreSQL 16, Redis 7 e Chromium.
+- O seed E2E também prepara uma venda pendente determinística; o fluxo administrativo
+  valida a venda e confirma sua passagem para a produção oficial.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
@@ -196,10 +199,8 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - CI do backend provisiona PostgreSQL 16, valida a migração inicial e executa os testes
   HTTP com `TEST_DATABASE_URL`; fora da CI, a fixture mantém fallback SQLite para
   desenvolvimento local.
-- A infraestrutura E2E foi validada localmente até o limite disponível (seed,
-  typecheck, lint, testes e build). A execução integrada com PostgreSQL/Redis
-  reais continua pendente da primeira execução remota da CI porque o Docker
-  Desktop não estava disponível neste ambiente.
+- A infraestrutura E2E foi validada localmente e na CI com PostgreSQL 16,
+  Redis 7 e Chromium.
 
 ## Pendente (próximas etapas)
 
@@ -210,12 +211,11 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Próximo passo
 
-1. Abra um pull request e confirme o novo job E2E com PostgreSQL 16, Redis 7 e Chromium.
-2. Provisione a VPS (Ubuntu 22.04+, Docker + Compose v2, DNS apontado).
-3. Clone o repositório em `/opt/lynk/app` e siga `docs/checklist-producao.md`.
-4. Após o boot, rode `scripts/healthcheck.sh` e execute `npm run test:e2e` a partir de uma máquina cliente com `LYNK_E2E_BASE_URL` apontando para o domínio.
-5. Configure `cron` diário para `scripts/backup.sh` e verifique restauração em ambiente separado (`docs/backup-restore.md`).
-6. Marque os itens `🟨` de `docs/requisitos.md` como `✅` conforme cada fluxo for confirmado em produção.
+1. Provisione a VPS (Ubuntu 22.04+, Docker + Compose v2, DNS apontado).
+2. Clone o repositório em `/opt/lynk/app` e siga `docs/checklist-producao.md`.
+3. Após o boot, rode `scripts/healthcheck.sh` e execute `npm run test:e2e` a partir de uma máquina cliente com `LYNK_E2E_BASE_URL` apontando para o domínio.
+4. Configure `cron` diário para `scripts/backup.sh` e verifique restauração em ambiente separado (`docs/backup-restore.md`).
+5. Marque os itens `🟨` de `docs/requisitos.md` como `✅` conforme cada fluxo for confirmado em produção.
 
 ## Limitações declaradas
 
