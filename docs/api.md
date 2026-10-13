@@ -21,7 +21,11 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
 
 ## Autenticação
 
-- `POST /auth/login` — body `{ "email", "password" }`. Sucesso: `{ "user": { ... } }`. Falha: `401`.
+- `POST /auth/login` — body `{ "email", "password" }`. Sucesso: usuário autenticado.
+  - `401 invalid_credentials`: credenciais inválidas, sem revelar se a conta existe.
+  - `429 too_many_login_attempts`: limite por conta ou origem atingido; inclui `Retry-After`.
+  - `503 auth_temporarily_unavailable`: Redis do controle de tentativas indisponível. A
+    autenticação falha fechada, sem ignorar o controle.
 - `POST /auth/logout` — invalida sessão. `204`.
 - `GET /auth/me` — retorna usuário logado com perfil, permissões e produtos autorizados. `401` se anônimo.
 

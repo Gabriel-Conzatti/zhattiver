@@ -116,8 +116,10 @@ docker compose up -d --build api worker scheduler web
 
 ## 11. Limitações conhecidas
 
-- Rate limiting em `/auth/login` ainda não está implementado (usar fail2ban/Caddyfile custom se exposto à internet aberta).
-- Painel administrativo de funis/etapas ainda não tem UI (funis padrão via `create-admin`; endpoints existem).
+- O rate limiting de `/auth/login` depende do Redis. Validar respostas `429`, o header
+  `Retry-After` e o comportamento fail-closed `503` antes de liberar tráfego externo.
+- O painel administrativo já mantém funis, etapas, mensagens, motivos de perda e tipos de
+  próxima ação. Produtos, tags e demais catálogos ainda não possuem UI completa.
 - Job `generate_daily_followups` roda uma vez às 6h local — no primeiro dia execute manualmente para popular:
   ```bash
   docker compose exec worker celery -A app.jobs.celery_app call app.jobs.tasks.generate_daily_followups

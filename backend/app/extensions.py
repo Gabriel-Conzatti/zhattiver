@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from flask_login import LoginManager
 from flask_migrate import Migrate
-from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
 from sqlalchemy import MetaData
+
+from flask_session import Session
 
 _naming_convention = {
     "ix": "ix_%(column_0_label)s",
@@ -23,5 +24,8 @@ session_ext = Session()
 
 def get_redis(app) -> Redis:
     """Cliente Redis compartilhado (usado por sessão e locks)."""
-    url = app.config["REDIS_URL"]
-    return Redis.from_url(url)
+    client = app.extensions.get("lynk_redis")
+    if client is None:
+        client = Redis.from_url(app.config["REDIS_URL"])
+        app.extensions["lynk_redis"] = client
+    return client

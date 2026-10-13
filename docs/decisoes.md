@@ -14,6 +14,7 @@ Cada linha registra: **requisito** (documento) → **decisão técnica** → **h
 | Senhas | Argon2id via `argon2-cffi` | Prompt seção 18. |
 | Sessão | Cookie opaco `HttpOnly`, `SameSite=Lax`, `Secure` em produção; dados armazenados no Redis via Flask-Session | Prompt seção 18. |
 | CSRF | Token duplo (cookie + header `X-CSRF-Token`) em todas as mutações autenticadas | Prompt seção 18. |
+| Proteção do login | Contadores distribuídos no Redis por conta e IP, com identificadores em HMAC; falha fechada se o Redis estiver indisponível | Evita força bruta em múltiplas instâncias sem registrar e-mail/IP em claro nas chaves. |
 
 ## Regras comerciais
 
