@@ -119,7 +119,7 @@ Estados:
 | RN-070 | Perfis padrão (admin, vendedor, SDR) | 🟨 |
 | RN-071 | Permissões individuais | 🟨 |
 | RN-072 | Dados financeiros restritos | ✅ (vendas, bônus e relatórios cobertos por perfil e isolamento multiempresa) |
-| RN-073..RN-075 | Arquivamento em vez de exclusão | 🟨 |
+| RN-073..RN-075 | Arquivamento em vez de exclusão | 🟨 (catálogos administrativos cobertos com arquivamento e restauração) |
 | RN-076..RN-078 | Duplicidade por telefone normalizado | 🟨 |
 
 ### Auditoria / notificações / histórico

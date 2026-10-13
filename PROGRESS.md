@@ -213,6 +213,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   agrupamento por vendedor/produto. A API é exclusiva de administrador, deriva o tenant
   da sessão e reutiliza a elegibilidade RN-038. RN-072 foi verificada em vendas, bônus,
   notificações e relatórios.
+- Configurações administrativas agora cobrem produtos, origens, tipos de cliente,
+  seguradoras, categorias de tag e tags. Itens podem ser criados, renomeados, arquivados
+  e restaurados sem apagar o histórico; categorias de tag são validadas contra o tenant
+  ativo e todas as mutações geram auditoria.
 
 ## Pendente (próximas etapas)
 
@@ -231,9 +235,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Limitações declaradas
 
-- CRUD de produtos, tags, seguradoras, origens, tipos de cliente, metas e faixas de bônus
-  ainda não possui uma interface administrativa completa. Funis, etapas, mensagens, motivos
-  de perda e tipos de próxima ação já podem ser mantidos na tela **Configurações**.
+- Metas e faixas de bônus ainda não possuem uma interface administrativa completa.
+  Produtos, tags, seguradoras, origens, tipos de cliente, funis, etapas, mensagens,
+  motivos de perda e tipos de próxima ação já podem ser mantidos em **Configurações**.
 - Job de follow-ups é diário (6h local) — no primeiro deploy execute manualmente para popular as ações do dia:
   `docker compose exec worker celery -A app.jobs.celery_app call app.jobs.tasks.generate_daily_followups`.
 - PDFs e imagens de referência não foram copiados para `docs/referencias/`.

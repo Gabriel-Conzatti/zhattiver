@@ -19,6 +19,16 @@ vi.mock('@/lib/api', () => ({
     updateLossReason: vi.fn(),
     createNextActionType: vi.fn(),
     updateNextActionType: vi.fn(),
+    catalogs: vi.fn().mockResolvedValue({
+      products: [],
+      origins: [],
+      client_types: [],
+      insurers: [],
+      tag_categories: [],
+      tags: [],
+    }),
+    createCatalogItem: vi.fn(),
+    updateCatalogItem: vi.fn(),
   },
   catalog: {
     products: vi.fn().mockResolvedValue({

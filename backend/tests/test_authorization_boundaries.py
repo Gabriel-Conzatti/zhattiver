@@ -559,6 +559,96 @@ def test_admin_manages_configurable_activity_catalogs(app, seeded_data):
     assert action_type.get_json()["slug"] == "enviar-documentos"
 
 
+def test_admin_manages_catalogs_with_archiving_and_tenant_isolation(app, seeded_data):
+    seller_client = app.test_client()
+    _login(seller_client, seeded_data["seller_a"])
+    assert seller_client.get("/api/v1/admin/catalogs").status_code == 403
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    headers = _csrf_headers(admin_client)
+    product = admin_client.post(
+        "/api/v1/admin/catalogs/products",
+        json={"name": "Seguro Residencial"},
+        headers=headers,
+    )
+    assert product.status_code == 201
+    product_id = product.get_json()["id"]
+
+    duplicate = admin_client.post(
+        "/api/v1/admin/catalogs/products",
+        json={"name": "Seguro Residencial"},
+        headers=headers,
+    )
+    assert duplicate.status_code == 409
+
+    renamed = admin_client.patch(
+        f"/api/v1/admin/catalogs/products/{product_id}",
+        json={"name": "Residencial"},
+        headers=headers,
+    )
+    assert renamed.status_code == 200
+    assert renamed.get_json()["slug"] == "residencial"
+
+    archived = admin_client.patch(
+        f"/api/v1/admin/catalogs/products/{product_id}",
+        json={"archived": True},
+        headers=headers,
+    )
+    assert archived.status_code == 200
+    assert archived.get_json()["archived"] is True
+    public_ids = {item["id"] for item in admin_client.get("/api/v1/products").get_json()["items"]}
+    assert product_id not in public_ids
+    admin_products = admin_client.get("/api/v1/admin/catalogs").get_json()["products"]
+    assert any(item["id"] == product_id and item["archived"] for item in admin_products)
+
+    restored = admin_client.patch(
+        f"/api/v1/admin/catalogs/products/{product_id}",
+        json={"archived": False},
+        headers=headers,
+    )
+    assert restored.status_code == 200
+    public_ids = {item["id"] for item in admin_client.get("/api/v1/products").get_json()["items"]}
+    assert product_id in public_ids
+
+    external_client = app.test_client()
+    _login(external_client, seeded_data["admin_b"])
+    external_ids = {
+        item["id"]
+        for item in external_client.get("/api/v1/admin/catalogs").get_json()["products"]
+    }
+    assert product_id not in external_ids
+
+
+def test_tag_category_must_belong_to_active_organization(app, seeded_data):
+    external_client = app.test_client()
+    _login(external_client, seeded_data["admin_b"])
+    external_category = external_client.post(
+        "/api/v1/admin/catalogs/tag-categories",
+        json={"name": "Categoria externa"},
+        headers=_csrf_headers(external_client),
+    )
+    assert external_category.status_code == 201
+    external_category_id = external_category.get_json()["id"]
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    headers = _csrf_headers(admin_client)
+    consolidated = admin_client.post(
+        "/api/v1/admin/catalogs/tags",
+        json={"name": "Tag bloqueada", "category_id": external_category_id},
+        headers=headers,
+    )
+    legacy = admin_client.post(
+        "/api/v1/tags",
+        json={"name": "Tag bloqueada", "category_id": external_category_id},
+        headers=headers,
+    )
+
+    assert consolidated.status_code == 404
+    assert legacy.status_code == 404
+
+
 def test_user_cannot_read_or_mark_another_users_notification(client, seeded_data):
     _login(client, seeded_data["seller_a"])
 

@@ -8,6 +8,7 @@
 - Validação administrativa de venda por Playwright.
 - Vault de documentação do projeto.
 - Relatório mensal de produção por vendedor e produto.
+- Manutenção administrativa de produtos, origens, tipos de cliente, seguradoras e tags.
 
 ### Alterado
 
@@ -20,6 +21,7 @@
 - Barreiras de autorização e isolamento multiempresa.
 - Estados pendentes, em revisão e cancelados impedidos de compor a apuração comercial.
 - Referências financeiras externas à organização rejeitadas ao registrar vendas.
+- Categoria externa rejeitada ao criar ou editar tags.
 
 ### Segurança
 
