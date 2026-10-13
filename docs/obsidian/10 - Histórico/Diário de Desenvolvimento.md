@@ -20,6 +20,10 @@
 
 - Relatório aprovado e RN-072 verificada.
 
+### Versionamento
+
+- PR #5: relatórios administrativos seguros.
+
 ### Próximos passos
 
 - Configurações administrativas restantes.
