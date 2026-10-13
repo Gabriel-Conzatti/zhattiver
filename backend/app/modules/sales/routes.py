@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from flask import Blueprint, g, jsonify, request
@@ -18,8 +18,6 @@ from . import services
 from .models import (
     STATE_CANCELLED,
     STATE_REGISTERED,
-    STATE_REVISION_PENDING,
-    STATE_VALIDATED,
     Sale,
     SaleRevision,
 )
@@ -120,7 +118,9 @@ def create_sale():
 
     seller = payload.seller_user_id or ctx.user_id
     if ctx.role != ROLE_ADMIN and seller != ctx.user_id:
-        raise BusinessError("forbidden", "Sem permissão para registrar em nome de outro", status=403)
+        raise BusinessError(
+            "forbidden", "Sem permissão para registrar em nome de outro", status=403
+        )
 
     sale = services.create_sale(
         organization_id=ctx.organization_id,
@@ -148,6 +148,8 @@ def create_sale():
 @login_required
 def list_sales():
     ctx = load_context()
+    if ctx.role == ROLE_SDR:
+        raise BusinessError("forbidden", "SDR não acessa vendas", status=403)
     scope = request.args.get("scope", "mine")
     state = request.args.get("state")
     stmt = select(Sale).where(Sale.organization_id == ctx.organization_id)
@@ -253,6 +255,8 @@ def cancel_sale(sale_id: str):
 
 
 def _load(sale_id: str, ctx) -> Sale:
+    if ctx.role == ROLE_SDR:
+        raise BusinessError("forbidden", "SDR não acessa vendas", status=403)
     sale = db.session.get(Sale, sale_id)
     if sale is None or sale.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Venda não encontrada", status=404)
