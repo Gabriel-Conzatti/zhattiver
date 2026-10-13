@@ -2,29 +2,23 @@ from __future__ import annotations
 
 import calendar as _calendar
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 
 from ...core.audit import record as audit_record
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
-from ..sales.models import (
-    CANCEL_AFTER_BONUS,
-    STATE_CANCELLED,
-    STATE_VALIDATED,
-    Sale,
-)
+from ..sales.models import STATE_VALIDATED, Sale
 from .models import (
     BONUS_KIND_FIXED,
     BONUS_KIND_PERCENT,
     METRIC_COUNT,
     METRIC_NET_PREMIUM,
     PAY_STATE_APPROVED,
-    PAY_STATE_CANCELLED,
     PAY_STATE_PAID,
     PAY_STATE_PREDICTED,
     BonusPayment,
@@ -59,45 +53,40 @@ def month_bounds(year: int, month: int) -> tuple[date, date]:
     return date(year, month, 1), date(year, month, last)
 
 
-def _validated_sales_query(*, organization_id: str, user_id: str, product_id: str, year: int, month: int):
-    start, end = month_bounds(year, month)
-    return (
-        select(Sale)
-        .where(
-            Sale.organization_id == organization_id,
-            Sale.seller_user_id == user_id,
-            Sale.product_id == product_id,
-            Sale.closed_on >= start,
-            Sale.closed_on <= end,
-            Sale.state == STATE_VALIDATED,
-        )
-    )
-
-
-def _eligible_sales(
-    *, organization_id: str, user_id: str, product_id: str, year: int, month: int,
-    include_bonus_paid_cancels: bool = False,
-) -> list[Sale]:
-    """RN-038/040/041/042: apenas validadas contam.
-
-    - Cancelamentos antes do pagamento saem imediatamente da produção considerada.
-    - Cancelamentos depois do pagamento preservam o pagamento histórico (não recalculam
-      o snapshot pago), mas apurações vivas passam a ignorar a venda.
-    """
+def eligible_sales_statement(
+    *,
+    organization_id: str,
+    year: int,
+    month: int,
+    user_id: str | None = None,
+    product_id: str | None = None,
+):
+    """RN-038: fonte única das vendas que compõem produção, metas e bônus."""
     start, end = month_bounds(year, month)
     stmt = select(Sale).where(
         Sale.organization_id == organization_id,
-        Sale.seller_user_id == user_id,
-        Sale.product_id == product_id,
         Sale.closed_on >= start,
         Sale.closed_on <= end,
+        Sale.state == STATE_VALIDATED,
     )
-    sales = db.session.execute(stmt).scalars().all()
-    result: list[Sale] = []
-    for s in sales:
-        if s.state == STATE_VALIDATED:
-            result.append(s)
-    return result
+    if user_id is not None:
+        stmt = stmt.where(Sale.seller_user_id == user_id)
+    if product_id is not None:
+        stmt = stmt.where(Sale.product_id == product_id)
+    return stmt
+
+
+def _eligible_sales(
+    *, organization_id: str, user_id: str, product_id: str, year: int, month: int
+) -> list[Sale]:
+    stmt = eligible_sales_statement(
+        organization_id=organization_id,
+        user_id=user_id,
+        product_id=product_id,
+        year=year,
+        month=month,
+    )
+    return list(db.session.execute(stmt).scalars().all())
 
 
 def _find_rule(
@@ -323,7 +312,9 @@ def mark_bonus_paid(
     return payment
 
 
-def bonus_paid_for_sale_month(*, organization_id: str, user_id: str, product_id: str, year: int, month: int) -> bool:
+def bonus_paid_for_sale_month(
+    *, organization_id: str, user_id: str, product_id: str, year: int, month: int
+) -> bool:
     """Verifica se o bônus daquele mês/produto/vendedor já foi pago — para RN-040/041."""
     stmt = select(BonusPayment).where(
         BonusPayment.organization_id == organization_id,
@@ -362,23 +353,33 @@ def get_monthly_goal(
 def month_sales_summary(
     *, organization_id: str, user_id: str, product_id: str | None, year: int, month: int
 ) -> dict[str, Decimal | int]:
-    start, end = month_bounds(year, month)
+    eligible = eligible_sales_statement(
+        organization_id=organization_id,
+        user_id=user_id,
+        product_id=product_id,
+        year=year,
+        month=month,
+    ).subquery()
     stmt = select(
-        func.count(Sale.id),
-        func.coalesce(func.sum(Sale.net_premium), Decimal("0")),
-        func.coalesce(func.sum(Sale.commission_amount), Decimal("0")),
-    ).where(
-        Sale.organization_id == organization_id,
-        Sale.seller_user_id == user_id,
-        Sale.closed_on >= start,
-        Sale.closed_on <= end,
-        Sale.state == STATE_VALIDATED,
+        func.count(eligible.c.id),
+        func.coalesce(func.sum(eligible.c.net_premium), Decimal("0")),
+        func.coalesce(func.sum(eligible.c.commission_amount), Decimal("0")),
     )
-    if product_id:
-        stmt = stmt.where(Sale.product_id == product_id)
     total_count, total_net, total_comm = db.session.execute(stmt).one()
     return {
         "count": int(total_count or 0),
         "net_premium": Decimal(total_net or 0),
         "commission_amount": Decimal(total_comm or 0),
     }
+
+
+def eligible_seller_product_pairs(
+    *, organization_id: str, year: int, month: int
+) -> list[tuple[str, str]]:
+    eligible = eligible_sales_statement(
+        organization_id=organization_id,
+        year=year,
+        month=month,
+    ).subquery()
+    stmt = select(eligible.c.seller_user_id, eligible.c.product_id).distinct()
+    return [(str(user_id), str(product_id)) for user_id, product_id in db.session.execute(stmt)]

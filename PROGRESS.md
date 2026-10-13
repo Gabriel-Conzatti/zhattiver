@@ -204,6 +204,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   desenvolvimento local.
 - A infraestrutura E2E foi validada localmente e na CI com PostgreSQL 16,
   Redis 7 e Chromium.
+- RN-038 verificada por teste de integração: somente vendas `validated` entram nos
+  totais de produção usados pelas metas, na apuração de bônus e na descoberta de
+  pares vendedor/produto. Vendas registradas, em revisão, canceladas ou de outro
+  tenant permanecem fora da apuração.
 
 ## Pendente (próximas etapas)
 
