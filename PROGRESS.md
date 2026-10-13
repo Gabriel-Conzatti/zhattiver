@@ -217,12 +217,15 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   seguradoras, categorias de tag e tags. Itens podem ser criados, renomeados, arquivados
   e restaurados sem apagar o histórico; categorias de tag são validadas contra o tenant
   ativo e todas as mutações geram auditoria.
+- Recuperação segura de senha disponível por email. A solicitação não revela contas,
+  o token aleatório é persistido somente como hash SHA-256, expira em 30 minutos,
+  aceita um único uso e invalida todas as sessões após a redefinição. Falhas de SMTP
+  não expõem email ou token nos logs.
 
 ## Pendente (próximas etapas)
 
-- Polimento de longo prazo (fora do escopo das oito etapas): UI para tags e demais catálogos,
-  dashboards de relatórios agregados, integração com WhatsApp Business Cloud API para envio
-  real de mensagens.
+- Polimento de longo prazo: UI administrativa de metas e faixas de bônus, dashboards
+  adicionais e integração com WhatsApp Business Cloud API para envio real de mensagens.
 - Executar `pytest`, `npm run test`, `npm run build`, `docker compose config` e `scripts/deploy.sh` na VPS real para transformar as marcações `🟨` em `✅`.
 
 ## Próximo passo

@@ -1,5 +1,31 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Recuperação segura de senha
+
+### Realizado
+
+- Solicitação pública com resposta não enumerável.
+- Token expirável de uso único persistido somente como hash.
+- Envio SMTP com URL pública configurada e intervalo anti-spam.
+- Redefinição com Argon2id e invalidação de todas as sessões.
+- Telas públicas integradas ao login do Funil Sustentare.
+
+### Testes executados
+
+- Ruff nos arquivos backend alterados e 67 testes pytest.
+- Typecheck, ESLint, 10 testes Vitest e build Vite.
+- Playwright com 11 de 11 cenários aprovados em base limpa.
+- Grafo Alembic com head único `4b7ac198d21e`.
+
+### Resultado
+
+- Recuperação de senha aprovada localmente.
+
+### Próximos passos
+
+- Configurar e validar o SMTP no domínio de homologação.
+- Homologar deploy e restauração de backup na VPS.
+
 ## 2026-10-13 - Catálogos administrativos
 
 ### Realizado

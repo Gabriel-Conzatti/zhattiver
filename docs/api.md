@@ -33,6 +33,13 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
 - `POST /auth/change-password` — body `{ current_password, new_password }`. Exige senha
   atual válida, nova senha com pelo menos 10 caracteres e CSRF. Retorna `204`, mantém a
   sessão atual e invalida as demais.
+- `POST /auth/forgot-password` — body `{ email }`. Sempre retorna `202` com a mesma
+  mensagem para contas existentes, inexistentes ou dentro do intervalo anti-spam. O link é
+  enviado somente para usuário ativo; o token bruto nunca é persistido.
+- `POST /auth/reset-password` — body `{ token, new_password }`. Consome um token válido
+  uma única vez, redefine a senha e invalida todas as sessões. Retorna `204`.
+  - `422 invalid_password_reset_token`: token inválido, expirado ou já utilizado.
+  - `422 password_unchanged`: a nova senha é igual à senha atual.
 - Requisições com versão de sessão antiga retornam `401 session_invalidated`.
 
 ## Convenções (a expandir nas próximas etapas)

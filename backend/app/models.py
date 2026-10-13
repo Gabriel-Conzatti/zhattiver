@@ -4,6 +4,7 @@ Adicione novos modelos aqui à medida que novos módulos forem criados.
 """
 
 from .modules.audit.models import AuditLog  # noqa: F401
+from .modules.auth.models import PasswordResetToken  # noqa: F401
 from .modules.bonus.models import BonusPayment, BonusRule, MonthlyGoal  # noqa: F401
 from .modules.calendar.models import Holiday  # noqa: F401
 from .modules.catalog.models import (  # noqa: F401
@@ -74,6 +75,7 @@ __all__ = [
     "Organization",
     "Origin",
     "PermissionGrant",
+    "PasswordResetToken",
     "Product",
     "Sale",
     "SaleRevision",

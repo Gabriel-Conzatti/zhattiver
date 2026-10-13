@@ -9,7 +9,12 @@ from .errors import api_error
 def init_session_security(app: Flask) -> None:
     @app.before_request
     def _enforce_session_version():
-        if request.endpoint in {"auth.login", "auth.logout"}:
+        if request.endpoint in {
+            "auth.login",
+            "auth.logout",
+            "auth.forgot_password",
+            "auth.reset_password",
+        }:
             return None
         if not current_user.is_authenticated:
             return None

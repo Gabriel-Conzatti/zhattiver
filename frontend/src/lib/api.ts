@@ -891,3 +891,16 @@ export const profile = {
       },
     }),
 };
+
+export const passwordRecovery = {
+  request: (email: string) =>
+    api<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+    }),
+  reset: (token: string, newPassword: string) =>
+    api<void>('/auth/reset-password', {
+      method: 'POST',
+      body: { token, new_password: newPassword },
+    }),
+};

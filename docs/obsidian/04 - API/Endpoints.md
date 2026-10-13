@@ -5,6 +5,15 @@ Inventário canônico: [api.md](../../api.md).
 Todas as rotas autenticadas derivam a organização da sessão; o cliente não
 fornece `organization_id`.
 
+## Recuperação de senha
+
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/reset-password`
+
+A solicitação sempre responde da mesma forma para não revelar contas. Tokens são
+aleatórios, armazenados somente como hash, expiram, aceitam um único uso e invalidam
+todas as sessões quando a senha é redefinida.
+
 ## Relatórios administrativos
 
 - `GET /api/v1/admin/reports/production`

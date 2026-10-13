@@ -77,6 +77,21 @@ Concessões individuais (RN-071, MP-005/006).
 
 Metadados de sessão (opaco). Corpo real fica em Redis via Flask-Session.
 
+### `password_reset_tokens`
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| id | UUID PK | |
+| organization_id | UUID FK | tenant do usuário |
+| user_id | UUID FK | conta destinatária |
+| token_hash | VARCHAR(64) UNIQUE | SHA-256; token bruto não é persistido |
+| expires_at | TIMESTAMPTZ | validade curta |
+| used_at | TIMESTAMPTZ NULL | preenchido no uso, substituição ou falha de envio |
+| created_at, updated_at | TIMESTAMPTZ | |
+
+Índice composto `(user_id, used_at, expires_at)` acelera cooldown, substituição e
+validação de tokens abertos.
+
 ## Calendário e configuração
 
 ### `holidays`

@@ -1,6 +1,13 @@
+from datetime import UTC, datetime, timedelta
+
 from app.core.auth import hash_password
 from app.extensions import db
 from app.modules.audit.models import AuditLog
+from app.modules.auth.models import PasswordResetToken
+from app.modules.auth.password_recovery import (
+    PasswordResetDeliveryError,
+    hash_reset_token,
+)
 from app.modules.orgs.models import Organization
 from app.modules.users.models import ROLE_ADMIN, ROLE_VENDEDOR, User
 
@@ -135,3 +142,200 @@ def test_admin_password_reset_invalidates_target_sessions(app):
     seller_client = app.test_client()
     assert _login(seller_client, "vendedor@example.com").status_code == 401
     assert _login(seller_client, "vendedor@example.com", "senha-redefinida").status_code == 200
+
+
+def test_password_recovery_does_not_disclose_accounts_and_stores_only_hash(
+    app, monkeypatch
+):
+    _seed_users(app)
+    delivered: list[str] = []
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        lambda user, token: delivered.append(token),
+    )
+    client = app.test_client()
+
+    existing = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+    missing = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "inexistente@example.com"},
+    )
+    repeated = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+
+    assert existing.status_code == missing.status_code == repeated.status_code == 202
+    assert existing.get_json() == missing.get_json() == repeated.get_json()
+    assert len(delivered) == 1
+    with app.app_context():
+        token = db.session.query(PasswordResetToken).one()
+        assert token.token_hash == hash_reset_token(delivered[0])
+        assert token.token_hash != delivered[0]
+        audit = db.session.query(AuditLog).filter_by(
+            action="password_reset_requested"
+        ).one()
+        assert delivered[0] not in str(audit.before)
+        assert delivered[0] not in str(audit.after)
+
+
+def test_password_recovery_is_single_use_and_invalidates_sessions(app, monkeypatch):
+    _seed_users(app)
+    delivered: list[str] = []
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        lambda user, token: delivered.append(token),
+    )
+    authenticated_client = app.test_client()
+    assert _login(authenticated_client, "vendedor@example.com").status_code == 200
+    recovery_client = app.test_client()
+    requested = recovery_client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+    assert requested.status_code == 202
+
+    changed = recovery_client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[0], "new_password": "senha-nova-segura"},
+    )
+    reused = recovery_client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[0], "new_password": "outra-senha-segura"},
+    )
+
+    assert changed.status_code == 204
+    assert reused.status_code == 422
+    assert reused.get_json()["error"]["code"] == "invalid_password_reset_token"
+    invalidated = authenticated_client.get("/api/v1/auth/me")
+    assert invalidated.status_code == 401
+    assert invalidated.get_json()["error"]["code"] == "session_invalidated"
+    fresh_client = app.test_client()
+    assert _login(fresh_client, "vendedor@example.com").status_code == 401
+    assert (
+        _login(fresh_client, "vendedor@example.com", "senha-nova-segura").status_code
+        == 200
+    )
+    with app.app_context():
+        token = db.session.query(PasswordResetToken).one()
+        assert token.used_at is not None
+        audit = db.session.query(AuditLog).filter_by(
+            action="password_reset_completed"
+        ).one()
+        assert audit.after == {"sessions_invalidated": True}
+
+
+def test_password_recovery_rejects_expired_token(app, monkeypatch):
+    _seed_users(app)
+    delivered: list[str] = []
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        lambda user, token: delivered.append(token),
+    )
+    client = app.test_client()
+    client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+    with app.app_context():
+        token = db.session.query(PasswordResetToken).one()
+        token.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+        db.session.commit()
+
+    response = client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[0], "new_password": "senha-nova-segura"},
+    )
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "invalid_password_reset_token"
+
+
+def test_password_recovery_does_not_issue_token_for_inactive_user(app, monkeypatch):
+    user_ids = _seed_users(app)
+    delivered: list[str] = []
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        lambda user, token: delivered.append(token),
+    )
+    with app.app_context():
+        user = db.session.get(User, user_ids["seller_id"])
+        user.is_active = False
+        db.session.commit()
+
+    response = app.test_client().post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+
+    assert response.status_code == 202
+    assert delivered == []
+    with app.app_context():
+        assert db.session.query(PasswordResetToken).count() == 0
+
+
+def test_password_recovery_invalidates_token_after_delivery_failure(
+    app, monkeypatch, caplog
+):
+    _seed_users(app)
+    delivered: list[str] = []
+
+    def fail_delivery(user, token):
+        delivered.append(token)
+        raise PasswordResetDeliveryError("Falha simulada")
+
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        fail_delivery,
+    )
+    client = app.test_client()
+
+    response = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "vendedor@example.com"},
+    )
+
+    assert response.status_code == 202
+    assert delivered[0] not in caplog.text
+    assert "vendedor@example.com" not in caplog.text
+    with app.app_context():
+        assert db.session.query(PasswordResetToken).one().used_at is not None
+    rejected = client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[0], "new_password": "senha-nova-segura"},
+    )
+    assert rejected.status_code == 422
+
+
+def test_new_password_recovery_request_invalidates_previous_token(
+    app, monkeypatch
+):
+    _seed_users(app)
+    app.config["LYNK_PASSWORD_RESET_COOLDOWN_SECONDS"] = 0
+    delivered: list[str] = []
+    monkeypatch.setattr(
+        "app.modules.auth.routes.send_password_reset_email",
+        lambda user, token: delivered.append(token),
+    )
+    client = app.test_client()
+    for _ in range(2):
+        response = client.post(
+            "/api/v1/auth/forgot-password",
+            json={"email": "vendedor@example.com"},
+        )
+        assert response.status_code == 202
+
+    assert len(delivered) == 2
+    previous = client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[0], "new_password": "senha-nova-segura"},
+    )
+    current = client.post(
+        "/api/v1/auth/reset-password",
+        json={"token": delivered[1], "new_password": "senha-nova-segura"},
+    )
+    assert previous.status_code == 422
+    assert current.status_code == 204
