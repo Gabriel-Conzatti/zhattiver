@@ -34,10 +34,10 @@ export function AdminLayout() {
       <aside className="border-r border-border bg-surface/80 p-4">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-            L
+            F
           </div>
           <div>
-            <div className="text-sm font-semibold">Lynk</div>
+            <div className="text-sm font-semibold">Funil Sustentare</div>
             <div className="text-xs text-text-secondary">Admin</div>
           </div>
         </div>

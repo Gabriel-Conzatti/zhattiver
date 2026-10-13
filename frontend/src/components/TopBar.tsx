@@ -10,9 +10,11 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
     <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-border bg-base/80 px-4 py-3 backdrop-blur">
       <div className="flex items-center gap-2 pr-2">
         <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-          L
+          F
         </div>
-        <span className="text-sm font-semibold tracking-wide text-text-primary">Lynk</span>
+        <span className="text-sm font-semibold tracking-wide text-text-primary">
+          Funil Sustentare
+        </span>
       </div>
       <div className="flex-1">{children}</div>
       <label className="relative hidden md:block w-72">

@@ -1,4 +1,4 @@
-# Instruções permanentes do projeto Lynk
+# Instruções permanentes do projeto Funil Sustentare
 
 Use as regras abaixo como base para qualquer edição neste repositório. Consulte também:
 

@@ -49,10 +49,10 @@ export function LoginPage() {
       <div className="w-full max-w-md card-strong p-8">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-            L
+            F
           </div>
           <div>
-            <h1 className="text-xl font-semibold">Lynk</h1>
+            <h1 className="text-xl font-semibold">Funil Sustentare</h1>
             <p className="text-sm text-text-secondary">Gestão de prospecção e novos negócios</p>
           </div>
         </div>
