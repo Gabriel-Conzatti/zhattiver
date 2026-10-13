@@ -5,13 +5,13 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import select
 
 from ...core.audit import record as audit_record
-from ...core.auth import verify_password
+from ...core.auth import hash_password, verify_password
 from ...core.errors import api_error
 from ...core.login_rate_limit import LoginRateLimiter
 from ...core.time import now_utc
 from ...extensions import db
 from ..users.models import PermissionGrant, User
-from .schemas import LoginRequest, UserPublic
+from .schemas import LoginRequest, PasswordChangeRequest, ProfileUpdateRequest, UserPublic
 
 bp = Blueprint("auth", __name__)
 
@@ -41,6 +41,7 @@ def login():
     limiter.clear_account_failures(email=payload.email)
     login_user(user, remember=False, fresh=True)
     session.permanent = True
+    session["auth_version"] = user.session_version
     user.last_login_at = now_utc()
     audit_record(
         organization_id=str(user.organization_id),
@@ -85,6 +86,57 @@ def logout():
 @login_required
 def me():
     return jsonify(_serialize_user(current_user).model_dump())
+
+
+@bp.patch("/profile")
+@login_required
+def update_profile():
+    payload = ProfileUpdateRequest.model_validate(request.get_json(silent=True) or {})
+    name = payload.name.strip()
+    if not name:
+        return api_error("invalid_name", "Nome inválido", status=422)
+    before = {"name": current_user.name}
+    current_user.name = name
+    audit_record(
+        organization_id=str(current_user.organization_id),
+        actor_user_id=str(current_user.id),
+        entity_type="user",
+        entity_id=str(current_user.id),
+        action="profile_update",
+        before=before,
+        after={"name": name},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify(_serialize_user(current_user).model_dump())
+
+
+@bp.post("/change-password")
+@login_required
+def change_password():
+    payload = PasswordChangeRequest.model_validate(request.get_json(silent=True) or {})
+    if not verify_password(current_user.password_hash, payload.current_password):
+        return api_error("invalid_current_password", "Senha atual inválida", status=422)
+    if verify_password(current_user.password_hash, payload.new_password):
+        return api_error(
+            "password_unchanged",
+            "A nova senha deve ser diferente da senha atual",
+            status=422,
+        )
+    current_user.password_hash = hash_password(payload.new_password)
+    current_user.session_version += 1
+    audit_record(
+        organization_id=str(current_user.organization_id),
+        actor_user_id=str(current_user.id),
+        entity_type="user",
+        entity_id=str(current_user.id),
+        action="password_change",
+        after={"sessions_invalidated": True},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    session["auth_version"] = current_user.session_version
+    return ("", 204)
 
 
 def _serialize_user(user: User) -> UserPublic:

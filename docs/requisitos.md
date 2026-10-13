@@ -133,15 +133,15 @@ Estados:
 
 ### Vendedor
 
-- Dashboard, Prospecção, Agendamentos, Funil, Perfil (via avatar) — imagens 1 a 4.
+- Dashboard, Prospecção, Agendamentos, Funil, Perfil (via avatar) — perfil e troca de senha verificados.
 
 ### SDR
 
-- Dashboard, Prospecção, Agendamentos, Importações, Perfil.
+- Dashboard, Prospecção, Agendamentos, Importações, Perfil — perfil e troca de senha verificados.
 
 ### Administrador
 
-- Dashboard, Comercial (Prospecção/Agendamentos/Funil/Cross-Sell), Gestão (Produção/Metas/Bônus/Equipe/Ausências), Relatórios, Configurações, Auditoria.
+- Dashboard, Comercial (Prospecção/Agendamentos/Funil/Cross-Sell), Gestão (Produção/Metas/Bônus/Equipe/Ausências), Relatórios, Configurações, Auditoria e Perfil.
 
 ## Critérios de aceite mínimos
 

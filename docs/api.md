@@ -28,6 +28,12 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
     autenticação falha fechada, sem ignorar o controle.
 - `POST /auth/logout` — invalida sessão. `204`.
 - `GET /auth/me` — retorna usuário logado com perfil, permissões e produtos autorizados. `401` se anônimo.
+- `PATCH /auth/profile` — altera somente o nome do próprio usuário. Retorna o usuário
+  atualizado. Exige CSRF.
+- `POST /auth/change-password` — body `{ current_password, new_password }`. Exige senha
+  atual válida, nova senha com pelo menos 10 caracteres e CSRF. Retorna `204`, mantém a
+  sessão atual e invalida as demais.
+- Requisições com versão de sessão antiga retornam `401 session_invalidated`.
 
 ## Convenções (a expandir nas próximas etapas)
 

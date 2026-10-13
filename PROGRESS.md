@@ -150,7 +150,7 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Verificado
 
-- Backend: `pytest` executado em `backend/` — 47 testes aprovados.
+- Backend: `pytest` executado em `backend/` — 51 testes aprovados.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
@@ -176,6 +176,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - Login protegido por rate limiting distribuído no Redis, com limites independentes por
   conta e IP, chaves HMAC sem PII em claro, `Retry-After` em bloqueios e falha fechada
   quando o Redis estiver indisponível. Testes cobrem bloqueio, limpeza após sucesso e `503`.
+- Perfil disponível para vendedor, SDR e administrador, com nome editável e troca de senha
+  protegida pela senha atual. A versão de sessão invalida acessos antigos após troca/reset,
+  sem registrar senha ou hash na auditoria. Testes usam duas sessões simultâneas.
 - CI do backend provisiona PostgreSQL 16, valida a migração inicial e executa os testes
   HTTP com `TEST_DATABASE_URL`; fora da CI, a fixture mantém fallback SQLite para
   desenvolvimento local.

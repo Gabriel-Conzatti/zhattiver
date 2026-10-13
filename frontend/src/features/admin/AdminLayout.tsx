@@ -1,5 +1,5 @@
-import { LogOut, Settings } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { LogOut, Settings, User } from 'lucide-react';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 
 import { useAuth } from '@/app/AuthProvider';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -70,7 +70,8 @@ export function AdminLayout() {
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4 text-xs text-text-secondary">
           <span title={user?.email}>{user?.name}</span>
           <div className="flex gap-2">
-            <button type="button" aria-label="Configurações"><Settings className="h-4 w-4" /></button>
+            <Link to="/admin/perfil" aria-label="Perfil"><User className="h-4 w-4" /></Link>
+            <Link to="/admin/configuracoes" aria-label="Configurações"><Settings className="h-4 w-4" /></Link>
             <button type="button" onClick={() => void logout()} aria-label="Sair"><LogOut className="h-4 w-4" /></button>
           </div>
         </div>

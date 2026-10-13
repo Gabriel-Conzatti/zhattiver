@@ -1,4 +1,5 @@
 import { api } from './http';
+import type { CurrentUser } from './types';
 
 export interface CatalogItem {
   id: string;
@@ -788,4 +789,20 @@ export const notifications = {
   read: (id: string) =>
     api<NotificationRow>(`/notifications/${id}/read`, { method: 'POST', body: {} }),
   readAll: () => api<void>('/notifications/read-all', { method: 'POST', body: {} }),
+};
+
+export const profile = {
+  update: (name: string) =>
+    api<CurrentUser>('/auth/profile', {
+      method: 'PATCH',
+      body: { name },
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<void>('/auth/change-password', {
+      method: 'POST',
+      body: {
+        current_password: currentPassword,
+        new_password: newPassword,
+      },
+    }),
 };
