@@ -168,6 +168,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - A CI do PR #1 confirmou os mesmos fluxos com PostgreSQL 16, Redis 7 e Chromium.
 - O seed E2E também prepara uma venda pendente determinística; o fluxo administrativo
   valida a venda e confirma sua passagem para a produção oficial.
+- A identidade visível do produto foi atualizada para **Funil Sustentare** no login,
+  navegação, administração, título do navegador e favicon. Identificadores técnicos
+  legados (`LYNK_*`, comando `flask lynk`) foram preservados por compatibilidade operacional.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
