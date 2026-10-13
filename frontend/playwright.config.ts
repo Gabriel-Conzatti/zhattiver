@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.LYNK_E2E_BASE_URL ?? 'http://localhost:5173';
+const browserChannel = process.env.LYNK_E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './e2e',
@@ -16,6 +17,7 @@ export default defineConfig({
     video: 'off',
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
+    ...(browserChannel ? { channel: browserChannel } : {}),
   },
   projects: [
     {

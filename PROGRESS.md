@@ -145,12 +145,26 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   - `e2e/login.spec.ts` — login admin, logout, credenciais inválidas.
   - `e2e/sdr-flow.spec.ts` — cadastro + disponibilização + duplicidade por telefone.
   - `e2e/vendedor-flow.spec.ts` — "Copiar mensagem" registra atividade + presença das metas do dia.
+  - `flask lynk seed-e2e` cria organização e usuários isolados por
+    `LYNK_E2E_RUN_ID`, catálogos e disponibilidade inicial; o comando é bloqueado
+    em produção e exige senha de teste explícita.
+  - Os specs usam dados derivados do identificador da execução e não dependem de
+    relógio nem da ordem entre arquivos.
+  - A reprodução local dos sete cenários encontrou e corrigiu: rótulos sem
+    associação acessível no formulário SDR, seleção incorreta da etapa inicial,
+    corrida na criação da oportunidade e efeito duplicado do modal em React
+    Strict Mode.
 - Backend adiciona teste de smoke `test_health.py` cobrindo `/api/v1/health` sem exigir Postgres.
-- CI: `.github/workflows/ci.yml` roda `pytest`, `npm typecheck`, `npm build`, `npm test` e valida `docker compose config` em prod e dev.
+- CI: `.github/workflows/ci.yml` roda `pytest`, `npm typecheck`, `npm build`,
+  `npm test`, valida `docker compose config` em prod/dev e possui job E2E com
+  PostgreSQL 16, Redis 7, migrations, seed isolado e Chromium.
 
 ## Verificado
 
-- Backend: `pytest` executado em `backend/` — 51 testes aprovados.
+- Backend: `pytest` executado em `backend/` — 53 testes aprovados.
+- Playwright: sete cenários aprovados em execução local isolada (login/logout,
+  credencial inválida, cadastro/disponibilização/duplicidade SDR, cópia de
+  mensagem e metas do vendedor).
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
@@ -182,8 +196,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - CI do backend provisiona PostgreSQL 16, valida a migração inicial e executa os testes
   HTTP com `TEST_DATABASE_URL`; fora da CI, a fixture mantém fallback SQLite para
   desenvolvimento local.
-- Validação com PostgreSQL/Redis continua pendente: o Docker Desktop não estava
-  disponível neste ambiente.
+- A infraestrutura E2E foi validada localmente até o limite disponível (seed,
+  typecheck, lint, testes e build). A execução integrada com PostgreSQL/Redis
+  reais continua pendente da primeira execução remota da CI porque o Docker
+  Desktop não estava disponível neste ambiente.
 
 ## Pendente (próximas etapas)
 
@@ -194,11 +210,12 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Próximo passo
 
-1. Provisione a VPS (Ubuntu 22.04+, Docker + Compose v2, DNS apontado).
-2. Clone o repositório em `/opt/lynk/app` e siga `docs/checklist-producao.md`.
-3. Após o boot, rode `scripts/healthcheck.sh` e execute `npm run test:e2e` a partir de uma máquina cliente com `LYNK_E2E_BASE_URL` apontando para o domínio.
-4. Configure `cron` diário para `scripts/backup.sh` e verifique restauração em ambiente separado (`docs/backup-restore.md`).
-5. Marque os itens `🟨` de `docs/requisitos.md` como `✅` conforme cada fluxo for confirmado em produção.
+1. Abra um pull request e confirme o novo job E2E com PostgreSQL 16, Redis 7 e Chromium.
+2. Provisione a VPS (Ubuntu 22.04+, Docker + Compose v2, DNS apontado).
+3. Clone o repositório em `/opt/lynk/app` e siga `docs/checklist-producao.md`.
+4. Após o boot, rode `scripts/healthcheck.sh` e execute `npm run test:e2e` a partir de uma máquina cliente com `LYNK_E2E_BASE_URL` apontando para o domínio.
+5. Configure `cron` diário para `scripts/backup.sh` e verifique restauração em ambiente separado (`docs/backup-restore.md`).
+6. Marque os itens `🟨` de `docs/requisitos.md` como `✅` conforme cada fluxo for confirmado em produção.
 
 ## Limitações declaradas
 
