@@ -64,6 +64,15 @@ npm run dev
 
 ## Testes
 
+Da raiz do repositório no Windows, execute toda a validação local:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+Use `.\scripts\verify.ps1 -SkipFrontend` ou `-SkipCompose` para executar apenas a
+parte necessária durante o desenvolvimento.
+
 Backend:
 
 ```powershell

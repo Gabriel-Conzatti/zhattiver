@@ -157,6 +157,8 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   de bônus é isolada por organização; mutações autenticadas sem CSRF recebem `403` e, com
   token válido, são aceitas.
 - Lint dos arquivos backend alterados aprovado com `ruff check`.
+- Verificador local único: `scripts/verify.ps1` executado com sucesso — pytest backend,
+  typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.
 - Validação com PostgreSQL/Redis continua pendente: o Docker Desktop não estava
   disponível neste ambiente.
 
