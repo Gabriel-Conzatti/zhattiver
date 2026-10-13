@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import re
+from datetime import timedelta
+from decimal import Decimal
 from getpass import getpass
 
 import click
@@ -16,6 +18,7 @@ from ..modules.funnel.models import Funnel, FunnelStage
 from ..modules.leads.models import Availability, Lead, LeadPhone
 from ..modules.opportunities.models import LossReason, NextActionType
 from ..modules.orgs.models import Organization
+from ..modules.sales.models import STATE_REGISTERED, Sale
 from ..modules.users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, User
 
 DEFAULT_ORIGINS = ["Placas", "Indicação", "Renovação", "Prospecção", "Cliente ativo", "Novo"]
@@ -207,6 +210,47 @@ def register(app: Flask) -> None:
                     product_id=product.id,
                     released_by=users[ROLE_SDR].id,
                     released_at=now_utc(),
+                )
+            )
+
+        sale_marker = f"E2E:{run_id}:pending"
+        pending_sale = db.session.execute(
+            select(Sale).where(
+                Sale.organization_id == org.id,
+                Sale.notes == sale_marker,
+            )
+        ).scalar_one_or_none()
+        if pending_sale is None:
+            insurer = db.session.execute(
+                select(Insurer)
+                .where(Insurer.organization_id == org.id)
+                .order_by(Insurer.name)
+            ).scalars().first()
+            client_type = db.session.execute(
+                select(ClientType)
+                .where(ClientType.organization_id == org.id)
+                .order_by(ClientType.name)
+            ).scalars().first()
+            if insurer is None or client_type is None:
+                raise click.ClickException("Catálogos E2E obrigatórios não foram criados")
+            registered_at = now_utc()
+            db.session.add(
+                Sale(
+                    organization_id=org.id,
+                    lead_id=seller_lead.id,
+                    product_id=product.id,
+                    seller_user_id=users[ROLE_VENDEDOR].id,
+                    insurer_id=insurer.id,
+                    client_type_id=client_type.id,
+                    net_premium=Decimal("2000.00"),
+                    commission_pct=Decimal("0.1500"),
+                    commission_amount=Decimal("300.00"),
+                    closed_on=registered_at.date(),
+                    origin="e2e",
+                    notes=sale_marker,
+                    registered_at=registered_at,
+                    edit_deadline_at=registered_at + timedelta(days=2),
+                    state=STATE_REGISTERED,
                 )
             )
 
