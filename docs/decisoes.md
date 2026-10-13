@@ -7,7 +7,7 @@ Cada linha registra: **requisito** (documento) → **decisão técnica** → **h
 | Tema | Decisão | Justificativa |
 |---|---|---|
 | Stack backend | Flask 3 + SQLAlchemy 2 + Alembic + Pydantic v2 + Flask-Login + Flask-Session (Redis) + Celery 5 + Gunicorn | Exigido pelo prompt (seção 3). |
-| Stack frontend | React 18 + TS 5 + Vite 5 + Tailwind 3 + React Router 6 + TanStack Query 5 + React Hook Form 7 + Zod 3 + Lucide React | Exigido pelo prompt (seção 3). |
+| Stack frontend | React 18 + TS 5 + Vite 6 + Tailwind 4 + React Router + TanStack Query 5 + React Hook Form 7 + Zod 3 + Lucide React | Vite, Vitest e Tailwind foram elevados às primeiras versões sem os CVEs conhecidos encontrados em 2026-10-13; a arquitetura exigida foi preservada. |
 | Multi-tenant | Coluna `organization_id` em todas as tabelas de negócio, derivada da sessão; nunca aceita do cliente | Prompt seção 5. |
 | Dinheiro | `NUMERIC(14, 2)` no banco, `Decimal` em Python, número em string na API | Evita perda de precisão. |
 | Fuso | Instantes em UTC (`TIMESTAMPTZ`), regras comerciais e apresentação em `America/Sao_Paulo` | Prompt seção 5. |

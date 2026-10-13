@@ -150,7 +150,7 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Verificado
 
-- Backend: `pytest` executado em `backend/` — 41 testes aprovados.
+- Backend: `pytest` executado em `backend/` — 43 testes aprovados.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
@@ -160,12 +160,19 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   paginação, ordenação determinística e isolamento por organização. A tela **Auditoria**
   permite ao administrador consultar e filtrar os registros sem alterá-los. A suíte de
   autorização cobre acesso exclusivo de administrador e evita exposição entre organizações.
+- Configurações administrativas agora mantêm funis, etapas, ordem, etapa inicial/final,
+  mensagens, motivos de perda e tipos de próxima ação. As mutações validam o tenant,
+  preservam histórico por arquivamento/desativação e geram auditoria. A tela
+  **Configurações** cobre carregamento, vazio, erro, sucesso e indisponibilidade.
 - Serviços administrativos validam que origem/destino de transferências e usuário substituído
   em concessões pertençam à organização ativa. Agendamentos também validam lead, produto,
   responsável e origem antes da gravação.
 - Lint dos arquivos backend alterados aprovado com `ruff check`.
 - Verificador local único: `scripts/verify.ps1` executado com sucesso — pytest backend,
   typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.
+- Barreira de lint frontend restaurada com configuração flat do ESLint 9. Vite 6.4.3,
+  Vitest 4.1.11 e Tailwind CSS 4.3.3 substituem versões com CVEs conhecidos; os scans
+  finais do `appmod-cve-assessment` e `npm audit` não encontraram vulnerabilidades.
 - CI do backend provisiona PostgreSQL 16, valida a migração inicial e executa os testes
   HTTP com `TEST_DATABASE_URL`; fora da CI, a fixture mantém fallback SQLite para
   desenvolvimento local.
@@ -174,7 +181,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Pendente (próximas etapas)
 
-- Polimento de longo prazo (fora do escopo das oito etapas): UI para CRUD de funis/motivos/tags, rate limiting em `/auth/login`, dashboards de relatórios agregados, integração com WhatsApp Business Cloud API para envio real de mensagens.
+- Polimento de longo prazo (fora do escopo das oito etapas): UI para tags e demais catálogos,
+  rate limiting em `/auth/login`, dashboards de relatórios agregados, integração com WhatsApp
+  Business Cloud API para envio real de mensagens.
 - Executar `pytest`, `npm run test`, `npm run build`, `docker compose config` e `scripts/deploy.sh` na VPS real para transformar as marcações `🟨` em `✅`.
 
 ## Próximo passo
@@ -187,7 +196,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Limitações declaradas
 
-- CRUD de produtos, funis, motivos e tipos ainda usa apenas o seed inicial do CLI (a UI cobre usuários, ausências, concessões, cross-sell). Endpoints administrativos existem para funil/tags/motivos/bonus-rules; UI dedicada para esses cadastros é polimento para a Etapa 8.
+- CRUD de produtos, tags, seguradoras, origens, tipos de cliente, metas e faixas de bônus
+  ainda não possui uma interface administrativa completa. Funis, etapas, mensagens, motivos
+  de perda e tipos de próxima ação já podem ser mantidos na tela **Configurações**.
 - Job de follow-ups é diário (6h local) — no primeiro deploy execute manualmente para popular as ações do dia:
   `docker compose exec worker celery -A app.jobs.celery_app call app.jobs.tasks.generate_daily_followups`.
 - PDFs e imagens de referência não foram copiados para `docs/referencias/`.

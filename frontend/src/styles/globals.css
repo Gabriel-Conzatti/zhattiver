@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
 
 @layer base {
   :root {
@@ -42,13 +41,19 @@
            disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-gradient-to-r from-brand-cyan to-brand-blue text-black hover:shadow-glow;
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-gradient-to-r
+           from-brand-cyan to-brand-blue px-4 py-2 font-medium text-black transition
+           hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-orange {
-    @apply btn bg-brand-orange text-black hover:brightness-110;
+    @apply inline-flex items-center justify-center gap-2 rounded-pill bg-brand-orange px-4 py-2
+           font-medium text-black transition hover:brightness-110 disabled:cursor-not-allowed
+           disabled:opacity-50;
   }
   .btn-ghost {
-    @apply btn border border-border bg-transparent text-text-primary hover:bg-surface-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-pill border border-border
+           bg-transparent px-4 py-2 font-medium text-text-primary transition hover:bg-surface-2
+           disabled:cursor-not-allowed disabled:opacity-50;
   }
   .input {
     @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-text-primary
