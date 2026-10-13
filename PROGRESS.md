@@ -156,6 +156,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
   de bônus é isolada por organização; mutações autenticadas sem CSRF recebem `403` e, com
   token válido, são aceitas.
+- Serviços administrativos validam que origem/destino de transferências e usuário substituído
+  em concessões pertençam à organização ativa. Agendamentos também validam lead, produto,
+  responsável e origem antes da gravação.
 - Lint dos arquivos backend alterados aprovado com `ruff check`.
 - Verificador local único: `scripts/verify.ps1` executado com sucesso — pytest backend,
   typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.

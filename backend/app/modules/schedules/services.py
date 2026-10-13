@@ -8,6 +8,9 @@ from ...core.audit import record as audit_record
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
+from ..catalog.models import Origin
+from ..leads.models import Lead
+from ..users.models import Product, User
 from .models import STATE_CANCELLED, STATE_RESOLVED, STATE_SCHEDULED, Schedule
 
 
@@ -27,6 +30,21 @@ def create_schedule(
 ) -> Schedule:
     if coverage_end_date is None:
         raise BusinessError("missing_date", "Data final da vigência é obrigatória", status=422)
+    lead = db.session.get(Lead, lead_id)
+    if lead is None or lead.organization_id != organization_id:
+        raise BusinessError("not_found", "Lead não encontrado", status=404)
+    product = db.session.get(Product, product_id)
+    if product is None or product.organization_id != organization_id:
+        raise BusinessError("not_found", "Produto não encontrado", status=404)
+    if owner_user_id:
+        owner = db.session.get(User, owner_user_id)
+        if owner is None or owner.organization_id != organization_id:
+            raise BusinessError("not_found", "Responsável não encontrado", status=404)
+    if origin_id:
+        origin = db.session.get(Origin, origin_id)
+        if origin is None or origin.organization_id != organization_id:
+            raise BusinessError("not_found", "Origem não encontrada", status=404)
+
     schedule = Schedule(
         organization_id=organization_id,
         lead_id=lead_id,

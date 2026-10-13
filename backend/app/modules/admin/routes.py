@@ -233,6 +233,10 @@ def create_grant():
     user = db.session.get(User, payload.user_id)
     if user is None or user.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Usuário não encontrado", status=404)
+    if payload.target_user_id:
+        target_user = db.session.get(User, payload.target_user_id)
+        if target_user is None or target_user.organization_id != ctx.organization_id:
+            raise BusinessError("not_found", "Usuário substituído não encontrado", status=404)
     if payload.permission.startswith("bonus.view_others"):
         raise BusinessError(
             "forbidden",

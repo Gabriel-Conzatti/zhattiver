@@ -104,6 +104,15 @@ def transfer_workload(
     """
     if from_user_id == to_user_id:
         raise BusinessError("same_user", "Origem e destino são iguais", status=422)
+
+    source_user = db.session.get(User, from_user_id)
+    if source_user is None or source_user.organization_id != organization_id:
+        raise BusinessError("not_found", "Usuário de origem não encontrado", status=404)
+
+    target_user = db.session.get(User, to_user_id)
+    if target_user is None or target_user.organization_id != organization_id:
+        raise BusinessError("not_found", "Usuário de destino não encontrado", status=404)
+
     result = TransferResult(schedules=0, next_actions=0, opportunities=0)
 
     if include_schedules:

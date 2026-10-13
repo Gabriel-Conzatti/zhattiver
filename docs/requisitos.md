@@ -153,7 +153,8 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
   nem detalha vendas ou oportunidades, vendedor não acessa venda de outro vendedor,
   valores de comissão não aparecem na listagem do vendedor, bônus próprio sem concessão
   não expõe valor, listagem administrativa de bônus é isolada por organização e outra
-  organização recebe `404` ao buscar venda.
+  organização recebe `404` ao buscar venda. Transferências, concessões e criação de
+  agendamentos rejeitam IDs de outra organização.
 - A cobertura ainda não valida todos os caminhos financeiros, incluindo relatórios,
   bônus, notificações e cache de cliente. RN-072 permanece pendente de verificação
   completa antes de receber o estado `✅`.

@@ -157,6 +157,8 @@ def create_lead():
 @login_required
 def get_lead(lead_id: str):
     ctx = load_context()
+    if ctx.role not in (ROLE_ADMIN, ROLE_SDR):
+        raise BusinessError("forbidden", "Perfil sem acesso a leads", status=403)
     lead = _load_org_lead(lead_id, ctx.organization_id)
     return jsonify(_full_response(lead.id))
 
