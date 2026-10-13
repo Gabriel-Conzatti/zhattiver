@@ -21,6 +21,7 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
       { to: '/admin/equipe', label: 'Equipe' },
       { to: '/admin/ausencias', label: 'Ausências' },
       { to: '/admin/concessoes', label: 'Concessões' },
+      { to: '/admin/auditoria', label: 'Auditoria' },
     ],
   },
 ];

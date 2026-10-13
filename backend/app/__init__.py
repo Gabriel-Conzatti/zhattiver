@@ -64,6 +64,7 @@ def _init_extensions(app: Flask) -> None:
 
 
 def _register_blueprints(app: Flask) -> None:
+    from .modules.audit.routes import bp as audit_bp
     from .modules.admin.routes import bp as admin_bp
     from .modules.auth.routes import bp as auth_bp
     from .modules.bonus.routes import bp as bonus_bp
@@ -79,6 +80,7 @@ def _register_blueprints(app: Flask) -> None:
     from .modules.schedules.routes import bp as schedules_bp
 
     app.register_blueprint(health_bp, url_prefix="/api/v1")
+    app.register_blueprint(audit_bp, url_prefix="/api/v1")
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(catalog_bp, url_prefix="/api/v1")
     app.register_blueprint(leads_bp, url_prefix="/api/v1")

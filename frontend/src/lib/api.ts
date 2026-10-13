@@ -536,6 +536,25 @@ export interface AdminUser {
   product_ids: string[];
 }
 
+export interface AuditLogEntry {
+  id: number;
+  actor_user_id: string | null;
+  entity_type: string;
+  entity_id: string | null;
+  action: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  reason: string | null;
+  occurred_at: string;
+}
+
+export interface AuditLogListResponse {
+  items: AuditLogEntry[];
+  page: number;
+  per_page: number;
+  total: number;
+}
+
 export const admin = {
   dashboard: () =>
     api<{
@@ -614,6 +633,23 @@ export const admin = {
       '/admin/transfers',
       { method: 'POST', body: input },
     ),
+  audit: (
+    params: {
+      page?: number;
+      per_page?: number;
+      actor_user_id?: string;
+      entity_type?: string;
+      entity_id?: string;
+      action?: string;
+    } = {},
+  ) => {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== '') qs.set(key, String(value));
+    }
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return api<AuditLogListResponse>(`/audit${suffix}`);
+  },
   crossSell: {
     list: () =>
       api<{

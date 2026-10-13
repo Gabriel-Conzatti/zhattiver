@@ -34,6 +34,17 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
 - IDs sempre em UUID string.
 - Nenhum endpoint aceita `organization_id` — o backend deriva da sessão.
 
+## Auditoria
+
+- `GET /audit` — lista os registros de auditoria da organização da sessão. Exclusivo para
+  administradores (`403` para os demais perfis). Não aceita `organization_id`.
+  - Filtros opcionais exatos: `actor_user_id`, `entity_type`, `entity_id`, `action`.
+  - Paginação: `page` (padrão `1`) e `per_page` (padrão `25`, máximo `200`).
+  - A resposta contém `{ items, page, per_page, total }`. Os itens são ordenados por
+    `occurred_at` decrescente e, em empate, por `id` decrescente.
+  - Cada item inclui o ator, entidade, ação, valores anteriores/novos permitidos, motivo e
+    instante UTC.
+
 ## Endpoints planejados (etapas seguintes)
 
 - `POST /orgs/bootstrap` (setup inicial via CLI, não pela API pública).
@@ -45,6 +56,5 @@ Autenticação por cookie de sessão (`HttpOnly`, `SameSite=Lax`, `Secure` em pr
 - `GET /goals`, `GET /bonus/current`, `POST /admin/bonus/{id}/pay`.
 - `GET /cross-sell/lists`, `POST /cross-sell/lists/{id}/release`.
 - `GET /reports/*` — apenas admin.
-- `GET /audit` — apenas admin.
 
 Cada endpoint terá documentação detalhada (parâmetros, corpo, códigos) quando o módulo correspondente for implementado.

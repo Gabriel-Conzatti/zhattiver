@@ -150,12 +150,16 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Verificado
 
-- Backend: `pytest` executado em `backend/` — 29 testes aprovados.
+- Backend: `pytest` executado em `backend/` — 41 testes aprovados.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
   de bônus é isolada por organização; mutações autenticadas sem CSRF recebem `403` e, com
   token válido, são aceitas.
+- Auditoria administrativa disponível em `GET /api/v1/audit`, com filtros exatos,
+  paginação, ordenação determinística e isolamento por organização. A tela **Auditoria**
+  permite ao administrador consultar e filtrar os registros sem alterá-los. A suíte de
+  autorização cobre acesso exclusivo de administrador e evita exposição entre organizações.
 - Serviços administrativos validam que origem/destino de transferências e usuário substituído
   em concessões pertençam à organização ativa. Agendamentos também validam lead, produto,
   responsável e origem antes da gravação.

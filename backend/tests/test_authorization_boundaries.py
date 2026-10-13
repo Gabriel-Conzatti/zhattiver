@@ -5,6 +5,7 @@ import pytest
 
 from app.core.auth import hash_password
 from app.extensions import db
+from app.modules.audit.models import AuditLog
 from app.modules.bonus.models import METRIC_NET_PREMIUM, BonusPayment
 from app.modules.catalog.models import ClientType, Insurer, Origin
 from app.modules.leads.models import Lead
@@ -143,7 +144,23 @@ def seeded_data(app):
             kind="sale_pending",
             title="Venda pendente",
         )
-        db.session.add_all([sale_a, sale_b, bonus_b, notification_b])
+        audit_a = AuditLog(
+            organization_id=org_a.id,
+            actor_user_id=admin_a.id,
+            entity_type="sale",
+            entity_id=sale_a.id,
+            action="validate",
+            occurred_at=now,
+        )
+        audit_b = AuditLog(
+            organization_id=org_b.id,
+            actor_user_id=admin_b.id,
+            entity_type="sale",
+            entity_id=None,
+            action="validate",
+            occurred_at=now,
+        )
+        db.session.add_all([sale_a, sale_b, bonus_b, notification_b, audit_a, audit_b])
         db.session.commit()
         return {
             "admin_a": {"id": str(admin_a.id), "email": admin_a.email},
@@ -250,6 +267,26 @@ def test_admin_bonus_listing_isolated_by_organization(client, seeded_data):
 
     assert response.status_code == 200
     assert response.get_json()["items"] == []
+
+
+def test_audit_logs_are_admin_only_and_organization_scoped(app, client, seeded_data):
+    _login(client, seeded_data["seller_a"])
+    forbidden_response = client.get("/api/v1/audit")
+    assert forbidden_response.status_code == 403
+
+    external_client = app.test_client()
+    _login(external_client, seeded_data["admin_b"])
+    external_response = external_client.get("/api/v1/audit?action=validate")
+    assert external_response.status_code == 200, external_response.get_json()
+    assert external_response.get_json()["total"] == 1
+    assert external_response.get_json()["items"][0]["actor_user_id"] == seeded_data["admin_b"]["id"]
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    own_response = admin_client.get("/api/v1/audit?action=validate")
+    assert own_response.status_code == 200
+    assert own_response.get_json()["total"] == 1
+    assert own_response.get_json()["items"][0]["entity_type"] == "sale"
 
 
 def test_user_cannot_read_or_mark_another_users_notification(client, seeded_data):

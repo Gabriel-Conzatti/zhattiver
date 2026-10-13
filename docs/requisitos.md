@@ -125,7 +125,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-079..RN-080 | Auditoria de ações relevantes | 🟨 |
+| RN-079..RN-080 | Auditoria de ações relevantes | 🟨 (consulta administrativa paginada, filtrável e isolada por organização; cobertura de autorização adicionada) |
 | RN-081..RN-085 | Notificações internas | 🟨 |
 | RN-086..RN-087 | Preservação histórica e linha do tempo | 🟨 |
 

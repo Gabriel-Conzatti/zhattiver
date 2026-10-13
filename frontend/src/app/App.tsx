@@ -10,6 +10,7 @@ import { AdminUsuariosPage } from '@/features/admin/AdminUsuariosPage';
 import { AdminAusenciasPage } from '@/features/admin/AdminAusenciasPage';
 import { AdminConcessoesPage } from '@/features/admin/AdminConcessoesPage';
 import { AdminCrossSellPage } from '@/features/admin/AdminCrossSellPage';
+import { AdminAuditPage } from '@/features/admin/AdminAuditPage';
 import { SdrLayout } from '@/features/sdr/SdrLayout';
 import { SdrDashboard } from '@/features/sdr/SdrDashboard';
 import { SdrProspeccaoPage } from '@/features/sdr/SdrProspeccaoPage';
@@ -66,6 +67,7 @@ export function App() {
           <Route path="ausencias" element={<AdminAusenciasPage />} />
           <Route path="concessoes" element={<AdminConcessoesPage />} />
           <Route path="cross-sell" element={<AdminCrossSellPage />} />
+          <Route path="auditoria" element={<AdminAuditPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
