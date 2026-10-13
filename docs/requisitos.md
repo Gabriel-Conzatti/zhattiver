@@ -118,7 +118,7 @@ Estados:
 |---|---|---|
 | RN-070 | Perfis padrão (admin, vendedor, SDR) | 🟨 |
 | RN-071 | Permissões individuais | 🟨 |
-| RN-072 | Dados financeiros restritos | 🟨 (cobertura parcial) |
+| RN-072 | Dados financeiros restritos | ✅ (vendas, bônus e relatórios cobertos por perfil e isolamento multiempresa) |
 | RN-073..RN-075 | Arquivamento em vez de exclusão | 🟨 |
 | RN-076..RN-078 | Duplicidade por telefone normalizado | 🟨 |
 
@@ -148,14 +148,12 @@ Estados:
 
 Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste automatizado nas etapas seguintes.
 
-## Evidência parcial de segurança
+## Evidência de segurança
 
 - RN-072: `backend/tests/test_authorization_boundaries.py` verifica que SDR não lista
   nem detalha vendas ou oportunidades, vendedor não acessa venda de outro vendedor,
   valores de comissão não aparecem na listagem do vendedor, bônus próprio sem concessão
   não expõe valor, listagem administrativa de bônus é isolada por organização e outra
-  organização recebe `404` ao buscar venda. Transferências, concessões e criação de
-  agendamentos rejeitam IDs de outra organização.
-- A cobertura ainda não valida todos os caminhos financeiros, incluindo relatórios,
-  bônus, notificações e cache de cliente. RN-072 permanece pendente de verificação
-  completa antes de receber o estado `✅`.
+  organização recebe `404` ao buscar venda. O relatório financeiro é exclusivo de
+  administrador, agrega somente vendas validadas e não cruza organizações. Notificações
+  não carregam valores financeiros e são isoladas pelo destinatário.

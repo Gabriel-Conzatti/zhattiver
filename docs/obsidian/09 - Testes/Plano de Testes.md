@@ -13,5 +13,4 @@
 - Login, logout e credencial inválida.
 - Cadastro, duplicidade e disponibilização de lead pelo SDR.
 - Primeiro contato e metas do vendedor.
-- Validação administrativa de venda.
-
+- Validação administrativa de venda e conferência do relatório financeiro.

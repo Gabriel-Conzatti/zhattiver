@@ -18,6 +18,7 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
     items: [
       { to: '/admin/producao', label: 'Produção' },
       { to: '/admin/bonus', label: 'Bônus' },
+      { to: '/admin/relatorios', label: 'Relatórios' },
       { to: '/admin/equipe', label: 'Equipe' },
       { to: '/admin/ausencias', label: 'Ausências' },
       { to: '/admin/concessoes', label: 'Concessões' },

@@ -21,4 +21,9 @@ test('admin valida venda pendente e ela passa a compor a produção oficial', as
   const validatedRow = page.getByRole('row', { name: /2000\.00/ });
   await expect(validatedRow).toContainText('Validada');
   await expect(validatedRow).toContainText('300.00');
+
+  await page.goto('/admin/relatorios');
+  await expect(page.getByRole('heading', { name: 'Relatórios' })).toBeVisible();
+  await expect(page.getByText('R$ 2.000,00').first()).toBeVisible();
+  await expect(page.getByText('R$ 300,00').first()).toBeVisible();
 });

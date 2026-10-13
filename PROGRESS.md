@@ -208,6 +208,11 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   totais de produção usados pelas metas, na apuração de bônus e na descoberta de
   pares vendedor/produto. Vendas registradas, em revisão, canceladas ou de outro
   tenant permanecem fora da apuração.
+- Relatório administrativo mensal de produção disponível com filtros por competência,
+  vendedor e produto, totais de prêmio líquido e comissão, contagem por estado e
+  agrupamento por vendedor/produto. A API é exclusiva de administrador, deriva o tenant
+  da sessão e reutiliza a elegibilidade RN-038. RN-072 foi verificada em vendas, bônus,
+  notificações e relatórios.
 
 ## Pendente (próximas etapas)
 

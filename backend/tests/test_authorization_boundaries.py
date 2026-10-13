@@ -12,7 +12,13 @@ from app.modules.funnel.models import Funnel
 from app.modules.leads.models import Lead
 from app.modules.notifications.models import Notification
 from app.modules.orgs.models import Organization
-from app.modules.sales.models import STATE_VALIDATED, Sale
+from app.modules.sales.models import (
+    STATE_CANCELLED,
+    STATE_REGISTERED,
+    STATE_REVISION_PENDING,
+    STATE_VALIDATED,
+    Sale,
+)
 from app.modules.users.models import (
     ROLE_ADMIN,
     ROLE_SDR,
@@ -78,7 +84,13 @@ def seeded_data(app):
         lead_b = Lead(organization_id=org_a.id, name="Cliente B")
         lead_external = Lead(organization_id=org_b.id, name="Cliente Externo")
         client_type_a = ClientType(organization_id=org_a.id, name="Pessoa Física", slug="pf")
+        client_type_b = ClientType(
+            organization_id=org_b.id,
+            name="Pessoa Jurídica",
+            slug="pj",
+        )
         insurer_a = Insurer(organization_id=org_a.id, name="Seguradora A")
+        insurer_b = Insurer(organization_id=org_b.id, name="Seguradora B")
         origin_external = Origin(organization_id=org_b.id, name="Origem Externa", slug="externa")
         db.session.add_all(
             [
@@ -91,7 +103,9 @@ def seeded_data(app):
                 lead_b,
                 lead_external,
                 client_type_a,
+                client_type_b,
                 insurer_a,
+                insurer_b,
                 origin_external,
             ]
         )
@@ -177,6 +191,10 @@ def seeded_data(app):
             "lead_external": {"id": str(lead_external.id)},
             "product_a": {"id": str(product_a.id)},
             "product_b": {"id": str(product_b.id)},
+            "client_type_a": {"id": str(client_type_a.id)},
+            "client_type_b": {"id": str(client_type_b.id)},
+            "insurer_a": {"id": str(insurer_a.id)},
+            "insurer_b": {"id": str(insurer_b.id)},
             "origin_external": {"id": str(origin_external.id)},
             "notification_b": {"id": str(notification_b.id)},
         }
@@ -270,6 +288,141 @@ def test_admin_bonus_listing_isolated_by_organization(client, seeded_data):
 
     assert response.status_code == 200
     assert response.get_json()["items"] == []
+
+
+def test_production_report_is_admin_only_and_organization_scoped(app, seeded_data):
+    seller_client = app.test_client()
+    _login(seller_client, seeded_data["seller_a"])
+    forbidden = seller_client.get("/api/v1/admin/reports/production?year=2026&month=10")
+    assert forbidden.status_code == 403
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    response = admin_client.get("/api/v1/admin/reports/production?year=2026&month=10")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["totals"] == {
+        "validated_count": 2,
+        "net_premium": "4000.00",
+        "commission_amount": "525.00",
+    }
+    assert payload["state_counts"] == {
+        "registered": 0,
+        "revision_pending": 0,
+        "validated": 2,
+        "cancelled": 0,
+    }
+    assert {
+        (item["seller_name"], item["net_premium"], item["commission_amount"])
+        for item in payload["items"]
+    } == {
+        ("Vendedor A", "1500.00", "225.00"),
+        ("Vendedor B", "2500.00", "300.00"),
+    }
+
+    filtered = admin_client.get(
+        "/api/v1/admin/reports/production",
+        query_string={
+            "year": 2026,
+            "month": 10,
+            "seller_user_id": seeded_data["seller_a"]["id"],
+        },
+    )
+    assert filtered.status_code == 200
+    assert filtered.get_json()["totals"]["net_premium"] == "1500.00"
+    assert len(filtered.get_json()["items"]) == 1
+
+    external_client = app.test_client()
+    _login(external_client, seeded_data["admin_b"])
+    external = external_client.get(
+        "/api/v1/admin/reports/production?year=2026&month=10"
+    )
+    assert external.status_code == 200
+    assert external.get_json()["totals"] == {
+        "validated_count": 0,
+        "net_premium": "0.00",
+        "commission_amount": "0.00",
+    }
+    assert external.get_json()["items"] == []
+
+
+def test_production_report_excludes_unvalidated_financial_values(app, seeded_data):
+    with app.app_context():
+        template = db.session.get(Sale, seeded_data["sale_a"]["id"])
+        assert template is not None
+        for state, premium in (
+            (STATE_REGISTERED, Decimal("10000.00")),
+            (STATE_REVISION_PENDING, Decimal("20000.00")),
+            (STATE_CANCELLED, Decimal("30000.00")),
+        ):
+            db.session.add(
+                Sale(
+                    organization_id=template.organization_id,
+                    lead_id=template.lead_id,
+                    product_id=template.product_id,
+                    seller_user_id=template.seller_user_id,
+                    insurer_id=template.insurer_id,
+                    client_type_id=template.client_type_id,
+                    net_premium=premium,
+                    commission_pct=Decimal("0.10"),
+                    commission_amount=premium * Decimal("0.10"),
+                    closed_on=template.closed_on,
+                    registered_at=template.registered_at,
+                    edit_deadline_at=template.edit_deadline_at,
+                    state=state,
+                )
+            )
+        db.session.commit()
+
+    admin_client = app.test_client()
+    _login(admin_client, seeded_data["admin_a"])
+    response = admin_client.get("/api/v1/admin/reports/production?year=2026&month=10")
+    payload = response.get_json()
+
+    assert payload["state_counts"] == {
+        "registered": 1,
+        "revision_pending": 1,
+        "validated": 2,
+        "cancelled": 1,
+    }
+    assert payload["totals"] == {
+        "validated_count": 2,
+        "net_premium": "4000.00",
+        "commission_amount": "525.00",
+    }
+
+
+@pytest.mark.parametrize(
+    ("field", "external_key"),
+    [
+        ("seller_user_id", "admin_b"),
+        ("insurer_id", "insurer_b"),
+        ("client_type_id", "client_type_b"),
+    ],
+)
+def test_admin_cannot_create_sale_with_external_financial_reference(
+    client, seeded_data, field, external_key
+):
+    _login(client, seeded_data["admin_a"])
+
+    payload = {
+        "lead_id": seeded_data["lead_a"]["id"],
+        "product_id": seeded_data["product_a"]["id"],
+        "seller_user_id": seeded_data["seller_a"]["id"],
+        "insurer_id": seeded_data["insurer_a"]["id"],
+        "client_type_id": seeded_data["client_type_a"]["id"],
+        "net_premium": "1000.00",
+        "commission_pct": "0.10",
+        "closed_on": "2026-10-10",
+    }
+    payload[field] = seeded_data[external_key]["id"]
+    response = client.post(
+        "/api/v1/sales",
+        json=payload,
+        headers=_csrf_headers(client),
+    )
+
+    assert response.status_code == 404
 
 
 def test_audit_logs_are_admin_only_and_organization_scoped(app, client, seeded_data):

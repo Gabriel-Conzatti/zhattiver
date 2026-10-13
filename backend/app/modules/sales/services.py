@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -12,10 +12,11 @@ from ...core.calendar import next_business_day
 from ...core.errors import BusinessError
 from ...core.time import DEFAULT_TZ, end_of_day_utc, now_utc, to_local
 from ...extensions import db
+from ..catalog.models import ClientType, Insurer
 from ..leads.models import Lead
-from ..opportunities.models import STATE_OPEN, Opportunity
 from ..opportunities import services as opp_services
-from ..users.models import Product
+from ..opportunities.models import STATE_OPEN, Opportunity
+from ..users.models import Product, User
 from .models import (
     CANCEL_AFTER_BONUS,
     CANCEL_BEFORE_BONUS,
@@ -48,7 +49,9 @@ def calc_commission(net_premium: Decimal, commission_pct: Decimal) -> Decimal:
     return (net_premium * commission_pct).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def compute_edit_deadline(registered_at_utc: datetime, organization_id: str | None = None) -> datetime:
+def compute_edit_deadline(
+    registered_at_utc: datetime, organization_id: str | None = None
+) -> datetime:
     """RN-034: até 23h59:59.999999 do próximo dia útil após o registro (fuso local)."""
     local_day = to_local(registered_at_utc, DEFAULT_TZ).date()
     deadline_day = next_business_day(local_day, organization_id)
@@ -79,6 +82,15 @@ def create_sale(
     product = db.session.get(Product, data.product_id)
     if product is None or product.organization_id != organization_id:
         raise BusinessError("not_found", "Produto não encontrado", status=404)
+    seller = db.session.get(User, data.seller_user_id)
+    if seller is None or seller.organization_id != organization_id:
+        raise BusinessError("not_found", "Vendedor não encontrado", status=404)
+    insurer = db.session.get(Insurer, data.insurer_id)
+    if insurer is None or insurer.organization_id != organization_id:
+        raise BusinessError("not_found", "Seguradora não encontrada", status=404)
+    client_type = db.session.get(ClientType, data.client_type_id)
+    if client_type is None or client_type.organization_id != organization_id:
+        raise BusinessError("not_found", "Tipo de cliente não encontrado", status=404)
 
     opportunity = None
     if data.opportunity_id:
@@ -338,7 +350,7 @@ def cancel_sale(
 def _serialize(value: Any) -> Any:
     if isinstance(value, Decimal):
         return str(value)
-    if isinstance(value, (date, datetime)):
+    if isinstance(value, date | datetime):
         return value.isoformat()
     return value
 
