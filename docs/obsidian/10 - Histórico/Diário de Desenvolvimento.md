@@ -19,6 +19,10 @@
 
 - Catálogos administrativos aprovados.
 
+### Versionamento
+
+- PR #6: manutenção completa dos catálogos administrativos.
+
 ### Próximos passos
 
 - Recuperação segura de senha.
