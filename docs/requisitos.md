@@ -34,7 +34,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-005 | Meta de prospecção configurável por vendedor | 🟨 |
+| RN-005 | Meta de prospecção configurável por vendedor | ✅ (gestão administrativa com vigência, histórico, auditoria e testes backend/frontend) |
 | RN-006 | Primeiro contato registrado por "Copiar mensagem" | 🟨 |
 | RN-007 | Contagem única por ciclo | 🟨 |
 | RN-008 | Excedente não compensa dia seguinte | 🟨 |

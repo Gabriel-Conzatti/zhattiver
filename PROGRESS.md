@@ -230,6 +230,11 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   colisão visual do token `base`, cards com destino conhecido e cache HTTP que podia
   restaurar a sessão visualmente após logout. As 23 rotas autenticadas foram verificadas
   em viewport de 390 px sem rolagem horizontal da página.
+- Administrador pode cadastrar e disponibilizar leads pela própria tela de Prospecção,
+  permitindo iniciar a operação sem criar um usuário SDR.
+- A tela Equipe permite configurar a meta diária de prospecção do vendedor com início
+  de vigência, preservação das vigências anteriores e auditoria. RN-005 foi coberta por
+  testes backend e frontend.
 
 ## Pendente (próximas etapas)
 
@@ -242,7 +247,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   foram verificados; o configurador seguro está em `/root/configure-smtp.py`. Não é
   bloqueador: a redefinição administrativa de senha já foi validada em produção.
 - Cadastrar `MonthlyGoal` e `BonusRule` (hoje zerados) antes de qualquer apuração.
-- Criar o usuário SDR (a base tem apenas administrador e vendedor).
+- Informar na tela Equipe a meta diária de prospecção da vendedora; o valor é uma
+  definição comercial e não deve ser inventado na implantação.
+- Usuário SDR foi retirado do escopo imediato por decisão da operação. O administrador
+  cobre cadastro e disponibilização de leads; o perfil poderá ser criado futuramente.
 
 ## Deploy de produção — 14/10/2026
 
@@ -282,8 +290,8 @@ Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
 
 ## Próximo passo
 
-1. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
-2. Criar o usuário SDR para homologar o fluxo de prospecção.
+1. Publicar esta correção e definir, na tela Equipe, a meta diária de prospecção.
+2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
 3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
 4. Quando houver uma senha exclusiva da caixa remetente na Locaweb, executar
    `python3 /root/configure-smtp.py` na VPS. O configurador valida a autenticação antes

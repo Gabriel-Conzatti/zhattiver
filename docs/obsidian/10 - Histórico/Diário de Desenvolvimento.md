@@ -1,5 +1,38 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Fechamento funcional sem dependência de SDR
+
+### Realizado
+
+- Confirmação de que `179.197.72.43` é a VPS Hostinger correta.
+- Retirada do usuário SDR do escopo imediato de entrada em operação.
+- Reaproveitamento do fluxo completo de prospecção para o administrador cadastrar,
+  disponibilizar e arquivar leads.
+- Gestão da meta diária de prospecção na tela Equipe, com vigência, histórico e auditoria.
+- Conferência da configuração de produção: produto, funil, seis etapas, origens, tipos de
+  cliente, seguradoras, motivos de perda e tipos de próxima ação estão semeados.
+
+### Arquivos principais
+
+- `backend/app/modules/admin/routes.py`
+- `frontend/src/features/admin/AdminLeadsPage.tsx`
+- `frontend/src/features/admin/AdminUsuariosPage.tsx`
+- `docs/obsidian/03 - Funcionalidades/Prospecção Administrativa.md`
+
+### Testes executados
+
+- `scripts/verify.ps1`: 73 testes backend, 17 frontend, typecheck, build e Compose.
+
+### Resultado
+
+- Código aprovado para publicação. Permanecem apenas valores comerciais a definir e a
+  credencial externa da caixa de e-mail.
+
+### Próximos passos
+
+- Publicar a correção na VPS.
+- Definir a meta diária da vendedora e, antes da apuração, metas mensais/faixas de bônus.
+
 ## 2026-10-14 - Validação da redefinição administrativa de senha
 
 ### Realizado
@@ -42,7 +75,7 @@
 
 ### Realizado
 
-- Identificação do host real de produção, diferente do documentado no Vault.
+- Identificação do endereço ativo da VPS Hostinger, diferente do informado inicialmente.
 - Backup do banco e do `.env` antes de qualquer alteração, com integridade verificada.
 - Atualização do código de `bfcfac7` para `c7733f3` por fast-forward de 32 commits.
 - Complemento do `.env` com as variáveis de URL pública, rate limiting e recuperação de senha.

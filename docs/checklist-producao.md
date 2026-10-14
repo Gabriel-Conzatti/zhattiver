@@ -157,8 +157,9 @@ responder `401`.
 
 ### Pendente
 
-SMTP real, cadastro de metas e faixas de bônus, criação do usuário SDR e homologação dos
-fluxos comerciais.
+SMTP real, definição das metas operacionais/financeiras e homologação dos fluxos
+comerciais. O usuário SDR não é necessário no início: o administrador pode cadastrar e
+disponibilizar leads pela tela de Prospecção.
 
 A ausência de SMTP não impede a entrada em operação. Enquanto o envio de e-mail não
 estiver configurado, o administrador redefine a senha de qualquer usuário pela tela de

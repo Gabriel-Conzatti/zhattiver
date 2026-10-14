@@ -41,6 +41,7 @@ export function AdminUsuariosPage() {
                 <th className="px-4 py-2 text-left">Email</th>
                 <th className="px-4 py-2 text-left">Perfil</th>
                 <th className="px-4 py-2 text-left">Produtos</th>
+                <th className="px-4 py-2 text-left">Meta/dia</th>
                 <th className="px-4 py-2 text-left">Estado</th>
                 <th className="px-4 py-2 text-right">Ações</th>
               </tr>
@@ -57,6 +58,9 @@ export function AdminUsuariosPage() {
                     {u.product_ids.length === 0
                       ? '—'
                       : u.product_ids.map((id) => productMap[id] ?? id.slice(0, 8)).join(', ')}
+                  </td>
+                  <td className="px-4 py-2">
+                    {u.role === 'vendedor' ? (u.daily_prospecting_quota ?? 'Não definida') : '—'}
                   </td>
                   <td className="px-4 py-2">
                     <span
@@ -78,7 +82,7 @@ export function AdminUsuariosPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-text-secondary">
+                  <td colSpan={7} className="py-8 text-center text-text-secondary">
                     Nenhum usuário.
                   </td>
                 </tr>
@@ -241,6 +245,10 @@ function EditDialog({
     is_active: user.is_active,
     product_ids: user.product_ids,
     reset_password: '',
+    new_prospecting_quota: '',
+    quota_effective_from: new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+    }),
   });
   const [error, setError] = useState<string | null>(null);
   const mut = useMutation({
@@ -251,6 +259,12 @@ function EditDialog({
         is_active: form.is_active,
         product_ids: form.product_ids,
         reset_password: form.reset_password || undefined,
+        daily_prospecting_quota:
+          form.new_prospecting_quota === ''
+            ? undefined
+            : Number(form.new_prospecting_quota),
+        quota_effective_from:
+          form.new_prospecting_quota === '' ? undefined : form.quota_effective_from,
       }),
     onSuccess: onDone,
     onError: (err) => setError((err as Error).message),
@@ -317,6 +331,39 @@ function EditDialog({
           onChange={(e) => setForm({ ...form, reset_password: e.target.value })}
         />
       </Field>
+      {form.role === 'vendedor' && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Nova meta diária de prospecção">
+            <input
+              aria-label="Nova meta diária de prospecção"
+              className="input"
+              type="number"
+              min={0}
+              max={10000}
+              placeholder={
+                user.daily_prospecting_quota === null
+                  ? 'Não definida'
+                  : `Atual: ${user.daily_prospecting_quota}`
+              }
+              value={form.new_prospecting_quota}
+              onChange={(e) =>
+                setForm({ ...form, new_prospecting_quota: e.target.value })
+              }
+            />
+          </Field>
+          <Field label="Vigência da nova meta">
+            <input
+              aria-label="Vigência da nova meta"
+              className="input"
+              type="date"
+              value={form.quota_effective_from}
+              onChange={(e) =>
+                setForm({ ...form, quota_effective_from: e.target.value })
+              }
+            />
+          </Field>
+        </div>
+      )}
       {error && <p className="mt-2 text-xs text-state-danger">{error}</p>}
       <div className="mt-4 flex justify-end gap-2">
         <button type="button" className="btn-ghost" onClick={onClose}>

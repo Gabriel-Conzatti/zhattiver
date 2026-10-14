@@ -1,29 +1,30 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 
 from ...core.audit import record as audit_record
 from ...core.auth import hash_password
 from ...core.authz import load_context
 from ...core.errors import BusinessError
-from ...core.time import now_utc
+from ...core.time import now_utc, today_local
 from ...extensions import db
+from ..goals.models import DailyProspectingQuota
 from ..leads.models import Lead
-from ..opportunities.models import Opportunity, STATE_OPEN
-from ..sales.models import STATE_REGISTERED as SALE_STATE_REGISTERED, Sale
+from ..opportunities.models import STATE_OPEN, Opportunity
+from ..sales.models import STATE_REGISTERED as SALE_STATE_REGISTERED
+from ..sales.models import Sale
 from ..schedules.models import STATE_SCHEDULED, Schedule
 from ..users.models import (
-    PermissionGrant,
-    Product,
     ROLE_ADMIN,
-    ROLE_SDR,
     ROLE_VENDEDOR,
     ROLES,
+    PermissionGrant,
+    Product,
     User,
 )
 
@@ -52,9 +53,12 @@ class UserUpdate(BaseModel):
     is_active: bool | None = None
     product_ids: list[str] | None = None
     reset_password: str | None = Field(default=None, min_length=10, max_length=200)
+    daily_prospecting_quota: int | None = Field(default=None, ge=0, le=10_000)
+    quota_effective_from: date | None = None
 
 
 def _serialize_user(u: User) -> dict:
+    quota = _prospecting_quota_at(u.id, today_local())
     return {
         "id": str(u.id),
         "email": u.email,
@@ -63,7 +67,66 @@ def _serialize_user(u: User) -> dict:
         "is_active": u.is_active,
         "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
         "product_ids": [str(p.id) for p in u.products],
+        "daily_prospecting_quota": quota.quota if quota else None,
+        "quota_effective_from": quota.effective_from.isoformat() if quota else None,
     }
+
+
+def _prospecting_quota_at(user_id: str, on: date) -> DailyProspectingQuota | None:
+    return db.session.execute(
+        select(DailyProspectingQuota)
+        .where(
+            DailyProspectingQuota.user_id == user_id,
+            DailyProspectingQuota.effective_from <= on,
+            or_(
+                DailyProspectingQuota.effective_to.is_(None),
+                DailyProspectingQuota.effective_to >= on,
+            ),
+        )
+        .order_by(DailyProspectingQuota.effective_from.desc())
+    ).scalars().first()
+
+
+def _set_prospecting_quota(
+    *,
+    organization_id: str,
+    user_id: str,
+    quota: int,
+    effective_from: date,
+) -> None:
+    same_start = db.session.execute(
+        select(DailyProspectingQuota).where(
+            DailyProspectingQuota.user_id == user_id,
+            DailyProspectingQuota.effective_from == effective_from,
+        )
+    ).scalar_one_or_none()
+    if same_start is not None:
+        same_start.quota = quota
+        return
+
+    current = _prospecting_quota_at(user_id, effective_from)
+    if current is not None:
+        current.effective_to = effective_from - timedelta(days=1)
+
+    next_quota = db.session.execute(
+        select(DailyProspectingQuota)
+        .where(
+            DailyProspectingQuota.user_id == user_id,
+            DailyProspectingQuota.effective_from > effective_from,
+        )
+        .order_by(DailyProspectingQuota.effective_from)
+    ).scalars().first()
+    db.session.add(
+        DailyProspectingQuota(
+            organization_id=organization_id,
+            user_id=user_id,
+            quota=quota,
+            effective_from=effective_from,
+            effective_to=(
+                next_quota.effective_from - timedelta(days=1) if next_quota else None
+            ),
+        )
+    )
 
 
 @bp.get("/admin/users")
@@ -134,11 +197,16 @@ def update_user(user_id: str):
     if user is None or user.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Usuário não encontrado", status=404)
     payload = UserUpdate.model_validate(request.get_json(silent=True) or {})
+    previous_quota = _prospecting_quota_at(user.id, today_local())
     before = {
         "name": user.name,
         "role": user.role,
         "is_active": user.is_active,
         "products": [str(p.id) for p in user.products],
+        "daily_prospecting_quota": previous_quota.quota if previous_quota else None,
+        "quota_effective_from": (
+            previous_quota.effective_from.isoformat() if previous_quota else None
+        ),
     }
     if payload.name is not None:
         user.name = payload.name.strip()
@@ -163,6 +231,26 @@ def update_user(user_id: str):
     if payload.reset_password:
         user.password_hash = hash_password(payload.reset_password)
         user.session_version += 1
+    if payload.daily_prospecting_quota is not None:
+        if user.role != ROLE_VENDEDOR:
+            raise BusinessError(
+                "invalid_role",
+                "Meta diária de prospecção é exclusiva de vendedor",
+                status=422,
+            )
+        effective_from = payload.quota_effective_from or today_local()
+        if effective_from < today_local():
+            raise BusinessError(
+                "invalid_effective_from",
+                "A vigência da meta não pode começar no passado",
+                status=422,
+            )
+        _set_prospecting_quota(
+            organization_id=ctx.organization_id,
+            user_id=user.id,
+            quota=payload.daily_prospecting_quota,
+            effective_from=effective_from,
+        )
     audit_record(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
@@ -176,6 +264,20 @@ def update_user(user_id: str):
             "is_active": user.is_active,
             "products": [str(p.id) for p in user.products],
             "password_reset": bool(payload.reset_password),
+            "daily_prospecting_quota": (
+                payload.daily_prospecting_quota
+                if payload.daily_prospecting_quota is not None
+                else (previous_quota.quota if previous_quota else None)
+            ),
+            "quota_effective_from": (
+                (payload.quota_effective_from or today_local()).isoformat()
+                if payload.daily_prospecting_quota is not None
+                else (
+                    previous_quota.effective_from.isoformat()
+                    if previous_quota
+                    else None
+                )
+            ),
         },
         request_id=getattr(g, "request_id", None),
     )

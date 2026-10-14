@@ -546,6 +546,8 @@ export interface AdminUser {
   is_active: boolean;
   last_login_at: string | null;
   product_ids: string[];
+  daily_prospecting_quota: number | null;
+  quota_effective_from: string | null;
 }
 
 export interface AuditLogEntry {
@@ -701,6 +703,8 @@ export const admin = {
     is_active: boolean;
     product_ids: string[];
     reset_password: string;
+    daily_prospecting_quota: number;
+    quota_effective_from: string;
   }>) => api<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body: changes }),
   grants: () =>
     api<{

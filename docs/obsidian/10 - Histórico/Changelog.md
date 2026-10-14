@@ -16,6 +16,8 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Adicionado
 
+- Cadastro e disponibilização de leads na tela administrativa de Prospecção.
+- Configuração versionada da meta diária do vendedor pela tela Equipe.
 - Seed E2E isolado e reproduzível.
 - Validação administrativa de venda por Playwright.
 - Vault de documentação do projeto.
@@ -27,6 +29,8 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Alterado
 
+- Usuário SDR deixa de ser requisito para iniciar a operação.
+- Documentação identifica `179.197.72.43` como a VPS Hostinger de produção.
 - Identidade visível atualizada para Funil Sustentare.
 - Elegibilidade de vendas para produção, metas e bônus centralizada conforme RN-038.
 - Apuração de bônus agora exibe nomes de vendedores e produtos em vez de identificadores.

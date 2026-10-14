@@ -22,6 +22,24 @@ todas as sessões quando a senha é redefinida.
   - retorna contagem por estado, totais validados e agrupamento por vendedor/produto;
   - valores financeiros consideram somente vendas validadas.
 
+## Usuários e meta diária
+
+- `GET /api/v1/admin/users`
+- `POST /api/v1/admin/users`
+- `PATCH /api/v1/admin/users/{id}`
+
+O `PATCH` aceita `daily_prospecting_quota` e `quota_effective_from` para vendedores.
+Uma nova vigência encerra a anterior no dia imediatamente anterior, sem apagar o
+histórico. A mutação é exclusiva de administrador e auditada.
+
+## Prospecção
+
+- `POST /api/v1/leads`
+- `POST /api/v1/availabilities`
+
+Administrador e SDR podem cadastrar e disponibilizar leads. A interface administrativa
+expõe esse fluxo para que a operação não dependa da existência de um usuário SDR.
+
 ## Catálogos administrativos
 
 - `GET /api/v1/admin/catalogs`

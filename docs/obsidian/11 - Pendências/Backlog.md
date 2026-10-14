@@ -2,12 +2,16 @@
 
 1. Criar senha exclusiva da caixa Locaweb, executar `/root/configure-smtp.py` na VPS e
    confirmar o recebimento do link de recuperação.
-2. Cadastrar metas mensais e faixas de bônus antes da primeira apuração.
-3. Criar o usuário SDR na organização de produção.
+2. Definir a meta diária de prospecção da vendedora na tela Equipe.
+3. Cadastrar metas mensais e faixas de bônus antes da primeira apuração.
 4. Executar os cenários E2E contra o domínio público.
 5. Homologar os fluxos comerciais e converter as RN `🟨` em `✅`.
-6. Avaliar a migração da produção para um host dedicado.
-7. Incluir Ruff e ESLint no workflow de CI.
+6. Incluir Ruff e ESLint no workflow de CI.
+
+## Adiados pela operação
+
+- Criar usuário SDR. O administrador cobre cadastro e disponibilização de leads no
+  início da operação.
 
 ## Concluídos
 
