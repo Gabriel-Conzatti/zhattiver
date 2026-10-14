@@ -1,5 +1,26 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Deploy dos dashboards por perfil
+
+### Realizado
+
+- Executado o deploy oficial do commit `7b09052` na VPS Hostinger.
+- Recriados os serviços web, API, worker e scheduler com as imagens atualizadas.
+- Confirmada a migração `6c9e0b4d7a12` como head.
+- Validado o healthcheck interno e o endpoint público de produção.
+
+### Testes executados
+
+- `npm run test` — 30 testes aprovados em 14 arquivos.
+- `npm run typecheck` — aprovado.
+- `npm run lint` — aprovado.
+- `npm run build` — aprovado.
+- `GET https://funil.zhattiver.com/api/v1/health` — HTTP 200.
+
+### Resultado
+
+- Deploy aprovado e produção saudável.
+
 ## 2026-10-14 - UI dos dashboards por perfil
 
 ### Realizado

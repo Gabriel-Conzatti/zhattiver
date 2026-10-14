@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-10-14] - Dashboards publicados em produção
+
+Commit `7b09052` publicado em `funil.zhattiver.com`.
+
+### Operação
+
+- Build Docker concluído sem erros.
+- Serviços API, web, worker, scheduler, PostgreSQL e Redis saudáveis.
+- Migração confirmada na head `6c9e0b4d7a12`.
+- Healthcheck público `/api/v1/health` retornando HTTP 200.
+
 ## [2026-10-14] - Publicado em produção
 
 Commit `c7733f3` publicado em `funil.zhattiver.com`, substituindo a versão de 01/10/2026.
