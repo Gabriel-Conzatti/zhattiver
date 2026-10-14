@@ -73,17 +73,22 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   - `next_bracket_hint` alimenta o "faltam X" no dashboard.
   - `get_or_create_prediction` mantém snapshot `predicted`/`approved` vivo com a apuração atual; congela após pagamento (RN-041).
   - `mark_bonus_paid` grava `paid_at`, `paid_amount` e trava o snapshot.
+  - `cancel_bonus` exige justificativa, impede cancelamento após pagamento e audita a transição.
   - `bonus_paid_for_sale_month` decide o `cancelled_kind` do cancelamento.
+  - Metas e faixas validam vendedor/produto contra a organização da sessão; faixas
+    sobrepostas são rejeitadas e vigências encerradas não podem ser reabertas.
 - Permissões (grants opcionais): `sales.view_net_premium`, `sales.view_commission_pct`, `sales.view_commission_amount`, `sales.edit_after_deadline`, `sales.validate`, `bonus.view_own`.
 - Rotas novas:
   - `POST /sales` (funil ou direta), `GET /sales`, `GET /sales/{id}`, `PATCH /sales/{id}` (grava revisão pendente quando cabível), `POST /sales/{id}/validate`, `POST /sales/{id}/cancel`.
   - `GET /me/production`, `GET /me/bonus` (respeitam MP-004 e configurações de visibilidade).
-  - `GET/POST /monthly-goals`, `GET/POST /bonus-rules`.
-  - `GET /admin/bonus?year=&month=`, `POST /admin/bonus/refresh`, `POST /admin/bonus/{id}/approve`, `POST /admin/bonus/{id}/pay`.
+  - `GET/POST /monthly-goals`, `GET/POST /bonus-rules`, `PATCH /bonus-rules/{id}`.
+  - `GET /admin/bonus?year=&month=`, `POST /admin/bonus/refresh`,
+    `POST /admin/bonus/{id}/approve|pay|cancel`.
 - Frontend:
   - `SaleFormDialog` reutilizável — venda direta (via botão `+` do topbar) ou venda pelo funil (via drawer "Ganhar"); campos obrigatórios com prévia da comissão calculada.
   - `AdminProducaoPage` — filtros por estado, badge, ações Validar/Cancelar (com justificativa).
-  - `AdminBonusPage` — seletor mês/ano, botão Recalcular, ações Aprovar e Marcar pago; explica RN-039/041.
+  - `AdminBonusPage` — apuração por competência, metas por vendedor/produto,
+    faixas versionadas, encerramento de vigência e ações Aprovar, Pagar e Cancelar.
   - Vendedor Dashboard mostra produção do mês, meta, faixa próxima e bônus previsto conforme visibilidade autorizada.
   - Drawer da oportunidade: botão "Ganhar" abre `SaleFormDialog`; o backend cuida de win + venda + auditoria na mesma transação.
 
@@ -228,8 +233,8 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Pendente (próximas etapas)
 
-- Polimento de longo prazo: UI administrativa de metas e faixas de bônus, dashboards
-  adicionais e integração com WhatsApp Business Cloud API para envio real de mensagens.
+- Polimento de longo prazo: dashboards adicionais e integração com WhatsApp Business
+  Cloud API para envio real de mensagens.
 - Executar `pytest`, `npm run test`, `npm run build`, `docker compose config` e `scripts/deploy.sh` na VPS real para transformar as marcações `🟨` em `✅`.
 
 ## Próximo passo
@@ -242,9 +247,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Limitações declaradas
 
-- Metas e faixas de bônus ainda não possuem uma interface administrativa completa.
-  Produtos, tags, seguradoras, origens, tipos de cliente, funis, etapas, mensagens,
-  motivos de perda e tipos de próxima ação já podem ser mantidos em **Configurações**.
+- Produtos, tags, seguradoras, origens, tipos de cliente, funis, etapas, mensagens,
+  motivos de perda, tipos de próxima ação, metas e faixas de bônus já possuem
+  manutenção administrativa.
 - Job de follow-ups é diário (6h local) — no primeiro deploy execute manualmente para popular as ações do dia:
   `docker compose exec worker celery -A app.jobs.celery_app call app.jobs.tasks.generate_daily_followups`.
 - PDFs e imagens de referência não foram copiados para `docs/referencias/`.

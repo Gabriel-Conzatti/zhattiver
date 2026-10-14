@@ -1,18 +1,20 @@
 from __future__ import annotations
 
+import calendar
 from datetime import date
 from decimal import Decimal
 
 from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 
+from ...core.audit import record as audit_record
 from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import today_local
 from ...extensions import db
-from ..users.models import ROLE_ADMIN, ROLE_SDR
+from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, User
 from . import services
 from .models import (
     BONUS_KIND_FIXED,
@@ -34,9 +36,9 @@ class MonthlyGoalCreate(BaseModel):
     product_id: str | None = None
     year: int = Field(ge=2020, le=2100)
     month: int = Field(ge=1, le=12)
-    target_count: int = 0
-    target_net_premium: Decimal = Decimal("0")
-    notes: str | None = None
+    target_count: int = Field(default=0, ge=0)
+    target_net_premium: Decimal = Field(default=Decimal("0"), ge=0)
+    notes: str | None = Field(default=None, max_length=500)
 
 
 @bp.get("/monthly-goals")
@@ -65,6 +67,7 @@ def list_monthly_goals():
                     "month": g.month,
                     "target_count": g.target_count,
                     "target_net_premium": str(g.target_net_premium),
+                    "notes": g.notes,
                 }
                 for g in rows
             ]
@@ -79,6 +82,23 @@ def create_monthly_goal():
     if ctx.role != ROLE_ADMIN:
         raise BusinessError("forbidden", "Somente admin", status=403)
     payload = MonthlyGoalCreate.model_validate(request.get_json(silent=True) or {})
+    user = db.session.get(User, payload.user_id)
+    if (
+        user is None
+        or user.organization_id != ctx.organization_id
+        or user.role != ROLE_VENDEDOR
+    ):
+        raise BusinessError("not_found", "Vendedor não encontrado", status=404)
+    if payload.product_id is not None:
+        product = db.session.get(Product, payload.product_id)
+        if product is None or product.organization_id != ctx.organization_id:
+            raise BusinessError("not_found", "Produto não encontrado", status=404)
+        if all(str(item.id) != payload.product_id for item in user.products):
+            raise BusinessError(
+                "product_not_assigned",
+                "O produto não está associado ao vendedor",
+                status=422,
+            )
     existing = services.get_monthly_goal(
         organization_id=ctx.organization_id,
         user_id=payload.user_id,
@@ -86,11 +106,15 @@ def create_monthly_goal():
         year=payload.year,
         month=payload.month,
     )
+    before = None
     if existing is not None:
+        before = _goal_snapshot(existing)
         existing.target_count = payload.target_count
         existing.target_net_premium = payload.target_net_premium
-        existing.notes = payload.notes
+        existing.notes = payload.notes.strip() if payload.notes else None
         goal = existing
+        status = 200
+        action = "update"
     else:
         goal = MonthlyGoal(
             organization_id=ctx.organization_id,
@@ -100,11 +124,24 @@ def create_monthly_goal():
             month=payload.month,
             target_count=payload.target_count,
             target_net_premium=payload.target_net_premium,
-            notes=payload.notes,
+            notes=payload.notes.strip() if payload.notes else None,
         )
         db.session.add(goal)
+        db.session.flush()
+        status = 201
+        action = "create"
+    audit_record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="monthly_goal",
+        entity_id=str(goal.id),
+        action=action,
+        before=before,
+        after=_goal_snapshot(goal),
+        request_id=getattr(g, "request_id", None),
+    )
     db.session.commit()
-    return jsonify({"id": str(goal.id)}), 201
+    return jsonify({"id": str(goal.id)}), status
 
 
 # ---- Faixas de bônus -------------------------------------------------------
@@ -113,18 +150,24 @@ class BonusRuleCreate(BaseModel):
     product_id: str
     name: str = Field(min_length=1, max_length=120)
     base: str
-    bracket_min: Decimal
+    bracket_min: Decimal = Field(ge=0)
     bracket_max: Decimal | None = None
     bonus_kind: str
-    value: Decimal
+    value: Decimal = Field(gt=0)
     effective_from: date
     effective_to: date | None = None
+
+
+class BonusRuleEnd(BaseModel):
+    effective_to: date
 
 
 @bp.get("/bonus-rules")
 @login_required
 def list_bonus_rules():
     ctx = load_context()
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente admin", status=403)
     rows = db.session.execute(
         select(BonusRule).where(BonusRule.organization_id == ctx.organization_id).order_by(
             BonusRule.product_id, BonusRule.base, BonusRule.bracket_min
@@ -162,10 +205,75 @@ def create_bonus_rule():
         raise BusinessError("invalid_base", "Base inválida", status=422)
     if payload.bonus_kind not in (BONUS_KIND_FIXED, BONUS_KIND_PERCENT):
         raise BusinessError("invalid_kind", "Tipo de bônus inválido", status=422)
+    product = db.session.get(Product, payload.product_id)
+    if product is None or product.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Produto não encontrado", status=404)
+    if payload.bracket_max is not None and payload.bracket_max < payload.bracket_min:
+        raise BusinessError(
+            "invalid_bracket",
+            "O limite máximo deve ser maior ou igual ao limite mínimo",
+            status=422,
+        )
+    if payload.effective_from.day != 1:
+        raise BusinessError(
+            "invalid_effective_period",
+            "A vigência deve começar no primeiro dia do mês",
+            status=422,
+        )
+    if payload.effective_to is not None:
+        last_day = calendar.monthrange(
+            payload.effective_to.year, payload.effective_to.month
+        )[1]
+        if payload.effective_to.day != last_day:
+            raise BusinessError(
+                "invalid_effective_period",
+                "O fim da vigência deve ser o último dia do mês",
+                status=422,
+            )
+        if payload.effective_to < payload.effective_from:
+            raise BusinessError(
+                "invalid_effective_period",
+                "O fim da vigência não pode ser anterior ao início",
+                status=422,
+            )
+    date_overlap = and_(
+        BonusRule.effective_from <= (payload.effective_to or date.max),
+        or_(
+            BonusRule.effective_to.is_(None),
+            BonusRule.effective_to >= payload.effective_from,
+        ),
+    )
+    bracket_overlap = and_(
+        BonusRule.bracket_min
+        <= (
+            payload.bracket_max
+            if payload.bracket_max is not None
+            else Decimal("999999999999.99")
+        ),
+        or_(
+            BonusRule.bracket_max.is_(None),
+            BonusRule.bracket_max >= payload.bracket_min,
+        ),
+    )
+    overlap = db.session.execute(
+        select(BonusRule.id).where(
+            BonusRule.organization_id == ctx.organization_id,
+            BonusRule.product_id == payload.product_id,
+            BonusRule.base == payload.base,
+            date_overlap,
+            bracket_overlap,
+        )
+    ).first()
+    if overlap is not None:
+        raise BusinessError(
+            "overlapping_bonus_rule",
+            "Já existe uma faixa sobreposta para esse produto, base e vigência",
+            status=409,
+        )
     rule = BonusRule(
         organization_id=ctx.organization_id,
         product_id=payload.product_id,
-        name=payload.name,
+        name=payload.name.strip(),
         base=payload.base,
         bracket_min=payload.bracket_min,
         bracket_max=payload.bracket_max,
@@ -175,8 +283,101 @@ def create_bonus_rule():
         effective_to=payload.effective_to,
     )
     db.session.add(rule)
+    db.session.flush()
+    audit_record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="bonus_rule",
+        entity_id=str(rule.id),
+        action="create",
+        after=_bonus_rule_snapshot(rule),
+        request_id=getattr(g, "request_id", None),
+    )
     db.session.commit()
     return jsonify({"id": str(rule.id)}), 201
+
+
+@bp.patch("/bonus-rules/<rule_id>")
+@login_required
+def end_bonus_rule(rule_id: str):
+    ctx = load_context()
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente admin", status=403)
+    rule = db.session.get(BonusRule, rule_id)
+    if rule is None or rule.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Faixa de bônus não encontrada", status=404)
+    if rule.effective_to is not None:
+        raise BusinessError(
+            "rule_already_ended",
+            "A vigência dessa faixa já foi encerrada",
+            status=409,
+        )
+    payload = BonusRuleEnd.model_validate(request.get_json(silent=True) or {})
+    last_day = calendar.monthrange(payload.effective_to.year, payload.effective_to.month)[1]
+    if payload.effective_to.day != last_day:
+        raise BusinessError(
+            "invalid_effective_period",
+            "O fim da vigência deve ser o último dia do mês",
+            status=422,
+        )
+    current = today_local()
+    current_month_end = date(
+        current.year,
+        current.month,
+        calendar.monthrange(current.year, current.month)[1],
+    )
+    if payload.effective_to < current_month_end:
+        raise BusinessError(
+            "historical_rule",
+            "Não é permitido alterar retroativamente uma faixa de bônus",
+            status=422,
+        )
+    if payload.effective_to < rule.effective_from:
+        raise BusinessError(
+            "invalid_effective_period",
+            "O fim da vigência não pode ser anterior ao início",
+            status=422,
+        )
+    before = _bonus_rule_snapshot(rule)
+    rule.effective_to = payload.effective_to
+    audit_record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="bonus_rule",
+        entity_id=str(rule.id),
+        action="end",
+        before=before,
+        after=_bonus_rule_snapshot(rule),
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"id": str(rule.id), "effective_to": rule.effective_to.isoformat()})
+
+
+def _goal_snapshot(goal: MonthlyGoal) -> dict[str, str | int | None]:
+    return {
+        "user_id": str(goal.user_id),
+        "product_id": str(goal.product_id) if goal.product_id else None,
+        "year": goal.year,
+        "month": goal.month,
+        "target_count": goal.target_count,
+        "target_net_premium": str(goal.target_net_premium),
+        "notes": goal.notes,
+    }
+
+
+def _bonus_rule_snapshot(rule: BonusRule) -> dict[str, str | None]:
+    return {
+        "product_id": str(rule.product_id),
+        "name": rule.name,
+        "base": rule.base,
+        "bracket_min": str(rule.bracket_min),
+        "bracket_max": str(rule.bracket_max) if rule.bracket_max is not None else None,
+        "bonus_kind": rule.bonus_kind,
+        "value": str(rule.value),
+        "effective_from": rule.effective_from.isoformat(),
+        "effective_to": rule.effective_to.isoformat() if rule.effective_to else None,
+    }
 
 
 # ---- Bônus / produção pessoal ---------------------------------------------
@@ -277,6 +478,10 @@ def my_production():
 
 class PayBonusRequest(BaseModel):
     paid_amount: Decimal | None = None
+
+
+class CancelBonusRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
 
 
 @bp.get("/admin/bonus")
@@ -390,6 +595,29 @@ def pay_bonus(payment_id: str):
             "id": str(payment.id),
             "state": payment.state,
             "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
-            "paid_amount": str(payment.paid_amount) if payment.paid_amount else None,
+            "paid_amount": (
+                str(payment.paid_amount) if payment.paid_amount is not None else None
+            ),
         }
     )
+
+
+@bp.post("/admin/bonus/<payment_id>/cancel")
+@login_required
+def cancel_bonus(payment_id: str):
+    ctx = load_context()
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente admin", status=403)
+    payment = db.session.get(BonusPayment, payment_id)
+    if payment is None or payment.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Bônus não encontrado", status=404)
+    payload = CancelBonusRequest.model_validate(request.get_json(silent=True) or {})
+    services.cancel_bonus(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        payment=payment,
+        reason=payload.reason.strip(),
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"id": str(payment.id), "state": payment.state})

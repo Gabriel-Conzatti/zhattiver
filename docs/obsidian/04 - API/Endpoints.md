@@ -31,3 +31,18 @@ todas as sessões quando a senha é redefinida.
 Tipos: `products`, `origins`, `client-types`, `insurers`, `tag-categories` e
 `tags`. As mutações são exclusivas de administrador, auditadas e usam arquivamento
 reversível em vez de exclusão.
+
+## Metas e bônus
+
+- `GET/POST /api/v1/monthly-goals`
+- `GET/POST /api/v1/bonus-rules`
+- `PATCH /api/v1/bonus-rules/{id}`
+- `GET /api/v1/admin/bonus`
+- `POST /api/v1/admin/bonus/refresh`
+- `POST /api/v1/admin/bonus/{id}/approve`
+- `POST /api/v1/admin/bonus/{id}/pay`
+- `POST /api/v1/admin/bonus/{id}/cancel`
+
+As mutações são exclusivas de administrador, derivam a organização da sessão e geram
+auditoria. Metas fazem upsert por competência; faixas são versionadas e não aceitam
+sobreposição de vigência e intervalo.
