@@ -47,3 +47,7 @@ Thumbs.db
 
 # Backups locais (ao rodar scripts localmente)
 backups/
+
+# Referências visuais e documentais (podem conter dados reais)
+docs/referencias/*
+!docs/referencias/README.md

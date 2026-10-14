@@ -300,11 +300,12 @@ Publicado em `funil.zhattiver.com` a partir do commit `e23d4ae`.
 1. Definir, na tela Equipe, a meta diária de prospecção da vendedora.
 2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
 3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
-4. Quando houver uma senha exclusiva da caixa remetente na Locaweb, executar
+4. A recuperação de senha por e-mail foi **adiada por decisão da operação**: o sistema
+   entra em produção sem SMTP e o caminho oficial para esquecimento de senha é a
+   redefinição administrativa em Equipe > Editar, já validada em produção. Se a decisão
+   for revista, basta criar uma senha exclusiva da caixa remetente na Locaweb e executar
    `python3 /root/configure-smtp.py` na VPS. O configurador valida a autenticação antes
-   de alterar o `.env`, recria a API e dispara uma recuperação real. Enquanto isso, a
-   redefinição administrativa de senha cobre o caso de esquecimento, portanto o e-mail
-   não bloqueia a entrada em operação.
+   de alterar o `.env`, recria a API e dispara uma recuperação real.
 
 ## Limitações declaradas
 

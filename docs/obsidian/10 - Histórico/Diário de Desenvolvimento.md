@@ -1,5 +1,39 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Adiamento do SMTP e preparo para referências de UI/UX
+
+### Realizado
+
+- Registro da decisão da operação de entrar em produção sem recuperação de senha por
+  e-mail. A redefinição administrativa em Equipe > Editar passa a ser o caminho oficial
+  para esquecimento de senha, e o SMTP sai da lista de pendências ativas.
+- Reescrita de `docs/referencias/README.md` como guia de envio de prints de UI/UX, com
+  convenção de nomes por tela e formato, informações exigidas por print e as regras de
+  uso (somente aparência, identidade Funil Sustentare, requisito escrito prevalece).
+- Exclusão do conteúdo de `docs/referencias/` do versionamento, preservando o README,
+  já que prints podem conter dados reais de clientes.
+
+### Arquivos principais
+
+- `.gitignore`
+- `docs/referencias/README.md`
+- `docs/obsidian/11 - Pendências/Backlog.md`
+- `docs/obsidian/11 - Pendências/Problemas Conhecidos.md`
+- `PROGRESS.md`
+
+### Testes executados
+
+- `git check-ignore -v docs/referencias/README.md` para confirmar que o guia continua
+  versionado enquanto os prints são ignorados.
+
+### Resultado
+
+- Aprovado. Alteração exclusivamente documental e de versionamento, sem impacto em código.
+
+### Próximos passos
+
+- Receber os prints de UI/UX e aplicar o Protocolo de Análise de Referências.
+
 ## 2026-10-14 - Fechamento funcional sem dependência de SDR
 
 ### Realizado

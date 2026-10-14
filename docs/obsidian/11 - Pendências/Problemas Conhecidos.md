@@ -3,12 +3,13 @@
 - Identificadores técnicos `LYNK_*` permanecem por compatibilidade.
 - Warnings de depreciação do backend de sessão filesystem aparecem apenas nos testes;
   produção usa Redis.
-- SMTP ainda sem credencial em produção. DNS confirma Email Locaweb; a VPS alcança
-  `email-ssl.com.br:587` por STARTTLS e o servidor exige `AUTH PLAIN/LOGIN`. O endpoint
-  legado `smtp.locaweb.com.br` não responde. O configurador seguro
-  `/root/configure-smtp.py` aguarda uma senha exclusiva da caixa remetente.
+- SMTP permanece sem credencial em produção, agora por decisão da operação, que optou por
+  entrar no ar sem recuperação de senha por e-mail. DNS confirma Email Locaweb; a VPS
+  alcança `email-ssl.com.br:587` por STARTTLS e o servidor exige `AUTH PLAIN/LOGIN`. O
+  endpoint legado `smtp.locaweb.com.br` não responde. O configurador seguro
+  `/root/configure-smtp.py` segue instalado para quando a decisão for revista.
   **Não bloqueia o go-live**: a redefinição administrativa de senha foi validada em
-  produção e cobre o caso de esquecimento enquanto o e-mail não estiver ativo.
+  produção e é o caminho oficial para esquecimento de senha.
 - `MonthlyGoal` e `BonusRule` não possuem nenhum registro em produção. Sem cadastro
   prévio, metas e apuração de bônus não produzem resultado.
 - A meta diária de prospecção da vendedora ainda precisa receber o valor definido pela
