@@ -1,5 +1,43 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Deploy de produção e execução do checklist
+
+### Realizado
+
+- Identificação do host real de produção, diferente do documentado no Vault.
+- Backup do banco e do `.env` antes de qualquer alteração, com integridade verificada.
+- Atualização do código de `bfcfac7` para `c7733f3` por fast-forward de 32 commits.
+- Complemento do `.env` com as variáveis de URL pública, rate limiting e recuperação de senha.
+- Build das imagens, aplicação de três migrações até a head `6c9e0b4d7a12` e recriação dos serviços.
+- Execução completa de `docs/checklist-producao.md`.
+- Teste de restauração do backup em banco separado, descartado após a conferência.
+- Execução manual do job de follow-ups e conferência do agendador.
+
+### Arquivos principais
+
+- `scripts/deploy.sh`
+- `scripts/healthcheck.sh`
+- `docs/checklist-producao.md`
+
+### Testes executados
+
+- `scripts/healthcheck.sh` no servidor.
+- Verificação HTTPS de saúde, sessão ausente, rota inexistente e mutação por GET.
+- Teste real de rate limiting no login.
+- Restauração do dump em banco temporário e conferência das tabelas e registros.
+- Inspeção de portas expostas, cabeçalhos de segurança e validade do certificado.
+
+### Resultado
+
+- Deploy aprovado. Domínio público passou a servir o Funil Sustentare.
+- Pendente apenas a validação do login autenticado pelo titular da credencial.
+
+### Próximos passos
+
+- Configurar SMTP real e validar a recuperação de senha.
+- Cadastrar metas mensais e faixas de bônus.
+- Homologar os fluxos comerciais no domínio público.
+
 ## 2026-10-13 - Gestão administrativa de metas e bônus
 
 ### Realizado

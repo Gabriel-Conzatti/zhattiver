@@ -5,7 +5,7 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 ## Etapa atual
 
-**Etapa 8 — Entrega para VPS (produção endurecida, deploy scriptado, testes E2E, CI)**
+**Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
 ## Concluído
 
@@ -235,15 +235,49 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 - Polimento de longo prazo: dashboards adicionais e integração com WhatsApp Business
   Cloud API para envio real de mensagens.
-- Executar `pytest`, `npm run test`, `npm run build`, `docker compose config` e `scripts/deploy.sh` na VPS real para transformar as marcações `🟨` em `✅`.
+- Homologação comercial assistida no domínio público para transformar as marcações
+  `🟨` de `docs/requisitos.md` em `✅`.
+- Configurar SMTP real e validar ponta a ponta a recuperação de senha.
+- Cadastrar `MonthlyGoal` e `BonusRule` (hoje zerados) antes de qualquer apuração.
+- Criar o usuário SDR (a base tem apenas administrador e vendedor).
+
+## Deploy de produção — 14/10/2026
+
+Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
+
+- Versão anterior em produção: `bfcfac7` (01/10/2026). Fast-forward de 32 commits.
+- Backup pré-deploy verificado antes da atualização (`gzip -t` aprovado).
+- Migrações aplicadas: `1ea62d17932e` → `8f28a73b9c11` → `4b7ac198d21e` → `6c9e0b4d7a12` (head).
+- Serviços recriados: `api`, `worker`, `scheduler`, `web`. Todos saudáveis.
+- `scripts/healthcheck.sh` aprovado; nenhum erro nos logs da API.
+- Identidade pública confirmada como **Funil Sustentare** (o domínio ainda servia "Lynk").
+- Bundle publicado idêntico ao build local (`index-DP9J2fHT.js`).
+
+### Verificado em produção
+
+- `GET /api/v1/health` responde `200`.
+- `GET /api/v1/auth/me` sem sessão responde `401`.
+- Rota inexistente da API responde `404`; rota desconhecida da SPA entrega o `index.html`.
+- `GET` em rota de mutação responde `405` (nenhuma mutação por GET).
+- Rate limiting real: bloqueio na 8ª tentativa inválida, com `Retry-After: 899`.
+- Restauração do backup validada em banco separado (40 tabelas, dados íntegros) e descartada em seguida.
+- Backup automático diário ativo via cron às 03h, com 10 dias de histórico.
+- `generate_daily_followups` executado manualmente com sucesso (`{'created': 0}`, base sem oportunidades).
+- Celery beat ativo com `close_daily_metas` e `generate_daily_followups` registrados.
+- Apenas 80, 443 e 22 expostos no host; banco, Redis e API permanecem na rede interna.
+- Certificado Let's Encrypt válido até 29/12/2026, TLS 1.3, com renovação ARI acompanhada pelo Caddy.
+- SPA renderiza login e recuperação de senha sem violação de CSP.
+
+### Pendente de validação pelo responsável
+
+- Login autenticado do administrador e conferência do painel (exige credencial do titular).
 
 ## Próximo passo
 
-1. Provisione a VPS (Ubuntu 22.04+, Docker + Compose v2, DNS apontado).
-2. Clone o repositório em `/opt/lynk/app` e siga `docs/checklist-producao.md`.
-3. Após o boot, rode `scripts/healthcheck.sh` e execute `npm run test:e2e` a partir de uma máquina cliente com `LYNK_E2E_BASE_URL` apontando para o domínio.
-4. Configure `cron` diário para `scripts/backup.sh` e verifique restauração em ambiente separado (`docs/backup-restore.md`).
-5. Marque os itens `🟨` de `docs/requisitos.md` como `✅` conforme cada fluxo for confirmado em produção.
+1. Entrar com o administrador em `https://funil.zhattiver.com` e validar painel, notificações e menus.
+2. Configurar SMTP real no `.env` e testar a recuperação de senha ponta a ponta.
+3. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
+4. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
 
 ## Limitações declaradas
 

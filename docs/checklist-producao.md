@@ -130,3 +130,30 @@ docker compose up -d --build api worker scheduler web
   ```bash
   docker compose exec worker celery -A app.jobs.celery_app call app.jobs.tasks.generate_daily_followups
   ```
+
+## 12. Execução de 2026-10-14
+
+Checklist executado integralmente no ambiente público. Resultado em `PROGRESS.md`.
+
+### Aprovado
+
+Backup pré-deploy verificado, atualização por fast-forward, três migrações até a head
+`6c9e0b4d7a12`, serviços recriados e saudáveis, `scripts/healthcheck.sh` sem erros,
+identidade pública correta, apenas 80/443/22 expostos, cabeçalhos de segurança e TLS 1.3
+ativos, rate limiting respondendo `429` com `Retry-After`, restauração do backup validada
+em banco separado e job de follow-ups executado com sucesso.
+
+### Pendente
+
+Login autenticado do administrador, SMTP real, cadastro de metas e faixas de bônus,
+criação do usuário SDR e homologação dos fluxos comerciais.
+
+### Armadilhas observadas
+
+- `git pull --ff-only` pode falhar por mudança de permissão de arquivo. Resolva com
+  `git config core.fileMode false` em vez de descartar alterações.
+- `docker compose exec -T` consome o stdin herdado. Ao rodar um script por SSH, envie o
+  arquivo e execute-o, e acrescente `< /dev/null` a cada `exec -T`.
+- Se a porta 80 estiver bloqueada pelo provedor, a emissão e a renovação do certificado
+  continuam funcionando por TLS-ALPN-01 na 443, mas não há redirecionamento de HTTP para
+  HTTPS. Avise os usuários para acessarem o domínio com `https://`.

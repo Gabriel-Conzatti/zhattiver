@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-10-14] - Publicado em produção
+
+Commit `c7733f3` publicado em `funil.zhattiver.com`, substituindo a versão de 01/10/2026.
+Todo o conteúdo listado em "Não publicado" até esta data passou a valer em produção.
+
+### Operação
+
+- Três migrações aplicadas até a head `6c9e0b4d7a12`.
+- A migração de invalidação de sessões exige novo login de todos os usuários.
+- Variáveis de URL pública, rate limiting e recuperação de senha explicitadas no `.env`.
+- Backup pré-deploy verificado e restauração validada em banco separado.
+
 ## [Não publicado]
 
 ### Adicionado
