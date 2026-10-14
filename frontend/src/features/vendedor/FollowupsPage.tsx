@@ -22,26 +22,26 @@ export function FollowupsPage() {
           <div>
             <h1 className="text-lg font-semibold">Follow-ups</h1>
             <p className="text-sm text-text-secondary">
-              24h corridas após a última atualização relevante + próximo dia útil (RN-016/017).
-              Se há próxima ação programada, o follow-up automático é suprimido (RN-018).
+              Após 24 horas sem atualização, o acompanhamento é programado para o próximo
+              dia útil. Uma próxima ação já agendada evita lembretes duplicados.
             </p>
           </div>
         </div>
       </section>
 
       <section className="card overflow-hidden">
-        <header className="flex items-center justify-between border-b border-border px-4 py-2 text-sm font-semibold">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2 text-sm font-semibold">
           <span>Follow-ups automáticos pendentes ({pending.length})</span>
           <span className="text-xs text-text-muted">Ordenados por última atualização</span>
         </header>
         {pending.length === 0 ? (
           <p className="p-6 text-sm text-text-secondary">
-            Nenhum follow-up pendente. 0/0 — Concluída.
+            Nenhum follow-up pendente.
           </p>
         ) : (
           <ul className="divide-y divide-border">
             {pending.map((row) => (
-              <li key={row.opportunity_id} className="flex items-center justify-between px-4 py-2 text-sm">
+              <li key={row.opportunity_id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 text-sm">
                 <div>
                   <div className="font-medium">{row.lead_name ?? '—'}</div>
                   <div className="text-xs text-text-muted">
@@ -73,7 +73,7 @@ export function FollowupsPage() {
             {nextActions.map((na) => (
               <li
                 key={na.id}
-                className="flex items-center justify-between px-4 py-2 text-sm"
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 text-sm"
               >
                 <div>
                   <div className="font-medium">{na.type}</div>

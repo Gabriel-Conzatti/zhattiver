@@ -1,5 +1,41 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Auditoria de navegação e acabamento visual
+
+### Realizado
+
+- Auditoria visual local dos perfis administrador, vendedor e SDR em desktop e celular.
+- Menu administrativo responsivo e navegação horizontal contida nos demais perfis.
+- Remoção de busca e botões sem comportamento disponível.
+- Correção de títulos com contraste inválido por colisão de classes Tailwind.
+- Cards com destino real, textos operacionais revisados e métricas fictícias removidas.
+- Logout protegido contra restauração de resposta autenticada pelo cache do navegador.
+- Registro de que o domínio público ainda executa uma versão antiga.
+
+### Arquivos principais
+
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+- `frontend/src/styles/globals.css`
+- `frontend/e2e/responsive-navigation.spec.ts`
+
+### Testes executados
+
+- TypeScript e ESLint.
+- 12 testes Vitest.
+- Build Vite de produção.
+- Playwright com 14 de 14 cenários aprovados em base limpa.
+- Verificação manual das 23 rotas autenticadas em viewport de 390 px.
+
+### Resultado
+
+- Navegação e acabamento visual aprovados localmente.
+
+### Próximos passos
+
+- Publicar a `main` atualizada na VPS.
+- Repetir a auditoria no domínio público após o deploy.
+
 ## 2026-10-14 - Recuperação segura de senha
 
 ### Realizado

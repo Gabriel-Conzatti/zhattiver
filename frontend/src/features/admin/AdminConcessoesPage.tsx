@@ -66,8 +66,8 @@ export function AdminConcessoesPage() {
           <ShieldCheck className="h-5 w-5 text-brand-cyan" /> Nova concessão
         </h2>
         <p className="mt-1 text-xs text-text-secondary">
-          Bônus de outros vendedores nunca é delegável (MP-004). Concessões expiram automaticamente
-          pela vigência (MP-005).
+          Bônus de outros vendedores nunca podem ser delegados. As concessões expiram
+          automaticamente ao fim da vigência.
         </p>
         <div className="mt-3 space-y-3">
           <select

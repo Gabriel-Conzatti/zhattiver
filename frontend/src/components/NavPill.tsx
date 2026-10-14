@@ -12,9 +12,9 @@ interface Props {
 
 export function NavPill({ items }: Props) {
   return (
-    <nav className="nav-pill" aria-label="Navegação principal">
+    <nav className="nav-pill w-max" aria-label="Navegação principal">
       {items.map((item) => (
-        <NavLink key={item.to} to={item.to} end={item.end} className="inline-flex">
+        <NavLink key={item.to} to={item.to} end={item.end} className="inline-flex shrink-0">
           {({ isActive }) => (
             <span data-active={isActive ? 'true' : 'false'} className="nav-pill-item">
               {item.label}

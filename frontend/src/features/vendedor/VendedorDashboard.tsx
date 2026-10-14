@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Headphones, Megaphone, Target, TrendingUp, Trophy } from 'lucide-react';
+import { Calendar, Headphones, Megaphone, Target, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { bonusApi, opportunities, schedules } from '@/lib/api';
@@ -40,7 +40,7 @@ export function VendedorDashboard() {
           <p className="text-sm text-text-secondary">Carregando…</p>
         )}
         {!schedulesQuery.isLoading && inWindow.length === 0 && overdue.length === 0 && (
-          <EmptyState message="Sem agendamentos exigíveis hoje. 0/0 — Concluída (RN-015)." />
+          <EmptyState message="Nenhum agendamento exige contato hoje." />
         )}
         {(inWindow.length > 0 || overdue.length > 0) && (
           <ul className="space-y-2">
@@ -74,7 +74,7 @@ export function VendedorDashboard() {
       <aside className="space-y-4">
         <section className="card p-5">
           <header className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-base font-semibold">
+            <h3 className="flex items-center gap-2 text-[1rem] font-semibold">
               <Target className="h-4 w-4 text-brand-cyan" /> Minhas metas de hoje
             </h3>
           </header>
@@ -98,7 +98,7 @@ export function VendedorDashboard() {
           />
           {goals && (
             <p className="mt-3 text-xs text-text-muted">
-              Meta operacional fecha às {goals.closes_at_hour}h (RN-003).
+              A meta operacional do dia fecha às {goals.closes_at_hour}h.
             </p>
           )}
         </section>
@@ -106,7 +106,7 @@ export function VendedorDashboard() {
         <section className="card p-5">
           <header className="mb-3 flex items-center gap-2">
             <Trophy className="h-4 w-4 text-brand-orange" />
-            <h3 className="text-base font-semibold">Meta do mês</h3>
+            <h3 className="text-[1rem] font-semibold">Meta do mês</h3>
           </header>
           {production ? (
             <div className="space-y-2 text-sm">
@@ -134,23 +134,10 @@ export function VendedorDashboard() {
               )}
             </div>
           ) : (
-            <p className="text-sm text-text-secondary">Configuração administrativa pendente.</p>
+            <p className="text-sm text-text-secondary">
+              A meta mensal ainda não foi configurada pela administração.
+            </p>
           )}
-        </section>
-
-        <section className="card p-5">
-          <header className="mb-3 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-brand-cyan" />
-            <h3 className="text-base font-semibold">Meu desempenho da semana</h3>
-          </header>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            {['Contatos', 'Agendamentos', 'Propostas', 'Ganhos'].map((label) => (
-              <div key={label} className="rounded-xl border border-border bg-surface-2 p-3">
-                <div className="text-xl font-semibold">—</div>
-                <div className="text-[10px] uppercase tracking-wide text-text-muted">{label}</div>
-              </div>
-            ))}
-          </div>
         </section>
       </aside>
 
@@ -164,7 +151,7 @@ export function VendedorDashboard() {
           </Link>
         </header>
         {pendingFollowups.length === 0 ? (
-          <EmptyState message="Nenhum follow-up pendente. RN-016/017 verificados a cada acesso." />
+          <EmptyState message="Nenhum follow-up pendente no momento." />
         ) : (
           <ul className="space-y-2">
             {pendingFollowups.slice(0, 6).map((f) => (
@@ -203,7 +190,7 @@ function MetricBar({
   target: number;
 }) {
   const pct = target > 0 ? (done / target) * 100 : done > 0 ? 100 : 0;
-  const value = target > 0 ? `${done}/${target}` : `${done}/0 — Concluída`;
+  const value = target > 0 ? `${done}/${target}` : `${done}`;
   return (
     <div className="mb-3 last:mb-0">
       <div className="mb-1 flex items-center justify-between text-sm">

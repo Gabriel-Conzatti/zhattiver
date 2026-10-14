@@ -27,7 +27,7 @@ export function AdminLeadsPage() {
         </div>
         <input
           type="search"
-          className="input w-72"
+          className="input w-full sm:w-72"
           placeholder="Buscar por nome…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

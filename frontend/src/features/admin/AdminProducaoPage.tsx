@@ -22,15 +22,15 @@ export function AdminProducaoPage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Produção</h1>
           <p className="text-sm text-text-secondary">
-            Vendas registradas passam por validação administrativa (RN-036/037). Apenas
-            validadas contam para metas, faixas e bônus (RN-038).
+            Vendas registradas passam por validação administrativa. Apenas vendas
+            validadas contam para metas, faixas e bônus.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
           {(['registered', 'validated', 'cancelled', ''] as const).map((s) => (
             <button
               key={s}
@@ -162,10 +162,10 @@ function CancelDialog({ sale, onClose }: { sale: SaleSummary; onClose: () => voi
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-md card-strong p-6">
-        <h3 className="text-base font-semibold">Cancelar venda</h3>
+        <h3 className="text-[1rem] font-semibold">Cancelar venda</h3>
         <p className="mt-1 text-xs text-text-secondary">
-          Cancelamento antes do pagamento retira a venda da produção considerada. Depois do
-          pagamento, o bônus histórico é preservado (RN-040/041).
+          O cancelamento antes do pagamento retira a venda da produção considerada.
+          Depois do pagamento, o bônus histórico é preservado.
         </p>
         <label className="label mt-3">Justificativa</label>
         <textarea

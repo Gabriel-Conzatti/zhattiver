@@ -20,7 +20,7 @@ export function FunilPage() {
         <h1 className="text-lg font-semibold">Funil</h1>
         <p className="text-sm text-text-secondary">
           Clique em um card para abrir a oportunidade e registrar contatos, mudar etapa,
-          criar próxima ação, marcar ganho ou perda (RN-023..RN-025).
+          criar a próxima ação ou marcar ganho e perda.
         </p>
       </section>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-6">

@@ -29,7 +29,7 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
 }
 
 export async function api<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, headers, method = 'GET', ...rest } = options;
+  const { body, headers, method = 'GET', cache = 'no-store', ...rest } = options;
   const finalHeaders = new Headers(headers ?? {});
   finalHeaders.set('Accept', 'application/json');
 
@@ -45,6 +45,7 @@ export async function api<T = unknown>(path: string, options: RequestOptions = {
   const response = await fetch(`/api/v1${path}`, {
     method,
     credentials: 'include',
+    cache,
     headers: finalHeaders,
     body: body === undefined ? undefined : JSON.stringify(body),
     ...rest,

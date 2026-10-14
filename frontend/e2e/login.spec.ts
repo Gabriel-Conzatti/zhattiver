@@ -28,7 +28,6 @@ test.describe('Login e roteamento por perfil', () => {
     await page.getByLabel('Senha').fill(password);
     await page.getByRole('button', { name: /Entrar/i }).click();
     await expect(page).toHaveURL(/\/admin(?:$|\/)/);
-    await expect(page.getByText('Funil Sustentare', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Painel administrativo/i })).toBeVisible();
   });
 
@@ -40,6 +39,9 @@ test.describe('Login e roteamento por perfil', () => {
     await expect(page).toHaveURL(/\/admin/);
     await page.getByRole('button', { name: /Sair/i }).click();
     await expect(page).toHaveURL(/\/login/);
+    await page.reload();
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByLabel('Email')).toBeVisible();
   });
 
   test('credenciais inválidas mostram erro', async ({ page }) => {

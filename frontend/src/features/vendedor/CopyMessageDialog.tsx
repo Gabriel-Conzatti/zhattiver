@@ -116,10 +116,10 @@ export function CopyMessageDialog({
             {state.kind === 'ready' && (
               <div className="mt-3 text-xs text-text-secondary">
                 {state.counted
-                  ? 'Este contato conta para sua meta do dia (RN-006).'
+                  ? 'Este contato conta para sua meta do dia.'
                   : state.reused
                     ? 'Cópia repetida — já estava registrada.'
-                    : 'Registro criado sem contagem para meta (RN-007).'}
+                    : 'Registro criado sem contagem para a meta.'}
               </div>
             )}
             <div className="mt-4 flex justify-end gap-2">

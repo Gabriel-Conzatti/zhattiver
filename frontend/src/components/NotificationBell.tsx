@@ -48,7 +48,7 @@ export function NotificationBell() {
     <div className="relative" data-notif-root>
       <button
         type="button"
-        className="relative grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface"
+        className="icon-button relative"
         aria-label={`Notificações (${unread} não lidas)`}
         onClick={() => setOpen((o) => !o)}
       >
@@ -60,7 +60,7 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-40 w-[360px] card-strong p-3">
+        <div className="absolute right-0 top-11 z-40 w-[min(360px,calc(100vw-1.5rem))] card-strong p-3">
           <header className="mb-2 flex items-center justify-between">
             <div className="text-sm font-semibold">Notificações</div>
             {unread > 0 && (

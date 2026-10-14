@@ -130,7 +130,7 @@ export function OpportunityDrawer({ opportunityId, onClose }: Props) {
                 </button>
               </div>
               <p className="mt-2 text-xs text-text-muted">
-                Registrar resposta não obriga a mudar de etapa (RN-024).
+                Registrar uma resposta não altera automaticamente a etapa.
               </p>
             </section>
 
@@ -376,7 +376,7 @@ function LoseDialog({
           </option>
         ))}
       </select>
-      <label className="label mt-3">Justificativa (obrigatória — RN-054)</label>
+      <label className="label mt-3">Justificativa obrigatória</label>
       <textarea
         className="input h-24"
         value={justification}
@@ -433,8 +433,7 @@ function RecycleDialog({
   return (
     <ModalShell title="Reagendar (reciclagem)" onClose={onClose}>
       <p className="text-xs text-text-secondary">
-        Cria um novo agendamento vinculado ao lead. O histórico da tentativa atual é
-        preservado (RN-059).
+        Cria um novo agendamento vinculado ao lead e preserva o histórico da tentativa atual.
       </p>
       <label className="label mt-3">Nova data</label>
       <input
@@ -548,7 +547,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
     >
       <div className="w-full max-w-md card-strong p-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold">{title}</h3>
+          <h3 className="text-[1rem] font-semibold">{title}</h3>
           <button type="button" onClick={onClose} aria-label="Fechar">
             <X className="h-4 w-4" />
           </button>

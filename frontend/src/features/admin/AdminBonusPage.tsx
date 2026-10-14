@@ -32,12 +32,12 @@ export function AdminBonusPage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Bônus</h1>
           <p className="text-sm text-text-secondary">
-            Snapshot mensal por vendedor/produto. Pagamento previsto no dia 20 do mês seguinte
-            (RN-039). Após pago, o valor histórico é preservado (RN-041).
+            Apuração mensal por vendedor e produto. O pagamento é previsto para o dia
+            20 do mês seguinte e o valor pago permanece no histórico.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function AdminBonusPage() {
       <section className="card p-5">
         <div className="flex items-center gap-2 text-sm text-text-secondary">
           <Trophy className="h-4 w-4 text-brand-orange" />
-          Ao marcar como pago, o snapshot atual da regra e da métrica é congelado (RN-041).
+          Ao marcar como pago, a regra e a métrica atuais são preservadas no histórico.
         </div>
       </section>
     </div>
