@@ -7,6 +7,8 @@
   `email-ssl.com.br:587` por STARTTLS e o servidor exige `AUTH PLAIN/LOGIN`. O endpoint
   legado `smtp.locaweb.com.br` não responde. O configurador seguro
   `/root/configure-smtp.py` aguarda uma senha exclusiva da caixa remetente.
+  **Não bloqueia o go-live**: a redefinição administrativa de senha foi validada em
+  produção e cobre o caso de esquecimento enquanto o e-mail não estiver ativo.
 - `MonthlyGoal` e `BonusRule` não possuem nenhum registro em produção. Sem cadastro
   prévio, metas e apuração de bônus não produzem resultado.
 - A base de produção tem apenas administrador e vendedor. Falta criar o usuário SDR
@@ -21,6 +23,9 @@
 
 ## Resolvidos
 
+- Risco de bloqueio de acesso por falta de SMTP. Em 2026-10-14 ficou comprovado que a
+  redefinição administrativa de senha funciona em produção, invalida sessões ativas e
+  gera auditoria, servindo como caminho operacional até o e-mail ser configurado.
 - Em 2026-10-13, `funil.zhattiver.com` servia uma versão antiga identificada como “Lynk”.
   Resolvido pelo deploy de 2026-10-14, que publicou o commit `c7733f3`.
 - Homologação de deploy e restauração de backup na VPS. Ambas executadas e aprovadas

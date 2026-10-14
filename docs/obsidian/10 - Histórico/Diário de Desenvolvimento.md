@@ -1,5 +1,43 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Validação da redefinição administrativa de senha
+
+### Realizado
+
+- Criação de um par descartável de administrador e vendedor diretamente no banco de
+  produção, com senhas aleatórias e auditoria explícita.
+- Autenticação do administrador pelo domínio público, com cookie CSRF e cabeçalho
+  `X-CSRF-Token`.
+- Chamada de `PATCH /api/v1/admin/users/<id>` com `reset_password`, respondendo `200`.
+- Login do vendedor com a nova senha, abertura de sessão própria e confirmação de `403`
+  ao tentar uma rota administrativa.
+- Conferência da trilha de auditoria: dois cadastros, uma atualização e dois logins.
+- Remoção das contas descartáveis e dos scripts temporários do servidor e do contêiner.
+
+### Arquivos principais
+
+- PROGRESS.md
+- docs/checklist-producao.md
+- docs/obsidian/11 - Pendências/Problemas Conhecidos.md
+
+### Testes executados
+
+- Fluxo HTTPS real contra `funil.zhattiver.com`: login do administrador, redefinição,
+  login do vendedor, sessão autenticada e bloqueio por papel.
+- Verificação pós-limpeza: login das contas removidas responde `401`, base volta a
+  administrador e vendedor, `GET /api/v1/health` responde `200` e os seis serviços
+  seguem saudáveis.
+
+### Resultado
+
+- Aprovado. A ausência de SMTP deixa de ser bloqueador para a entrada em operação.
+
+### Próximos passos
+
+- Cadastrar metas mensais e faixas de bônus.
+- Criar o usuário SDR.
+- Homologar os fluxos comerciais das RN marcadas com `🟨`.
+
 ## 2026-10-14 - Deploy de produção e execução do checklist
 
 ### Realizado

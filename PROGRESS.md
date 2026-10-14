@@ -239,7 +239,8 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   `🟨` de `docs/requisitos.md` em `✅`.
 - Concluir a autenticação SMTP com uma senha exclusiva da caixa Locaweb e validar o
   recebimento. DNS, endpoint `email-ssl.com.br:587`, STARTTLS e conectividade da VPS já
-  foram verificados; o configurador seguro está em `/root/configure-smtp.py`.
+  foram verificados; o configurador seguro está em `/root/configure-smtp.py`. Não é
+  bloqueador: a redefinição administrativa de senha já foi validada em produção.
 - Cadastrar `MonthlyGoal` e `BonusRule` (hoje zerados) antes de qualquer apuração.
 - Criar o usuário SDR (a base tem apenas administrador e vendedor).
 
@@ -273,14 +274,22 @@ Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
   metas e bônus, configurações, notificações e auditoria carregaram corretamente.
 - A conta descartável foi removida após o smoke test; a base voltou aos dois usuários
   originais e a sessão recebeu `401` com redirecionamento para o login.
+- Redefinição administrativa de senha validada ponta a ponta sobre HTTPS com um par
+  descartável de administrador e vendedor: `PATCH /api/v1/admin/users/<id>` com
+  `reset_password` respondeu `200`, o vendedor autenticou com a nova senha e recebeu
+  `403` ao tentar rota administrativa. A auditoria registrou os dois cadastros, a
+  atualização e os dois logins. As contas foram removidas e passaram a responder `401`.
 
 ## Próximo passo
 
-1. Criar uma senha exclusiva para a caixa remetente na Locaweb e executar
-   `python3 /root/configure-smtp.py` na VPS. O configurador valida a autenticação antes
-   de alterar o `.env`, recria a API e dispara uma recuperação real.
-2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
+1. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
+2. Criar o usuário SDR para homologar o fluxo de prospecção.
 3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
+4. Quando houver uma senha exclusiva da caixa remetente na Locaweb, executar
+   `python3 /root/configure-smtp.py` na VPS. O configurador valida a autenticação antes
+   de alterar o `.env`, recria a API e dispara uma recuperação real. Enquanto isso, a
+   redefinição administrativa de senha cobre o caso de esquecimento, portanto o e-mail
+   não bloqueia a entrada em operação.
 
 ## Limitações declaradas
 

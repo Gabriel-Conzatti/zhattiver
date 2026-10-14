@@ -146,10 +146,24 @@ validado. O smoke test autenticado percorreu painel, equipe, metas e bônus, con
 e auditoria. A conta descartável foi removida; a sessão perdeu acesso imediatamente e a
 base voltou aos dois usuários originais.
 
+A redefinição administrativa de senha também foi validada ponta a ponta sobre HTTPS.
+Com um par descartável de administrador e vendedor, o administrador autenticou, chamou
+`PATCH /api/v1/admin/users/<id>` com `reset_password` e recebeu `200`. O vendedor
+autenticou com a nova senha, abriu sessão própria e recebeu `403` ao tentar uma rota
+administrativa, confirmando o isolamento por papel. A trilha de auditoria registrou os
+dois cadastros, a atualização e os dois logins. As contas descartáveis foram removidas,
+a base voltou aos dois usuários originais e o login das contas apagadas passou a
+responder `401`.
+
 ### Pendente
 
 SMTP real, cadastro de metas e faixas de bônus, criação do usuário SDR e homologação dos
 fluxos comerciais.
+
+A ausência de SMTP não impede a entrada em operação. Enquanto o envio de e-mail não
+estiver configurado, o administrador redefine a senha de qualquer usuário pela tela de
+equipe e entrega a senha provisória por um canal seguro. A operação invalida as sessões
+ativas do usuário e fica registrada em auditoria.
 
 O domínio usa Email Locaweb. O endpoint funcional verificado da VPS é
 `email-ssl.com.br:587` com STARTTLS e autenticação obrigatória; o host legado
@@ -164,6 +178,12 @@ aciona uma recuperação real.
   `git config core.fileMode false` em vez de descartar alterações.
 - `docker compose exec -T` consome o stdin herdado. Ao rodar um script por SSH, envie o
   arquivo e execute-o, e acrescente `< /dev/null` a cada `exec -T`.
+- Evite alimentar `flask shell` pela entrada padrão. O console interativo quebra em
+  blocos indentados sem linha em branco e rejeita o BOM que o PowerShell grava com
+  `Set-Content -Encoding utf8`. Prefira um script normal copiado com `docker compose cp`
+  e executado com `python`, usando `-w /app -e PYTHONPATH=/app` para que o pacote `app`
+  seja importável. Para gerar arquivos sem BOM use
+  `[System.IO.File]::WriteAllText($caminho, $texto, (New-Object System.Text.UTF8Encoding($false)))`.
 - Se a porta 80 estiver bloqueada pelo provedor, a emissão e a renovação do certificado
   continuam funcionando por TLS-ALPN-01 na 443, mas não há redirecionamento de HTTP para
   HTTPS. Avise os usuários para acessarem o domínio com `https://`.
