@@ -186,9 +186,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - A CI do PR #1 confirmou os mesmos fluxos com PostgreSQL 16, Redis 7 e Chromium.
 - O seed E2E também prepara uma venda pendente determinística; o fluxo administrativo
   valida a venda e confirma sua passagem para a produção oficial.
-- A identidade visível do produto foi atualizada para **Funil Sustentare** no login,
-  navegação, administração, título do navegador e favicon. Identificadores técnicos
-  legados (`LYNK_*`, comando `flask lynk`) foram preservados por compatibilidade operacional.
+- A identidade visível do produto é **Lynk** no login, navegação, administração,
+  título do navegador e favicon, conforme a ADR-002 (que substitui a ADR-001).
+  Os identificadores técnicos `LYNK_*` e o comando `flask lynk` seguem válidos e
+  agora estão alinhados à marca.
 - Cobertura de autorização adicionada em `backend/tests/test_authorization_boundaries.py`:
   SDR não acessa vendas nem oportunidades; vendedor só vê as próprias vendas; organização
   externa não localiza vendas; bônus sem concessão não expõe valor; listagem administrativa
@@ -276,6 +277,7 @@ Publicado em `funil.zhattiver.com` a partir do commit `e23d4ae`.
 - Serviços recriados: `api`, `worker`, `scheduler`, `web`. Todos saudáveis.
 - `scripts/healthcheck.sh` aprovado; nenhum erro nos logs da API.
 - Identidade pública confirmada como **Funil Sustentare** (o domínio ainda servia "Lynk").
+  A marca foi posteriormente revista para **Lynk** na publicação de 14/10/2026 (ADR-002).
 - Bundle publicado idêntico ao build local (`index-DP9J2fHT.js`).
 
 ### Verificado em produção
