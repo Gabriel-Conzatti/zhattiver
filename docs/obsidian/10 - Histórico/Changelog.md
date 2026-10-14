@@ -9,6 +9,7 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 - Três migrações aplicadas até a head `6c9e0b4d7a12`.
 - Fechamento funcional sem dependência de SDR publicado no commit `e23d4ae`.
+- Nova tela de login e logo oficial publicados no commit `8c2798e`.
 - A migração de invalidação de sessões exige novo login de todos os usuários.
 - Variáveis de URL pública, rate limiting e recuperação de senha explicitadas no `.env`.
 - Backup pré-deploy verificado e restauração validada em banco separado.

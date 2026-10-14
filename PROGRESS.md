@@ -17,6 +17,8 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
   em Equipe > Editar permanece como caminho operacional.
 - O SVG fornecido foi incorporado em `frontend/public/logo-funil.svg` e passou a ser usado
   no login, no cabeçalho do vendedor/SDR e no menu administrativo.
+- Publicado em produção no commit `8c2798e`; healthcheck externo e interface pública
+  validados em `https://funil.zhattiver.com/login`.
 
 ## Concluído
 

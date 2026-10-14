@@ -26,11 +26,13 @@
 
 ### Resultado
 
-- Implementação aguardando validação visual no navegador e publicação.
+- Aprovado e publicado em produção no commit `8c2798e`.
+- Healthcheck externo respondeu `200` e a página pública confirmou logo, campos Login/Senha
+  e botão ACESSAR, sem recuperação de senha ou seletores de vendedor/SDR.
 
 ### Próximos passos
 
-- Revisar a proporção do logo e os espaçamentos após a conferência visual em produção.
+- Aplicar as próximas referências visuais após aprovação desta tela.
 
 ## 2026-10-14 - Adiamento do SMTP e preparo para referências de UI/UX
 
