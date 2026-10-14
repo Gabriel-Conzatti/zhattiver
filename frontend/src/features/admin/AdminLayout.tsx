@@ -11,6 +11,7 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
     items: [
       { to: '/admin', label: 'Dashboard', end: true },
       { to: '/admin/prospeccao', label: 'Prospecção' },
+      { to: '/admin/importacoes', label: 'Importações' },
       { to: '/admin/cross-sell', label: 'Cross-Sell' },
     ],
   },

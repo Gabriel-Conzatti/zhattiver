@@ -4,7 +4,7 @@ import { CheckCircle2, FileSpreadsheet, UploadCloud } from 'lucide-react';
 
 import { importsApi } from '@/lib/api';
 
-export function SdrImportacoesPage() {
+export function ImportacoesPage() {
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);

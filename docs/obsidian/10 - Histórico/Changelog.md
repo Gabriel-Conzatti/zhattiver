@@ -29,6 +29,9 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Alterado
 
+- Tela de Importações movida para o módulo compartilhado
+  `frontend/src/features/imports/ImportacoesPage.tsx`, usada pelas rotas de
+  administrador e de SDR sem duplicar código.
 - Dashboards de vendedor, SDR e administrador alinhados ao padrão visual escuro
   das referências, com cartões, indicadores e atalhos responsivos.
 - Painéis passam a exibir estados explícitos de carregamento, vazio e erro, sem
@@ -46,6 +49,9 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Adicionado
 
+- Importação de planilhas de clientes disponível para o administrador em
+  `/admin/importacoes`, com item no menu Comercial e atalho no painel. O backend
+  já autorizava o perfil; faltava apenas o caminho na interface.
 - Estados de carregamento, envio por Enter, mensagens de erro específicas por
   situação (credenciais, excesso de tentativas, acesso bloqueado) e suporte a
   leitores de tela na tela de login.

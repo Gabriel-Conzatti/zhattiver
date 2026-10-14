@@ -5,6 +5,7 @@ import {
   CheckCheck,
   ClipboardList,
   FileBarChart,
+  FileSpreadsheet,
   Settings,
   Target,
   UserRoundCheck,
@@ -72,6 +73,7 @@ export function AdminDashboard() {
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <DashboardActionLink to="/admin/prospeccao" icon={Target} title="Prospecção" description="Cadastrar, revisar e disponibilizar leads." />
+          <DashboardActionLink to="/admin/importacoes" icon={FileSpreadsheet} title="Importações" description="Enviar planilhas de clientes e revisar os lotes." />
           <DashboardActionLink to="/admin/producao" icon={ClipboardList} title="Produção" description="Validar vendas e acompanhar pendências." />
           <DashboardActionLink to="/admin/relatorios" icon={FileBarChart} title="Relatórios" description="Consultar a produção consolidada." />
           <DashboardActionLink to="/admin/equipe" icon={UserRoundCheck} title="Equipe" description="Gerenciar usuários, metas e acessos." />

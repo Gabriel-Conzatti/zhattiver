@@ -17,7 +17,7 @@ import { SdrLayout } from '@/features/sdr/SdrLayout';
 import { SdrDashboard } from '@/features/sdr/SdrDashboard';
 import { SdrProspeccaoPage } from '@/features/sdr/SdrProspeccaoPage';
 import { SdrAgendamentosPage } from '@/features/sdr/SdrAgendamentosPage';
-import { SdrImportacoesPage } from '@/features/sdr/SdrImportacoesPage';
+import { ImportacoesPage } from '@/features/imports/ImportacoesPage';
 import { VendedorLayout } from '@/features/vendedor/VendedorLayout';
 import { VendedorDashboard } from '@/features/vendedor/VendedorDashboard';
 import { ProspeccaoPage } from '@/features/vendedor/ProspeccaoPage';
@@ -58,7 +58,7 @@ export function App() {
           <Route index element={<SdrDashboard />} />
           <Route path="prospeccao" element={<SdrProspeccaoPage />} />
           <Route path="agendamentos" element={<SdrAgendamentosPage />} />
-          <Route path="importacoes" element={<SdrImportacoesPage />} />
+          <Route path="importacoes" element={<ImportacoesPage />} />
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -66,6 +66,7 @@ export function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="prospeccao" element={<AdminLeadsPage />} />
+          <Route path="importacoes" element={<ImportacoesPage />} />
           <Route path="producao" element={<AdminProducaoPage />} />
           <Route path="relatorios" element={<AdminRelatoriosPage />} />
           <Route path="bonus" element={<AdminBonusPage />} />

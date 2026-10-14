@@ -1,5 +1,41 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Importação de planilhas para o administrador
+
+### Realizado
+
+- Verificado que `POST /api/v1/imports` já autoriza administrador e SDR, mas a
+  área `/admin/*` não tinha rota nem tela de importação.
+- Tela movida de `features/sdr/SdrImportacoesPage.tsx` para
+  `features/imports/ImportacoesPage.tsx`, compartilhada pelos dois perfis.
+- Criada a rota `/admin/importacoes`, o item de menu no grupo Comercial e o
+  atalho no painel administrativo.
+- Nenhuma alteração no backend foi necessária.
+
+### Arquivos principais
+
+- frontend/src/features/imports/ImportacoesPage.tsx
+- frontend/src/features/imports/ImportacoesPage.test.tsx
+- frontend/src/app/App.tsx
+- frontend/src/features/admin/AdminLayout.tsx
+- frontend/src/features/admin/AdminDashboard.tsx
+- docs/obsidian/03 - Funcionalidades/Importação de Planilhas.md
+
+### Testes executados
+
+- `npm run test` — 32 testes aprovados em 15 arquivos.
+- `npm run typecheck` — aprovado.
+- `npm run lint` — aprovado.
+- `npm run build` — aprovado.
+
+### Resultado
+
+- Aprovado. Pendente de push e deploy, que dependem de autorização do responsável.
+
+### Próximos passos
+
+- Publicar em produção e validar o upload de uma planilha real pelo administrador.
+
 ## 2026-10-14 - Deploy dos dashboards por perfil
 
 ### Realizado

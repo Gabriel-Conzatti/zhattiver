@@ -21,6 +21,9 @@
 
 ## Resolvidos
 
+- Ausência de caminho na interface para o administrador importar planilhas de
+  clientes. Em 2026-10-14 a tela de Importações passou a ser exposta também em
+  `/admin/importacoes`.
 - Risco de bloqueio de acesso por falta de SMTP. Em 2026-10-14 ficou comprovado que a
   redefinição administrativa de senha funciona em produção, invalida sessões ativas e
   gera auditoria, servindo como caminho operacional até o e-mail ser configurado.
