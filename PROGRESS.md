@@ -221,6 +221,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   o token aleatório é persistido somente como hash SHA-256, expira em 30 minutos,
   aceita um único uso e invalida todas as sessões após a redefinição. Falhas de SMTP
   não expõem email ou token nos logs.
+- Auditoria de interface corrigiu navegação móvel nos três perfis, controles inertes,
+  colisão visual do token `base`, cards com destino conhecido e cache HTTP que podia
+  restaurar a sessão visualmente após logout. As 23 rotas autenticadas foram verificadas
+  em viewport de 390 px sem rolagem horizontal da página.
 
 ## Pendente (próximas etapas)
 

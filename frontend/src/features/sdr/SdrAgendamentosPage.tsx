@@ -53,7 +53,7 @@ export function SdrAgendamentosPage() {
         </h2>
         <p className="mt-1 text-sm text-text-secondary">
           Data final da vigência é obrigatória. Se não estiver confirmada, marque a caixa —
-          o item entra normalmente na rotina do vendedor com tag "Data não confirmada" (RN-010).
+          o item entra normalmente na rotina do vendedor com a indicação “Data não confirmada”.
         </p>
         <form
           className="mt-4 space-y-3"

@@ -33,8 +33,8 @@ export function AgendamentosPage() {
           <div>
             <h1 className="text-lg font-semibold">Agendamentos</h1>
             <p className="text-sm text-text-secondary">
-              A janela ideal é 5–7 dias úteis antes da vigência (RN-009). O limite para abordagem
-              é 2 dias úteis antes (RN-011). Fora do limite, a ação vira "Resolver".
+              A janela ideal começa de 5 a 7 dias úteis antes da vigência. Fora do
+              limite de abordagem, use a ação “Resolver”.
             </p>
           </div>
         </header>
@@ -223,8 +223,7 @@ function ResolveDialog({ schedule, onClose }: { schedule: Schedule; onClose: () 
       <div className="w-full max-w-md card-strong p-6">
         <h2 className="text-lg font-semibold">Resolver agendamento</h2>
         <p className="mt-1 text-xs text-text-secondary">
-          Justificativa obrigatória. Um novo agendamento será criado com a data informada
-          (RN-012/013).
+          A justificativa é obrigatória. Um novo agendamento será criado com a data informada.
         </p>
         <label className="label mt-4">Justificativa</label>
         <textarea

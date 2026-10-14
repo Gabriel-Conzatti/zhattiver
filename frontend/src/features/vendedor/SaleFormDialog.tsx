@@ -108,8 +108,8 @@ export function SaleFormDialog({
               </p>
             )}
             <p className="mt-1 text-xs text-text-muted">
-              Comissão calculada no servidor (RN-033). Você pode editar esta venda até 23h59 do
-              próximo dia útil (RN-034).
+              A comissão é calculada automaticamente. Você pode editar esta venda até
+              23h59 do próximo dia útil.
             </p>
           </div>
           <button type="button" aria-label="Fechar" onClick={onClose}>

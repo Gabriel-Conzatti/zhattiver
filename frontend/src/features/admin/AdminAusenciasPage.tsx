@@ -64,8 +64,8 @@ export function AdminAusenciasPage() {
           <UserMinus className="h-5 w-5 text-brand-cyan" /> Registrar ausência
         </h2>
         <p className="mt-1 text-xs text-text-secondary">
-          Meta de prospecção do ausente não é transferida (RN-068). Ao retornar, oportunidades
-          transferidas ficam onde estão (RN-069).
+          A meta de prospecção do ausente não é transferida. Ao retornar,
+          as oportunidades permanecem com o responsável atual.
         </p>
         <div className="mt-3 space-y-3">
           <select
@@ -124,7 +124,7 @@ export function AdminAusenciasPage() {
 
         <h3 className="mt-6 text-sm font-semibold">Transferir carteira</h3>
         <p className="text-xs text-text-secondary">
-          Move agendamentos ativos e follow-ups do vendedor origem para o destino (RN-067).
+          Move agendamentos ativos e follow-ups do vendedor de origem para o destino.
         </p>
         <div className="mt-2 space-y-2">
           <select

@@ -93,8 +93,8 @@ export function SdrProspeccaoPage() {
       <section className="card p-5">
         <h2 className="text-lg font-semibold">Novo lead</h2>
         <p className="mt-1 text-sm text-text-secondary">
-          Telefone é o identificador de duplicidade (RN-076/077). Formatos equivalentes são
-          reconhecidos.
+          O telefone identifica possíveis duplicidades, inclusive quando foi informado
+          com outra formatação.
         </p>
         <form className="mt-4 space-y-3" onSubmit={handleSubmit(onSubmit)}>
           <Field label="Nome" error={errors.name?.message}>

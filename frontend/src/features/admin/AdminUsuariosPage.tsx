@@ -19,12 +19,12 @@ export function AdminUsuariosPage() {
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Usuários</h1>
           <p className="text-sm text-text-secondary">
-            Gerencie perfis, produtos autorizados e reset de senha. Bônus de outros vendedores
-            permanece protegido (MP-004).
+            Gerencie perfis, produtos autorizados e redefinição de senha. Informações
+            individuais de bônus permanecem protegidas.
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
@@ -353,7 +353,7 @@ function Modal({
     >
       <div className="w-full max-w-xl card-strong p-6">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold">{title}</h3>
+          <h3 className="text-[1rem] font-semibold">{title}</h3>
           <button type="button" aria-label="Fechar" onClick={onClose}>
             <X className="h-4 w-4" />
           </button>

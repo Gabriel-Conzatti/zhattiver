@@ -30,8 +30,8 @@ export function ProspeccaoPage() {
             <div>
               <h1 className="text-lg font-semibold">Prospecção</h1>
               <p className="text-sm text-text-secondary">
-                Leads disponibilizados para os produtos aos quais você tem acesso (MP-001).
-                "Copiar mensagem" registra o primeiro contato (RN-006).
+                Leads disponibilizados para os produtos aos quais você tem acesso.
+                Copiar a mensagem registra o primeiro contato.
               </p>
             </div>
           </div>

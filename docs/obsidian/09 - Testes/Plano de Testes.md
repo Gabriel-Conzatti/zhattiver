@@ -15,3 +15,7 @@
 - Primeiro contato e metas do vendedor.
 - Validação administrativa de venda e conferência do relatório financeiro.
 - Criação e arquivamento administrativo de produto.
+- Navegação móvel administrativa sem conteúdo cortado.
+- Ação contextual de nova venda disponível somente ao vendedor.
+- Ausência de controles inertes no perfil SDR.
+- Logout permanece efetivo após recarregar a página.

@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 
+import { NavPill } from '@/components/NavPill';
 import { TopBar } from '@/components/TopBar';
 
 const NAV = [
@@ -13,22 +14,11 @@ export function SdrLayout() {
   return (
     <div className="min-h-screen">
       <TopBar>
-        <nav aria-label="Navegação SDR" className="flex justify-center gap-2">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `nav-pill-item ${isActive ? 'bg-brand-blue/20 text-text-primary' : ''}`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="flex lg:justify-center">
+          <NavPill items={NAV} />
+        </div>
       </TopBar>
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto min-w-0 max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         <Outlet />
       </main>
     </div>

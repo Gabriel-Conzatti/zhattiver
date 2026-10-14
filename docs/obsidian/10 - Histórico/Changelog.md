@@ -18,6 +18,11 @@
 
 ### Corrigido
 
+- Ícones e controles de cabeçalho sem ação para determinados perfis.
+- Estouro horizontal e navegação cortada em telas móveis.
+- Títulos quase invisíveis causados por colisão entre token de cor e classe tipográfica.
+- Reaparecimento visual de sessão após logout por cache HTTP do navegador.
+- Textos técnicos e métricas fictícias expostos na interface.
 - Corridas e duplicações no primeiro contato.
 - Barreiras de autorização e isolamento multiempresa.
 - Estados pendentes, em revisão e cancelados impedidos de compor a apuração comercial.

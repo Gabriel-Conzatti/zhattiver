@@ -18,11 +18,11 @@ export function VendedorLayout() {
   return (
     <div className="min-h-screen">
       <TopBar addAction={() => setShowSale(true)}>
-        <div className="flex justify-center">
+        <div className="flex lg:justify-center">
           <NavPill items={NAV} />
         </div>
       </TopBar>
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto min-w-0 max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         <Outlet />
       </main>
       {showSale && <SaleFormDialog onClose={() => setShowSale(false)} />}

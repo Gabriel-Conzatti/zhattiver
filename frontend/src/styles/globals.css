@@ -21,6 +21,7 @@
     color: #e9f2ff;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   *:focus-visible {
     outline: 2px solid #00cbff;
@@ -55,6 +56,11 @@
            bg-transparent px-4 py-2 font-medium text-text-primary transition hover:bg-surface-2
            disabled:cursor-not-allowed disabled:opacity-50;
   }
+  .icon-button {
+    @apply grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-surface
+           text-text-secondary transition hover:border-brand-cyan/60 hover:bg-surface-2
+           hover:text-text-primary;
+  }
   .input {
     @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-text-primary
            placeholder:text-text-muted focus:border-brand-cyan;
@@ -66,12 +72,19 @@
     @apply flex items-center gap-1 rounded-pill border border-border bg-surface p-1;
   }
   .nav-pill-item {
-    @apply rounded-pill px-4 py-1.5 text-sm text-text-secondary transition hover:text-text-primary;
+    @apply whitespace-nowrap rounded-pill px-4 py-1.5 text-sm text-text-secondary transition
+           hover:text-text-primary;
   }
   .nav-pill-item[data-active='true'] {
     @apply bg-gradient-to-r from-brand-cyan to-brand-blue text-black;
   }
   .badge {
     @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
