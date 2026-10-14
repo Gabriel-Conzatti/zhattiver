@@ -90,7 +90,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-043..RN-051 | Metas com vigência, faixas, bônus fixo/percentual, parcela, estados administrativos | 🟨 |
+| RN-043..RN-051 | Metas com vigência, faixas, bônus fixo/percentual, parcela, estados administrativos | ✅ (gestão administrativa, vigências sem sobreposição, apuração, aprovação, pagamento e cancelamento auditado testados) |
 | RN-052 | Tipos de cliente configuráveis | 🟨 |
 
 ### Perda / reciclagem

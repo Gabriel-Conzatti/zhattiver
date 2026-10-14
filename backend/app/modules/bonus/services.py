@@ -19,6 +19,7 @@ from .models import (
     METRIC_COUNT,
     METRIC_NET_PREMIUM,
     PAY_STATE_APPROVED,
+    PAY_STATE_CANCELLED,
     PAY_STATE_PAID,
     PAY_STATE_PREDICTED,
     BonusPayment,
@@ -270,6 +271,10 @@ def approve_bonus(
         raise BusinessError("forbidden", "Fora da organização", status=403)
     if payment.state == PAY_STATE_PAID:
         raise BusinessError("invalid_state", "Bônus já pago", status=409)
+    if payment.state == PAY_STATE_CANCELLED:
+        raise BusinessError("invalid_state", "Bônus cancelado não pode ser aprovado", status=409)
+    if payment.state == PAY_STATE_APPROVED:
+        return payment
     payment.state = PAY_STATE_APPROVED
     payment.approved_at = now_utc()
     payment.approved_by = actor_user_id
@@ -297,6 +302,8 @@ def mark_bonus_paid(
         raise BusinessError("forbidden", "Fora da organização", status=403)
     if payment.state == PAY_STATE_PAID:
         return payment
+    if payment.state == PAY_STATE_CANCELLED:
+        raise BusinessError("invalid_state", "Bônus cancelado não pode ser pago", status=409)
     payment.state = PAY_STATE_PAID
     payment.paid_at = now_utc()
     payment.paid_amount = paid_amount if paid_amount is not None else payment.amount
@@ -307,6 +314,36 @@ def mark_bonus_paid(
         entity_id=str(payment.id),
         action="pay",
         after={"paid_amount": str(payment.paid_amount)},
+        request_id=request_id,
+    )
+    return payment
+
+
+def cancel_bonus(
+    *,
+    organization_id: str,
+    actor_user_id: str,
+    payment: BonusPayment,
+    reason: str,
+    request_id: str | None = None,
+) -> BonusPayment:
+    if payment.organization_id != organization_id:
+        raise BusinessError("forbidden", "Fora da organização", status=403)
+    if payment.state == PAY_STATE_PAID:
+        raise BusinessError("invalid_state", "Bônus pago não pode ser cancelado", status=409)
+    if payment.state == PAY_STATE_CANCELLED:
+        return payment
+    before = {"state": payment.state}
+    payment.state = PAY_STATE_CANCELLED
+    audit_record(
+        organization_id=organization_id,
+        actor_user_id=actor_user_id,
+        entity_type="bonus_payment",
+        entity_id=str(payment.id),
+        action="cancel",
+        before=before,
+        after={"state": payment.state},
+        reason=reason,
         request_id=request_id,
     )
     return payment

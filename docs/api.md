@@ -88,7 +88,11 @@ IDs vinculados precisam pertencer à organização da sessão.
 - `GET/POST /schedules`, `POST /schedules/{id}/resolve`, `POST /schedules/{id}/contact`.
 - `GET/POST /opportunities`, `POST /opportunities/{id}/copy-message`, `POST /opportunities/{id}/next-action`, `POST /opportunities/{id}/win`, `POST /opportunities/{id}/lose`.
 - `GET/POST /sales`, `POST /sales/{id}/validate`, `POST /sales/{id}/cancel`.
-- `GET /goals`, `GET /bonus/current`, `POST /admin/bonus/{id}/pay`.
+- `GET/POST /monthly-goals` — metas mensais administrativas por vendedor/produto.
+- `GET/POST /bonus-rules`, `PATCH /bonus-rules/{id}` — faixas e encerramento de vigência.
+- `GET /me/production`, `GET /me/bonus` — produção e bônus do próprio usuário.
+- `GET /admin/bonus`, `POST /admin/bonus/refresh`,
+  `POST /admin/bonus/{id}/approve|pay|cancel`.
 - `GET /cross-sell/lists`, `POST /cross-sell/lists/{id}/release`.
 - `GET /reports/*` — apenas admin.
 

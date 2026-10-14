@@ -12,6 +12,13 @@ API, worker e scheduler.
 
 ## Histórico
 
+### `6c9e0b4d7a12` — unicidade de metas mensais
+
+- Adiciona índices únicos parciais separados para metas gerais e metas por produto.
+- Impede duplicidade de metas gerais mesmo quando `product_id` é nulo no PostgreSQL.
+- Rollback: `flask --app wsgi:app db downgrade 4b7ac198d21e`.
+- O downgrade remove somente os índices; nenhuma meta é apagada.
+
 ### `4b7ac198d21e` — tokens de recuperação de senha
 
 - Cria `password_reset_tokens` com organização, usuário, hash SHA-256 do token, validade
@@ -37,5 +44,5 @@ API, worker e scheduler.
 
 - O grafo Alembic deve possuir um único head.
 - A migration deve ser executada em PostgreSQL 16 na CI/homologação antes da produção.
-- Após upgrade, validar login, troca de senha, recuperação por email e invalidação de uma
-  segunda sessão.
+- Após upgrade, validar login, troca de senha, recuperação por email, invalidação de uma
+  segunda sessão e cadastro de meta geral/por produto.

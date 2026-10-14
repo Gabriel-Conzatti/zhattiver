@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Index, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Date, DateTime, Index, Integer, Numeric, String, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -42,6 +42,27 @@ class MonthlyGoal(db.Model, TimestampMixin):
             "month",
             name="uq_monthly_goals_scope",
         ),
+        Index(
+            "uq_monthly_goals_general_scope",
+            "organization_id",
+            "user_id",
+            "year",
+            "month",
+            unique=True,
+            postgresql_where=text("product_id IS NULL"),
+            sqlite_where=text("product_id IS NULL"),
+        ),
+        Index(
+            "uq_monthly_goals_product_scope",
+            "organization_id",
+            "user_id",
+            "product_id",
+            "year",
+            "month",
+            unique=True,
+            postgresql_where=text("product_id IS NOT NULL"),
+            sqlite_where=text("product_id IS NOT NULL"),
+        ),
     )
 
 
@@ -59,7 +80,9 @@ class BonusRule(db.Model, TimestampMixin):
     product_id: Mapped[str] = uuid_fk("products.id")
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     base: Mapped[str] = mapped_column(String(20), nullable=False, default=METRIC_COUNT)
-    bracket_min: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    bracket_min: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=Decimal("0")
+    )
     bracket_max: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     bonus_kind: Mapped[str] = mapped_column(String(10), nullable=False, default=BONUS_KIND_FIXED)
     value: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
@@ -91,7 +114,9 @@ class BonusPayment(db.Model, TimestampMixin):
     month: Mapped[int] = mapped_column(Integer, nullable=False)
     predicted_on: Mapped[date] = mapped_column(Date, nullable=False)
     metric_base: Mapped[str] = mapped_column(String(20), nullable=False)
-    metric_value: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
+    metric_value: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=Decimal("0")
+    )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=Decimal("0"))
     applied_rule_id: Mapped[str | None] = uuid_fk("bonus_rules.id", nullable=True)
     applied_rule_snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

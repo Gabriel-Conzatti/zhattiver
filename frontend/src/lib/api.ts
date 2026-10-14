@@ -438,6 +438,30 @@ export interface AdminBonusRow {
   paid_amount: string | null;
 }
 
+export interface MonthlyGoalRow {
+  id: string;
+  user_id: string;
+  product_id: string | null;
+  year: number;
+  month: number;
+  target_count: number;
+  target_net_premium: string;
+  notes: string | null;
+}
+
+export interface BonusRuleRow {
+  id: string;
+  product_id: string;
+  name: string;
+  base: 'count' | 'net_premium';
+  bracket_min: string;
+  bracket_max: string | null;
+  bonus_kind: 'fixed' | 'percent';
+  value: string;
+  effective_from: string;
+  effective_to: string | null;
+}
+
 export const bonusApi = {
   myProduction: (params: { year?: number; month?: number; product_id?: string } = {}) => {
     const qs = new URLSearchParams();
@@ -477,21 +501,12 @@ export const bonusApi = {
       `/admin/bonus/${id}/pay`,
       { method: 'POST', body: paid_amount ? { paid_amount } : {} },
     ),
-  bonusRules: () =>
-    api<{
-      items: Array<{
-        id: string;
-        product_id: string;
-        name: string;
-        base: string;
-        bracket_min: string;
-        bracket_max: string | null;
-        bonus_kind: string;
-        value: string;
-        effective_from: string;
-        effective_to: string | null;
-      }>;
-    }>('/bonus-rules'),
+  cancel: (id: string, reason: string) =>
+    api<{ id: string; state: string }>(`/admin/bonus/${id}/cancel`, {
+      method: 'POST',
+      body: { reason },
+    }),
+  bonusRules: () => api<{ items: BonusRuleRow[] }>('/bonus-rules'),
   createBonusRule: (input: {
     product_id: string;
     name: string;
@@ -503,18 +518,13 @@ export const bonusApi = {
     effective_from: string;
     effective_to?: string | null;
   }) => api<{ id: string }>('/bonus-rules', { method: 'POST', body: input }),
+  endBonusRule: (id: string, effective_to: string) =>
+    api<{ id: string; effective_to: string }>(`/bonus-rules/${id}`, {
+      method: 'PATCH',
+      body: { effective_to },
+    }),
   goals: (year: number, month: number) =>
-    api<{
-      items: Array<{
-        id: string;
-        user_id: string;
-        product_id: string | null;
-        year: number;
-        month: number;
-        target_count: number;
-        target_net_premium: string;
-      }>;
-    }>(`/monthly-goals?year=${year}&month=${month}`),
+    api<{ items: MonthlyGoalRow[] }>(`/monthly-goals?year=${year}&month=${month}`),
   createGoal: (input: {
     user_id: string;
     product_id?: string | null;
@@ -522,6 +532,7 @@ export const bonusApi = {
     month: number;
     target_count: number;
     target_net_premium: string;
+    notes?: string | null;
   }) => api<{ id: string }>('/monthly-goals', { method: 'POST', body: input }),
 };
 

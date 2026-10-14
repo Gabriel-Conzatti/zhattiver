@@ -10,11 +10,14 @@
 - Relatório mensal de produção por vendedor e produto.
 - Manutenção administrativa de produtos, origens, tipos de cliente, seguradoras e tags.
 - Recuperação de senha por email com token expirável de uso único.
+- Gestão administrativa de metas mensais e faixas de bônus versionadas.
+- Cancelamento auditado de bônus ainda não pagos.
 
 ### Alterado
 
 - Identidade visível atualizada para Funil Sustentare.
 - Elegibilidade de vendas para produção, metas e bônus centralizada conforme RN-038.
+- Apuração de bônus agora exibe nomes de vendedores e produtos em vez de identificadores.
 
 ### Corrigido
 
@@ -28,6 +31,8 @@
 - Estados pendentes, em revisão e cancelados impedidos de compor a apuração comercial.
 - Referências financeiras externas à organização rejeitadas ao registrar vendas.
 - Categoria externa rejeitada ao criar ou editar tags.
+- Referências externas e faixas sobrepostas rejeitadas ao configurar metas e bônus.
+- Duplicidade de meta geral impedida por índice único parcial.
 
 ### Segurança
 

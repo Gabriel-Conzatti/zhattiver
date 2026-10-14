@@ -19,3 +19,6 @@
 - Ação contextual de nova venda disponível somente ao vendedor.
 - Ausência de controles inertes no perfil SDR.
 - Logout permanece efetivo após recarregar a página.
+- Administração de metas mensais e faixas de bônus.
+- Rejeição de referências externas, faixas sobrepostas e vigência retroativa.
+- Cancelamento de bônus previsto com justificativa e auditoria.

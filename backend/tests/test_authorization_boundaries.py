@@ -1,7 +1,9 @@
+import calendar
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import select
 
 from app.core.auth import hash_password
 from app.extensions import db
@@ -741,3 +743,171 @@ def test_mutations_require_and_accept_csrf_token(client, seeded_data):
         headers=_csrf_headers(client),
     )
     assert valid_token.status_code == 204
+
+
+def test_admin_manages_monthly_goals_with_tenant_validation_and_audit(
+    app, client, seeded_data
+):
+    _login(client, seeded_data["admin_a"])
+    headers = _csrf_headers(client)
+    payload = {
+        "user_id": seeded_data["seller_a"]["id"],
+        "product_id": seeded_data["product_a"]["id"],
+        "year": 2026,
+        "month": 11,
+        "target_count": 12,
+        "target_net_premium": "18000.00",
+        "notes": "Meta comercial de novembro",
+    }
+
+    created = client.post("/api/v1/monthly-goals", json=payload, headers=headers)
+    assert created.status_code == 201, created.get_json()
+
+    payload["target_count"] = 15
+    updated = client.post("/api/v1/monthly-goals", json=payload, headers=headers)
+    assert updated.status_code == 200, updated.get_json()
+
+    listed = client.get("/api/v1/monthly-goals?year=2026&month=11")
+    assert listed.status_code == 200
+    assert listed.get_json()["items"] == [
+        {
+            "id": created.get_json()["id"],
+            "user_id": seeded_data["seller_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "year": 2026,
+            "month": 11,
+            "target_count": 15,
+            "target_net_premium": "18000.00",
+            "notes": "Meta comercial de novembro",
+        }
+    ]
+
+    external_product = client.post(
+        "/api/v1/monthly-goals",
+        json={**payload, "product_id": seeded_data["product_b"]["id"]},
+        headers=headers,
+    )
+    assert external_product.status_code == 404
+
+    with app.app_context():
+        actions = db.session.execute(
+            select(AuditLog.action).where(
+                AuditLog.organization_id == seeded_data["org_a"]["id"],
+                AuditLog.entity_type == "monthly_goal",
+            )
+        ).scalars().all()
+        assert actions == ["create", "update"]
+
+
+def test_admin_bonus_rules_reject_overlaps_and_cross_tenant_products(
+    client, seeded_data
+):
+    _login(client, seeded_data["admin_a"])
+    headers = _csrf_headers(client)
+    payload = {
+        "product_id": seeded_data["product_a"]["id"],
+        "name": "Faixa inicial",
+        "base": "net_premium",
+        "bracket_min": "0",
+        "bracket_max": "9999.99",
+        "bonus_kind": "fixed",
+        "value": "500.00",
+        "effective_from": date.today().replace(day=1).isoformat(),
+        "effective_to": None,
+    }
+
+    created = client.post("/api/v1/bonus-rules", json=payload, headers=headers)
+    assert created.status_code == 201, created.get_json()
+
+    overlapping = client.post(
+        "/api/v1/bonus-rules",
+        json={**payload, "name": "Faixa sobreposta", "bracket_min": "9000"},
+        headers=headers,
+    )
+    assert overlapping.status_code == 409
+    assert overlapping.get_json()["error"]["code"] == "overlapping_bonus_rule"
+
+    adjacent = client.post(
+        "/api/v1/bonus-rules",
+        json={
+            **payload,
+            "name": "Faixa superior",
+            "bracket_min": "10000",
+            "bracket_max": None,
+        },
+        headers=headers,
+    )
+    assert adjacent.status_code == 201, adjacent.get_json()
+
+    today = date.today()
+    end_on = date(today.year, today.month, calendar.monthrange(today.year, today.month)[1])
+    ended = client.patch(
+        f"/api/v1/bonus-rules/{created.get_json()['id']}",
+        json={"effective_to": end_on.isoformat()},
+        headers=headers,
+    )
+    assert ended.status_code == 200, ended.get_json()
+    assert ended.get_json()["effective_to"] == end_on.isoformat()
+
+    external = client.post(
+        "/api/v1/bonus-rules",
+        json={**payload, "product_id": seeded_data["product_b"]["id"]},
+        headers=headers,
+    )
+    assert external.status_code == 404
+
+
+def test_non_admin_cannot_read_bonus_configuration(client, seeded_data):
+    _login(client, seeded_data["seller_a"])
+
+    assert client.get("/api/v1/monthly-goals?year=2026&month=10").status_code == 403
+    assert client.get("/api/v1/bonus-rules").status_code == 403
+
+
+def test_admin_cancels_unpaid_bonus_with_reason_and_audit(app, client, seeded_data):
+    _login(client, seeded_data["admin_a"])
+    headers = _csrf_headers(client)
+
+    response = client.post(
+        f"/api/v1/admin/bonus/{seeded_data['seller_b']['id']}/cancel",
+        json={"reason": "Apuração substituída"},
+        headers=headers,
+    )
+    assert response.status_code == 404
+
+    with app.app_context():
+        payment_id = str(
+            db.session.execute(
+                select(BonusPayment.id).where(
+                    BonusPayment.organization_id == seeded_data["org_a"]["id"],
+                    BonusPayment.user_id == seeded_data["seller_b"]["id"],
+                )
+            ).scalar_one()
+        )
+
+    response = client.post(
+        f"/api/v1/admin/bonus/{payment_id}/cancel",
+        json={"reason": "Apuração substituída"},
+        headers=headers,
+    )
+    assert response.status_code == 200, response.get_json()
+    assert response.get_json()["state"] == "cancelled"
+
+    paid = client.post(
+        f"/api/v1/admin/bonus/{payment_id}/pay",
+        json={},
+        headers=headers,
+    )
+    assert paid.status_code == 409
+    assert paid.get_json()["error"]["code"] == "invalid_state"
+
+    with app.app_context():
+        audit = db.session.execute(
+            select(AuditLog).where(
+                AuditLog.organization_id == seeded_data["org_a"]["id"],
+                AuditLog.entity_type == "bonus_payment",
+                AuditLog.entity_id == payment_id,
+                AuditLog.action == "cancel",
+            )
+        ).scalar_one()
+        assert audit.reason == "Apuração substituída"

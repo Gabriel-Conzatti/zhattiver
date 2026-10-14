@@ -1,5 +1,37 @@
 # Diário de Desenvolvimento
 
+## 2026-10-13 - Gestão administrativa de metas e bônus
+
+### Realizado
+
+- Tela administrativa dividida em apuração, metas mensais e faixas versionadas.
+- Validação multiempresa de vendedores e produtos.
+- Bloqueio de faixas temporais/métricas sobrepostas e alterações retroativas.
+- Encerramento de vigência e cancelamento de bônus com auditoria.
+- Índices únicos parciais para metas gerais e por produto.
+
+### Arquivos principais
+
+- `backend/app/modules/bonus/routes.py`
+- `backend/app/modules/bonus/services.py`
+- `backend/migrations/versions/6c9e0b4d7a12_enforce_monthly_goal_uniqueness.py`
+- `frontend/src/features/admin/AdminBonusPage.tsx`
+
+### Testes executados
+
+- 71 testes pytest.
+- 15 testes Vitest.
+- Ruff direcionado, TypeScript, ESLint e build Vite.
+
+### Resultado
+
+- RN-043..RN-051 verificadas localmente.
+
+### Próximos passos
+
+- Publicar a migration e a interface na VPS.
+- Repetir a homologação no domínio público.
+
 ## 2026-10-14 - Auditoria de navegação e acabamento visual
 
 ### Realizado

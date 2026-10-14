@@ -254,10 +254,14 @@ Snapshots mensais reproduzíveis com regras vigentes.
 ### `goals`
 
 Metas mensais/diárias com vigência por competência (`year`, `month`) e escopo (usuário, produto, tipo). Não sobrepor.
+Metas mensais gerais usam índice único parcial quando `product_id IS NULL`; metas por
+produto usam índice único parcial quando `product_id IS NOT NULL`.
 
 ### `bonus_rules`
 
 Faixas por produto/base (`net_premium` ou `count`), com `bracket_min`, `bracket_max NULL`, `bonus_kind ENUM('fixed','percent')`, `value`, `base ENUM('net_premium','installment','count')`, `effective_from DATE`.
+As vigências começam no primeiro dia e terminam no último dia de uma competência.
+Faixas métricas e temporais sobrepostas para o mesmo produto/base são rejeitadas.
 
 ### `bonus_calculations`
 
