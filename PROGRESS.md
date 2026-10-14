@@ -267,17 +267,16 @@ Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
 - Apenas 80, 443 e 22 expostos no host; banco, Redis e API permanecem na rede interna.
 - Certificado Let's Encrypt válido até 29/12/2026, TLS 1.3, com renovação ARI acompanhada pelo Caddy.
 - SPA renderiza login e recuperação de senha sem violação de CSP.
-
-### Pendente de validação pelo responsável
-
-- Login autenticado do administrador e conferência do painel (exige credencial do titular).
+- Login autenticado validado com conta administrativa descartável: painel, equipe,
+  metas e bônus, configurações, notificações e auditoria carregaram corretamente.
+- A conta descartável foi removida após o smoke test; a base voltou aos dois usuários
+  originais e a sessão recebeu `401` com redirecionamento para o login.
 
 ## Próximo passo
 
-1. Entrar com o administrador em `https://funil.zhattiver.com` e validar painel, notificações e menus.
-2. Configurar SMTP real no `.env` e testar a recuperação de senha ponta a ponta.
-3. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
-4. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
+1. Configurar SMTP real no `.env` e testar a recuperação de senha ponta a ponta.
+2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
+3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
 
 ## Limitações declaradas
 

@@ -12,6 +12,9 @@
 - Execução completa de `docs/checklist-producao.md`.
 - Teste de restauração do backup em banco separado, descartado após a conferência.
 - Execução manual do job de follow-ups e conferência do agendador.
+- Smoke test autenticado com administrador descartável em painel, equipe, metas e bônus,
+  configurações e auditoria.
+- Remoção da conta descartável e confirmação de que a sessão perdeu o acesso.
 
 ### Arquivos principais
 
@@ -24,13 +27,14 @@
 - `scripts/healthcheck.sh` no servidor.
 - Verificação HTTPS de saúde, sessão ausente, rota inexistente e mutação por GET.
 - Teste real de rate limiting no login.
+- Login real, carregamento dos módulos administrativos e revogação do acesso após limpeza.
 - Restauração do dump em banco temporário e conferência das tabelas e registros.
 - Inspeção de portas expostas, cabeçalhos de segurança e validade do certificado.
 
 ### Resultado
 
 - Deploy aprovado. Domínio público passou a servir o Funil Sustentare.
-- Pendente apenas a validação do login autenticado pelo titular da credencial.
+- Checklist técnico e smoke test autenticado aprovados.
 
 ### Próximos passos
 

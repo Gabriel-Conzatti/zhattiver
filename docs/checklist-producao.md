@@ -141,12 +141,15 @@ Backup pré-deploy verificado, atualização por fast-forward, três migrações
 `6c9e0b4d7a12`, serviços recriados e saudáveis, `scripts/healthcheck.sh` sem erros,
 identidade pública correta, apenas 80/443/22 expostos, cabeçalhos de segurança e TLS 1.3
 ativos, rate limiting respondendo `429` com `Retry-After`, restauração do backup validada
-em banco separado e job de follow-ups executado com sucesso.
+em banco separado, job de follow-ups executado com sucesso e login administrativo
+validado. O smoke test autenticado percorreu painel, equipe, metas e bônus, configurações
+e auditoria. A conta descartável foi removida; a sessão perdeu acesso imediatamente e a
+base voltou aos dois usuários originais.
 
 ### Pendente
 
-Login autenticado do administrador, SMTP real, cadastro de metas e faixas de bônus,
-criação do usuário SDR e homologação dos fluxos comerciais.
+SMTP real, cadastro de metas e faixas de bônus, criação do usuário SDR e homologação dos
+fluxos comerciais.
 
 ### Armadilhas observadas
 
