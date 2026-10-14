@@ -14,7 +14,7 @@ Apresentar o sistema oficialmente como **Lynk**.
 
 ## Marca
 
-O logotipo oficial é `frontend/public/logo-funil.svg`, com a marca denominativa
+O logotipo oficial é `frontend/public/logo-lynk.svg`, com a marca denominativa
 "Lynk" e o descritor "Funil de Vendas". O favicon
 (`frontend/public/favicon.svg`) reaproveita apenas o símbolo (o arco) do
 logotipo, sobre o fundo `#050B1F`, com os tons claros do gradiente
@@ -29,4 +29,3 @@ continuam válidos e agora estão alinhados à marca visível.
 
 O Playwright verifica o título e o nome oficial na autenticação e após login
 administrativo.
-

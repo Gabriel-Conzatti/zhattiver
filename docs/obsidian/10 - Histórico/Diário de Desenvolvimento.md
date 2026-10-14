@@ -64,7 +64,7 @@
 - `frontend/src/app/App.tsx`
 - `frontend/src/components/TopBar.tsx`
 - `frontend/src/features/admin/AdminLayout.tsx`
-- `frontend/public/logo-funil.svg`
+- `frontend/public/logo-lynk.svg`
 
 ### Testes executados
 

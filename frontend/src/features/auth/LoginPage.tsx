@@ -69,7 +69,7 @@ export function LoginPage() {
       <div className="w-full max-w-[380px] rounded-[20px] border border-white/[0.08] bg-[#071521] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
         <div className="mb-7 flex justify-center">
           <img
-            src="/logo-funil.svg"
+            src="/logo-lynk.svg"
             alt="Lynk"
             className="h-[100px] w-full max-w-[240px] object-contain"
           />
