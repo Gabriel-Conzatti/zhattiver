@@ -45,7 +45,7 @@ export function AdminLayout() {
           <Menu className="h-5 w-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">Funil Sustentare</div>
+          <div className="truncate text-sm font-semibold">Lynk</div>
           <div className="text-xs text-text-secondary">Administração</div>
         </div>
         <NotificationBell />
@@ -66,7 +66,7 @@ export function AdminLayout() {
         <div className="mb-6 flex items-center gap-3">
           <img src="/logo-funil.svg" alt="" className="h-9 w-9 object-contain" />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold">Funil Sustentare</div>
+            <div className="text-sm font-semibold">Lynk</div>
             <div className="text-xs text-text-secondary">Admin</div>
           </div>
           <button

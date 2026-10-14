@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Tokens do Funil Sustentare — ver docs/decisoes.md
+        // Tokens visuais do Lynk — ver docs/decisoes.md
         base: '#050B1F',
         surface: '#0B1836',
         'surface-2': '#0F1E42',

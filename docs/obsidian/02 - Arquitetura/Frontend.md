@@ -5,7 +5,7 @@
 - TanStack Query, React Hook Form e Zod.
 - Playwright para fluxos críticos e Vitest para componentes.
 
-Identidade visível: **Funil Sustentare**.
+Identidade visível: **Lynk**.
 
 ## Navegação e responsividade
 

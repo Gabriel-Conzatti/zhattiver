@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Apresentar o sistema oficialmente como **Funil Sustentare**.
+Apresentar o sistema oficialmente como **Lynk**.
 
 ## Superfícies
 
@@ -12,10 +12,18 @@ Apresentar o sistema oficialmente como **Funil Sustentare**.
 - Título do navegador, descrição e favicon.
 - Documentação principal.
 
+## Marca
+
+O logotipo oficial é `frontend/public/logo-funil.svg`, com a marca denominativa
+"Lynk" e o descritor "Funil de Vendas". O favicon
+(`frontend/public/favicon.svg`) reaproveita apenas o símbolo (o arco) do
+logotipo, sobre o fundo `#050B1F`, com os tons claros do gradiente
+(`#00CBFF` → `#0079FF`) para manter legibilidade em 16px.
+
 ## Compatibilidade
 
-Identificadores técnicos legados, como variáveis `LYNK_*` e o comando
-`flask lynk`, permanecem temporariamente para não quebrar ambientes existentes.
+Identificadores técnicos com o prefixo `LYNK_*` e o comando `flask lynk`
+continuam válidos e agora estão alinhados à marca visível.
 
 ## Testes
 

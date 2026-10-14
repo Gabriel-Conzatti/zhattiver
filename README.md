@@ -1,4 +1,4 @@
-# Funil Sustentare
+# Lynk
 
 Sistema de gestão de prospecção e novos negócios para corretora de seguros.
 Monólito modular: frontend React + backend Flask + PostgreSQL + Redis + Celery, orquestrado por Docker Compose e servido em produção via Caddy.
@@ -12,7 +12,7 @@ Este repositório está sendo construído em etapas verificáveis. Consulte:
 - `docs/modelo-dados.md` — modelo de dados e integridade.
 - `docs/deploy-vps.md`, `docs/backup-restore.md`, `docs/operacao.md` — implantação, backup e operação em VPS.
 - `docs/checklist-producao.md` — checklist passo a passo para o primeiro deploy e para atualizações.
-- `docs/obsidian/` — Vault de navegação, decisões, histórico e backlog do Funil Sustentare.
+- `docs/obsidian/` — Vault de navegação, decisões, histórico e backlog do Lynk.
 - `docs/referencias/` — coloque aqui os PDFs e imagens de referência quando disponíveis.
 
 ## Requisitos

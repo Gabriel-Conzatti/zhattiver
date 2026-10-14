@@ -19,7 +19,7 @@ Anexar as imagens diretamente no chat também funciona.
 
 Para cada print, informe:
 
-1. a qual tela do Funil Sustentare ele corresponde;
+1. a qual tela do Lynk ele corresponde;
 2. se é referência **desktop**, **mobile** ou ambos;
 3. o que deve ser seguido (layout inteiro, apenas a paleta, apenas um componente).
 
@@ -30,7 +30,7 @@ cards, espaçamentos, hierarquia visual, tamanho de botões, posicionamento de m
 cores, tipografia e ícones.
 
 Não são copiados conteúdo, textos, nomes, dados, marcas nem regras de negócio das
-referências. A identidade aplicada é sempre **Funil Sustentare**, e em qualquer conflito
+referências. A identidade aplicada é sempre **Lynk**, e em qualquer conflito
 entre print e requisito escrito, prevalece o requisito.
 
 A paleta e as decisões visuais vigentes estão em `docs/decisoes.md`. O conteúdo funcional

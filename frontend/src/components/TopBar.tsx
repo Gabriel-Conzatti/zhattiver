@@ -11,7 +11,7 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
       <div className="flex shrink-0 items-center gap-2">
         <img src="/logo-funil.svg" alt="" className="h-8 w-8 object-contain" />
         <span className="hidden text-sm font-semibold tracking-wide text-text-primary sm:inline">
-          Funil Sustentare
+          Lynk
         </span>
       </div>
       <div className="scrollbar-none order-3 w-full min-w-0 overflow-x-auto lg:order-none lg:flex-1">

@@ -61,7 +61,7 @@ DEFAULT_STAGES = [
 
 
 def register(app: Flask) -> None:
-    group = click.Group("lynk", help="Comandos administrativos do Funil Sustentare")
+    group = click.Group("lynk", help="Comandos administrativos do Lynk")
 
     @group.command("create-admin", help="Cria um administrador inicial")
     @click.option("--org-name", default="Corretora", show_default=True)

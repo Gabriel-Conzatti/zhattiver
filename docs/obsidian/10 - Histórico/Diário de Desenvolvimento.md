@@ -1,5 +1,52 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Refinamento do login, favicon e marca Lynk
+
+### Realizado
+
+- Refinado o cartão de login conforme os cinco pontos pedidos: fundo `#071521`
+  com borda sutil e raio de 20px, largura máxima de 380px, padding interno de
+  32px, espaçamentos padronizados, campos escuros de 48px com toggle de senha,
+  e botão ciano de 46px com hover.
+- Adicionados estados de carregamento, envio por Enter, navegação por teclado,
+  `aria-invalid`/`aria-describedby` e mensagens de erro específicas para 401,
+  429 e 403.
+- Favicon gerado a partir do símbolo do logotipo oficial, reaproveitando o path
+  e o gradiente do SVG com os tons claros para legibilidade em 16px.
+- Marca visível renomeada de "Funil Sustentare" para **Lynk**, conforme
+  confirmação do responsável pelo projeto. Registrada a ADR-002, que substitui
+  a ADR-001. Entradas históricas do Changelog e deste diário foram preservadas.
+- Corrigido o cenário Playwright de login, que ainda referenciava o título
+  antigo, os rótulos "Email"/"Entrar" e a recuperação de senha removida.
+
+### Arquivos principais
+
+- `frontend/src/features/auth/LoginPage.tsx`
+- `frontend/src/features/auth/LoginPage.test.tsx`
+- `frontend/e2e/login.spec.ts`
+- `frontend/public/favicon.svg`
+- `frontend/index.html`
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+- `backend/app/cli/__init__.py`
+- `backend/app/modules/auth/password_recovery.py`
+- `docs/obsidian/06 - Decisões Técnicas/ADR-002 - Marca oficial Lynk.md`
+
+### Testes executados
+
+- `npm run test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+### Resultado
+
+- Aprovado.
+
+### Próximos passos
+
+- Deploy na VPS e verificação da aba do navegador em produção.
+
 ## 2026-10-14 - Ajuste visual da tela de login
 
 ### Realizado

@@ -119,7 +119,7 @@ def send_password_reset_email(user: User, raw_token: str) -> None:
         f"{current_app.config['LYNK_PUBLIC_URL']}/redefinir-senha?{query}"
     )
     message = EmailMessage()
-    message["Subject"] = "Redefinição de senha - Funil Sustentare"
+    message["Subject"] = "Redefinição de senha - Lynk"
     message["From"] = sender
     message["To"] = user.email
     message.set_content(

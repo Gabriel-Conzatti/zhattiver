@@ -1,4 +1,4 @@
-# Funil Sustentare
+# Lynk
 
 Sistema de gestão de prospecção e novos negócios para corretoras de seguros.
 

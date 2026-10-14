@@ -16,8 +16,24 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ## [Não publicado]
 
+### Alterado
+
+- Marca oficial do produto alterada para **Lynk** no título do navegador,
+  descrição, login, cabeçalho de vendedor/SDR e navegação administrativa
+  (ADR-002, substitui a ADR-001).
+- Favicon gerado a partir do símbolo do logotipo oficial, substituindo o ícone
+  provisório com a letra "F".
+- Cartão de login refinado: fundo `#071521`, borda sutil, raio de 20px,
+  largura máxima de 380px e padding interno de 32px.
+- Campos de login escuros com 48px de altura, destaque ciano no foco e botão
+  para mostrar/ocultar a senha.
+- Botão de acesso com 46px de altura, cantos menos arredondados e hover sutil.
+
 ### Adicionado
 
+- Estados de carregamento, envio por Enter, mensagens de erro específicas por
+  situação (credenciais, excesso de tentativas, acesso bloqueado) e suporte a
+  leitores de tela na tela de login.
 - Logo SVG oficial aplicada ao login e às áreas autenticadas.
 
 - Cadastro e disponibilização de leads na tela administrativa de Prospecção.
