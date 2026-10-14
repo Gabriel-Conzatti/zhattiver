@@ -1,5 +1,44 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - UI dos dashboards por perfil
+
+### Realizado
+
+- Analisadas quatro referências visuais do vendedor: dashboard, prospecção,
+  agendamentos e funil.
+- Aplicado o padrão escuro com bordas ciano, cartões, métricas, chips e ações
+  destacadas aos dashboards de vendedor, SDR e administrador.
+- Preservadas as rotas, consultas e autorizações existentes para evitar conflitos
+  entre perfis.
+- Removidos do rascunho indicadores, clientes, telefones, datas e metas fictícios.
+- Controles sem ação foram substituídos por links para fluxos já implementados.
+- Criados componentes compartilhados para métricas, atalhos e estados de painel.
+- Adicionados estados explícitos de carregamento, vazio e erro.
+
+### Arquivos principais
+
+- `frontend/src/components/DashboardUi.tsx`
+- `frontend/src/features/vendedor/VendedorDashboard.tsx`
+- `frontend/src/features/sdr/SdrDashboard.tsx`
+- `frontend/src/features/admin/AdminDashboard.tsx`
+- `docs/obsidian/03 - Funcionalidades/Painéis por Perfil.md`
+
+### Testes executados
+
+- Testes de componente dos três dashboards.
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+### Resultado
+
+- Aprovado. Os painéis exibem somente dados reais das APIs ou estados explícitos
+  de indisponibilidade.
+
+### Próximos passos
+
+- Revisão visual em ambiente autenticado antes de um futuro deploy.
+
 ## 2026-10-14 - Refinamento do login, favicon e marca Lynk
 
 ### Realizado

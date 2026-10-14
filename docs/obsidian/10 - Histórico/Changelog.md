@@ -18,6 +18,10 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Alterado
 
+- Dashboards de vendedor, SDR e administrador alinhados ao padrão visual escuro
+  das referências, com cartões, indicadores e atalhos responsivos.
+- Painéis passam a exibir estados explícitos de carregamento, vazio e erro, sem
+  substituir falhas de API por métricas ou clientes fictícios.
 - Marca oficial do produto alterada para **Lynk** no título do navegador,
   descrição, login, cabeçalho de vendedor/SDR e navegação administrativa
   (ADR-002, substitui a ADR-001).

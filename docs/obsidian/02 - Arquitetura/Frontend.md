@@ -15,3 +15,14 @@ Identidade visível: **Lynk**.
 - Tabelas permanecem roláveis dentro do próprio card, sem criar rolagem horizontal na página.
 - Requisições autenticadas usam `cache: no-store`; React Query é a única camada de cache
   do frontend.
+
+## Painéis por perfil
+
+- Vendedor, SDR e administrador compartilham componentes visuais de métricas,
+  atalhos e estados de painel em `frontend/src/components/DashboardUi.tsx`.
+- O padrão visual é compartilhado, mas cada perfil mantém seus próprios contratos
+  de API, rotas e limites de autorização.
+- A navegação lateral do administrador permanece separada da navegação horizontal
+  de vendedor e SDR para acomodar a quantidade de módulos sem alterar as rotas.
+- Dashboards nunca usam amostras, valores arbitrários ou dados dos prints como
+  fallback. Carregamento, vazio e erro são apresentados explicitamente.
