@@ -1,8 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { LoginPage } from '@/features/auth/LoginPage';
-import { PasswordRecoveryPage } from '@/features/auth/PasswordRecoveryPage';
-import { PasswordResetPage } from '@/features/auth/PasswordResetPage';
 import { AdminLayout } from '@/features/admin/AdminLayout';
 import { AdminDashboard } from '@/features/admin/AdminDashboard';
 import { AdminLeadsPage } from '@/features/admin/AdminLeadsPage';
@@ -45,8 +43,6 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to={homeFor(user.role)} replace /> : <LoginPage />} />
-      <Route path="/recuperar-senha" element={<PasswordRecoveryPage />} />
-      <Route path="/redefinir-senha" element={<PasswordResetPage />} />
       <Route element={<RequireAuth roles={['vendedor']} />}>
         <Route element={<VendedorLayout />}>
           <Route path="/" element={<VendedorDashboard />} />

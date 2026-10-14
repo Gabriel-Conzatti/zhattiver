@@ -17,6 +17,8 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Adicionado
 
+- Logo SVG oficial aplicada ao login e às áreas autenticadas.
+
 - Cadastro e disponibilização de leads na tela administrativa de Prospecção.
 - Configuração versionada da meta diária do vendedor pela tela Equipe.
 - Seed E2E isolado e reproduzível.
@@ -30,6 +32,9 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Alterado
 
+- Tela de login alinhada à referência visual enviada, com entrada única e
+  redirecionamento automático conforme o papel autenticado.
+- Recuperação de senha removida da navegação pública temporariamente.
 - Usuário SDR deixa de ser requisito para iniciar a operação.
 - Documentação identifica `179.197.72.43` como a VPS Hostinger de produção.
 - Identidade visível atualizada para Funil Sustentare.

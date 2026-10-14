@@ -9,9 +9,7 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-border bg-base/90 px-3 py-2 backdrop-blur sm:px-4">
       <div className="flex shrink-0 items-center gap-2">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-          F
-        </div>
+        <img src="/logo-funil.svg" alt="" className="h-8 w-8 object-contain" />
         <span className="hidden text-sm font-semibold tracking-wide text-text-primary sm:inline">
           Funil Sustentare
         </span>

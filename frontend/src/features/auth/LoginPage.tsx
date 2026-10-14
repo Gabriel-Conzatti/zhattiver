@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -45,24 +45,31 @@ export function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center px-4">
-      <div className="w-full max-w-md card-strong p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-            F
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold">Funil Sustentare</h1>
-            <p className="text-sm text-text-secondary">Gestão de prospecção e novos negócios</p>
-          </div>
+    <div
+      className="grid min-h-screen place-items-center px-4 py-8"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle at 20% 50%, rgba(0, 121, 255, 0.3), transparent 45%), linear-gradient(115deg, #062956 0%, #010b1a 52%, #053a4c 100%)',
+      }}
+    >
+      <div className="w-full max-w-[315px] rounded-[2.25rem] bg-black px-7 py-7 shadow-2xl">
+        <div className="mb-5 flex justify-center">
+          <img
+            src="/logo-funil.svg"
+            alt="Funil Sustentare"
+            className="h-[105px] w-[220px] object-contain"
+          />
         </div>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label className="label" htmlFor="email">Email</label>
+            <label className="mb-1 block text-sm font-semibold text-white" htmlFor="email">
+              Login
+            </label>
             <input
               id="email"
               type="email"
-              className="input"
+              className="h-8 w-full rounded-full border-0 bg-[#303030] px-4 text-sm text-white placeholder:text-[#8b8b8b] focus:border-0 focus:ring-2 focus:ring-brand-cyan"
+              placeholder="Digite o login"
               autoComplete="username"
               {...register('email')}
             />
@@ -71,11 +78,14 @@ export function LoginPage() {
             )}
           </div>
           <div>
-            <label className="label" htmlFor="password">Senha</label>
+            <label className="mb-1 block text-sm font-semibold text-white" htmlFor="password">
+              Senha
+            </label>
             <input
               id="password"
               type="password"
-              className="input"
+              className="h-8 w-full rounded-full border-0 bg-[#303030] px-4 text-sm text-white placeholder:text-[#8b8b8b] focus:border-0 focus:ring-2 focus:ring-brand-cyan"
+              placeholder="Digite a senha"
               autoComplete="current-password"
               {...register('password')}
             />
@@ -91,20 +101,14 @@ export function LoginPage() {
               {error}
             </div>
           )}
-          <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Entrando…' : 'Entrar'}
-          </button>
-          <Link
-            className="block text-center text-sm text-brand-cyan hover:underline"
-            to="/recuperar-senha"
+          <button
+            type="submit"
+            className="mt-7 h-8 w-full rounded-full bg-brand-cyan px-4 font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isSubmitting}
           >
-            Esqueci minha senha
-          </Link>
+            {isSubmitting ? 'ACESSANDO…' : 'ACESSAR'}
+          </button>
         </form>
-        <p className="mt-4 text-xs text-text-muted">
-          Uso interno. Todas as ações são auditadas. Se você não possui acesso, contate a
-          administração.
-        </p>
       </div>
     </div>
   );

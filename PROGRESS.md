@@ -7,6 +7,17 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Ajuste visual do login — 14/10/2026
+
+- Aplicada a referência visual enviada para a tela de login: fundo em gradiente,
+  logo no topo, formulário compacto em cartão escuro, campos arredondados e botão ciano.
+- Removidos os seletores visuais de vendedor/SDR; o destino continua sendo definido pelo
+  papel retornado pelo backend após a autenticação.
+- Removido o acesso público à recuperação de senha da navegação; a redefinição administrativa
+  em Equipe > Editar permanece como caminho operacional.
+- O SVG fornecido foi incorporado em `frontend/public/logo-funil.svg` e passou a ser usado
+  no login, no cabeçalho do vendedor/SDR e no menu administrativo.
+
 ## Concluído
 
 ### Etapa 1 — Diagnóstico e base

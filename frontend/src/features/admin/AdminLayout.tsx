@@ -64,9 +64,7 @@ export function AdminLayout() {
         }`}
       >
         <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-cyan to-brand-blue text-black font-bold">
-            F
-          </div>
+          <img src="/logo-funil.svg" alt="" className="h-9 w-9 object-contain" />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold">Funil Sustentare</div>
             <div className="text-xs text-text-secondary">Admin</div>

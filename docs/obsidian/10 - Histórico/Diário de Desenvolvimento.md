@@ -1,5 +1,37 @@
 # Diário de Desenvolvimento
 
+## 2026-10-14 - Ajuste visual da tela de login
+
+### Realizado
+
+- Aplicada a referência visual enviada: fundo em gradiente, cartão escuro central,
+  campos arredondados, botão ciano e logo no topo.
+- Removidos os seletores de vendedor e SDR da tela; o redirecionamento permanece
+  automático conforme o papel devolvido pela autenticação.
+- Removidos o link e as rotas públicas de recuperação de senha por enquanto.
+- Incorporado o SVG fornecido como logo padrão do login e das áreas autenticadas.
+
+### Arquivos principais
+
+- `frontend/src/features/auth/LoginPage.tsx`
+- `frontend/src/app/App.tsx`
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+- `frontend/public/logo-funil.svg`
+
+### Testes executados
+
+- Teste unitário da tela de login cobrindo ausência de seletor de perfil e recuperação.
+- Teste de build e typecheck do frontend.
+
+### Resultado
+
+- Implementação aguardando validação visual no navegador e publicação.
+
+### Próximos passos
+
+- Revisar a proporção do logo e os espaçamentos após a conferência visual em produção.
+
 ## 2026-10-14 - Adiamento do SMTP e preparo para referências de UI/UX
 
 ### Realizado
