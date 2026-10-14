@@ -25,12 +25,13 @@
 
 ### Resultado
 
-- Código aprovado para publicação. Permanecem apenas valores comerciais a definir e a
-  credencial externa da caixa de e-mail.
+- Commit `e23d4ae` publicado na VPS Hostinger.
+- Prospecção administrativa e meta diária validadas no domínio público com contas
+  descartáveis. Após a limpeza, a base voltou a dois usuários e zero quotas.
+- Permanecem apenas valores comerciais a definir e a credencial externa da caixa de e-mail.
 
 ### Próximos passos
 
-- Publicar a correção na VPS.
 - Definir a meta diária da vendedora e, antes da apuração, metas mensais/faixas de bônus.
 
 ## 2026-10-14 - Validação da redefinição administrativa de senha

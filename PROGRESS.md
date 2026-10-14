@@ -254,9 +254,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Deploy de produção — 14/10/2026
 
-Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
+Publicado em `funil.zhattiver.com` a partir do commit `e23d4ae`.
 
-- Versão anterior em produção: `bfcfac7` (01/10/2026). Fast-forward de 32 commits.
+- Versão inicial do deploy: `bfcfac7` (01/10/2026), atualizada para `c7733f3`.
+- Fechamento funcional sem SDR publicado em `e23d4ae`.
 - Backup pré-deploy verificado antes da atualização (`gzip -t` aprovado).
 - Migrações aplicadas: `1ea62d17932e` → `8f28a73b9c11` → `4b7ac198d21e` → `6c9e0b4d7a12` (head).
 - Serviços recriados: `api`, `worker`, `scheduler`, `web`. Todos saudáveis.
@@ -287,10 +288,16 @@ Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
   `reset_password` respondeu `200`, o vendedor autenticou com a nova senha e recebeu
   `403` ao tentar rota administrativa. A auditoria registrou os dois cadastros, a
   atualização e os dois logins. As contas foram removidas e passaram a responder `401`.
+- Prospecção administrativa validada no domínio público: formulário de novo lead,
+  origens, tipos de cliente, produto e ação de disponibilização carregaram com a sessão
+  administrativa.
+- Meta diária validada em produção com vendedor descartável: API gravou quota `17` com
+  vigência, a tela Equipe exibiu o valor e a auditoria registrou a atualização. As duas
+  contas e a quota temporárias foram removidas; a base voltou a 2 usuários e 0 quotas.
 
 ## Próximo passo
 
-1. Publicar esta correção e definir, na tela Equipe, a meta diária de prospecção.
+1. Definir, na tela Equipe, a meta diária de prospecção da vendedora.
 2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
 3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
 4. Quando houver uma senha exclusiva da caixa remetente na Locaweb, executar

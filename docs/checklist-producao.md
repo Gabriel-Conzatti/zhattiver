@@ -155,6 +155,11 @@ dois cadastros, a atualização e os dois logins. As contas descartáveis foram 
 a base voltou aos dois usuários originais e o login das contas apagadas passou a
 responder `401`.
 
+O fechamento funcional do commit `e23d4ae` também foi publicado e validado. O
+administrador consegue cadastrar e disponibilizar leads sem usuário SDR. A meta diária
+foi criada com vigência para um vendedor descartável, exibida na tela Equipe e removida
+na limpeza. A base terminou com os dois usuários reais e nenhuma quota temporária.
+
 ### Pendente
 
 SMTP real, definição das metas operacionais/financeiras e homologação dos fluxos
