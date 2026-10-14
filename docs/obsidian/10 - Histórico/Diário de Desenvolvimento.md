@@ -38,7 +38,8 @@
 
 ### Próximos passos
 
-- Configurar SMTP real e validar a recuperação de senha.
+- Criar senha exclusiva da caixa Locaweb e executar `/root/configure-smtp.py`; endpoint,
+  STARTTLS e conectividade já foram validados.
 - Cadastrar metas mensais e faixas de bônus.
 - Homologar os fluxos comerciais no domínio público.
 

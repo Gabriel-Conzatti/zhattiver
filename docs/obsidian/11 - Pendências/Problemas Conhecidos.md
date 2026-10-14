@@ -3,8 +3,10 @@
 - Identificadores técnicos `LYNK_*` permanecem por compatibilidade.
 - Warnings de depreciação do backend de sessão filesystem aparecem apenas nos testes;
   produção usa Redis.
-- SMTP não configurado em produção: `host`, `from`, `username` e `password` estão vazios,
-  então a recuperação de senha gera o token mas não envia o email.
+- SMTP ainda sem credencial em produção. DNS confirma Email Locaweb; a VPS alcança
+  `email-ssl.com.br:587` por STARTTLS e o servidor exige `AUTH PLAIN/LOGIN`. O endpoint
+  legado `smtp.locaweb.com.br` não responde. O configurador seguro
+  `/root/configure-smtp.py` aguarda uma senha exclusiva da caixa remetente.
 - `MonthlyGoal` e `BonusRule` não possuem nenhum registro em produção. Sem cadastro
   prévio, metas e apuração de bônus não produzem resultado.
 - A base de produção tem apenas administrador e vendedor. Falta criar o usuário SDR

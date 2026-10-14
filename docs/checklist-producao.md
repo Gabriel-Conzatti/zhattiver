@@ -151,6 +151,13 @@ base voltou aos dois usuários originais.
 SMTP real, cadastro de metas e faixas de bônus, criação do usuário SDR e homologação dos
 fluxos comerciais.
 
+O domínio usa Email Locaweb. O endpoint funcional verificado da VPS é
+`email-ssl.com.br:587` com STARTTLS e autenticação obrigatória; o host legado
+`smtp.locaweb.com.br` não respondeu. Execute `python3 /root/configure-smtp.py` na VPS
+depois de criar uma senha exclusiva para a caixa remetente. O script não ecoa a senha,
+testa a autenticação antes de gravar, preserva backup do `.env`, recria somente a API e
+aciona uma recuperação real.
+
 ### Armadilhas observadas
 
 - `git pull --ff-only` pode falhar por mudança de permissão de arquivo. Resolva com

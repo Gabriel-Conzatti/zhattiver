@@ -1,6 +1,7 @@
 # Backlog
 
-1. Configurar SMTP real e testar a recuperação de senha ponta a ponta.
+1. Criar senha exclusiva da caixa Locaweb, executar `/root/configure-smtp.py` na VPS e
+   confirmar o recebimento do link de recuperação.
 2. Cadastrar metas mensais e faixas de bônus antes da primeira apuração.
 3. Criar o usuário SDR na organização de produção.
 4. Executar os cenários E2E contra o domínio público.

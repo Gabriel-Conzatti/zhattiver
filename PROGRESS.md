@@ -237,7 +237,9 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
   Cloud API para envio real de mensagens.
 - Homologação comercial assistida no domínio público para transformar as marcações
   `🟨` de `docs/requisitos.md` em `✅`.
-- Configurar SMTP real e validar ponta a ponta a recuperação de senha.
+- Concluir a autenticação SMTP com uma senha exclusiva da caixa Locaweb e validar o
+  recebimento. DNS, endpoint `email-ssl.com.br:587`, STARTTLS e conectividade da VPS já
+  foram verificados; o configurador seguro está em `/root/configure-smtp.py`.
 - Cadastrar `MonthlyGoal` e `BonusRule` (hoje zerados) antes de qualquer apuração.
 - Criar o usuário SDR (a base tem apenas administrador e vendedor).
 
@@ -274,7 +276,9 @@ Publicado em `funil.zhattiver.com` a partir do commit `c7733f3`.
 
 ## Próximo passo
 
-1. Configurar SMTP real no `.env` e testar a recuperação de senha ponta a ponta.
+1. Criar uma senha exclusiva para a caixa remetente na Locaweb e executar
+   `python3 /root/configure-smtp.py` na VPS. O configurador valida a autenticação antes
+   de alterar o `.env`, recria a API e dispara uma recuperação real.
 2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração.
 3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
 
