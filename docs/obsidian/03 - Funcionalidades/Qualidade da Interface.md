@@ -32,3 +32,11 @@ desktop e dispositivos móveis.
 - Vitest para os controles do cabeçalho.
 - Playwright em viewport `390 × 844` para admin, vendedor e SDR.
 - Auditoria manual de largura nas 23 rotas autenticadas.
+
+## Ajuste de marca e navegação — 2026-10-15
+
+- Cabeçalhos autenticados exibem somente a logo e o nome `Lynk` em tamanho reduzido,
+  abaixo do símbolo.
+- O bloco da marca é um link para a dashboard inicial do perfil atual.
+- O menu administrativo mantém o mesmo comportamento em desktop e mobile, sem exibir
+  o rótulo redundante do perfil junto à marca.

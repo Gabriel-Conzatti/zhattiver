@@ -8,12 +8,17 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
   const { user, logout } = useAuth();
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-border bg-base/90 px-3 py-2 backdrop-blur sm:px-4">
-      <div className="flex shrink-0 items-center gap-2">
-        <img src="/logo-lynk.svg" alt="" className="h-8 w-8 object-contain" />
-        <span className="hidden text-sm font-semibold tracking-wide text-text-primary sm:inline">
+      <Link
+        to={homePath(user?.role)}
+        className="flex shrink-0 flex-col items-center gap-0.5 rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
+        aria-label="Página inicial"
+        title="Página inicial"
+      >
+        <img src="/logo-lynk.svg" alt="Lynk" className="h-8 w-8 object-contain" />
+        <span className="text-[10px] font-semibold leading-none tracking-wide text-text-primary">
           Lynk
         </span>
-      </div>
+      </Link>
       <div className="scrollbar-none order-3 w-full min-w-0 overflow-x-auto lg:order-none lg:flex-1">
         {children}
       </div>
@@ -66,4 +71,10 @@ function profilePath(role?: string) {
   if (role === 'admin') return '/admin/perfil';
   if (role === 'sdr') return '/sdr/perfil';
   return '/perfil';
+}
+
+function homePath(role?: string) {
+  if (role === 'admin') return '/admin';
+  if (role === 'sdr') return '/sdr';
+  return '/';
 }

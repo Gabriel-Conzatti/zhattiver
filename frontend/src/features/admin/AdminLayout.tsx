@@ -45,10 +45,17 @@ export function AdminLayout() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">Lynk</div>
-          <div className="text-xs text-text-secondary">Administração</div>
-        </div>
+        <Link
+          to="/admin"
+          className="flex min-w-0 flex-1 flex-col items-start rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
+          aria-label="Página inicial"
+          title="Página inicial"
+        >
+          <img src="/logo-lynk.svg" alt="Lynk" className="h-7 w-7 object-contain" />
+          <span className="text-[10px] font-semibold leading-none tracking-wide text-text-primary">
+            Lynk
+          </span>
+        </Link>
         <NotificationBell />
       </header>
       {menuOpen && (
@@ -64,12 +71,18 @@ export function AdminLayout() {
           menuOpen ? 'visible translate-x-0' : 'invisible -translate-x-full lg:visible'
         }`}
       >
-        <div className="mb-6 flex items-center gap-3">
-          <img src="/logo-lynk.svg" alt="" className="h-9 w-9 object-contain" />
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold">Lynk</div>
-            <div className="text-xs text-text-secondary">Admin</div>
-          </div>
+        <div className="mb-6 flex items-start gap-3">
+          <Link
+            to="/admin"
+            className="flex flex-col items-center gap-0.5 rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
+            aria-label="Página inicial"
+            title="Página inicial"
+          >
+            <img src="/logo-lynk.svg" alt="Lynk" className="h-9 w-9 object-contain" />
+            <span className="text-[10px] font-semibold leading-none tracking-wide text-text-primary">
+              Lynk
+            </span>
+          </Link>
           <button
             type="button"
             className="icon-button lg:hidden"

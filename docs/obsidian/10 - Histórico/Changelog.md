@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-10-15] - Navegação pela marca
+
+### Alterado
+
+- A logo dos cabeçalhos autenticados passou a exibir somente o nome `Lynk` pequeno
+  abaixo do símbolo.
+- Clicar na marca retorna à dashboard inicial do perfil atual.
+- O menu administrativo aplica o mesmo padrão em desktop e mobile.
+
 ## [2026-10-15] - Qualidade e importação administrativa publicadas
 
 Commit `6929999` publicado em `funil.zhattiver.com`.

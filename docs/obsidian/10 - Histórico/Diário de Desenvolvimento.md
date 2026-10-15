@@ -1,5 +1,33 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Ajuste da marca no cabeçalho
+
+### Realizado
+
+- Removido o rótulo de perfil exibido junto à marca no menu administrativo.
+- Logo e nome `Lynk` foram reorganizados verticalmente, com o nome em tamanho pequeno.
+- A marca dos cabeçalhos agora é clicável e direciona para a dashboard inicial conforme
+  o perfil autenticado.
+- Adicionado teste do link para a dashboard no componente compartilhado `TopBar`.
+
+### Arquivos principais
+
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/components/TopBar.test.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+- `docs/obsidian/03 - Funcionalidades/Qualidade da Interface.md`
+
+### Testes executados
+
+- `npm run test -- --run src/components/TopBar.test.tsx` — 2 testes aprovados.
+- `npm run lint` — aprovado.
+- `npm run typecheck` — aprovado.
+- `npm run build` — aprovado.
+
+### Resultado
+
+- Aprovado localmente. Pendente de publicação.
+
 ## 2026-10-15 - Correção das barreiras de qualidade e publicação
 
 ### Realizado
