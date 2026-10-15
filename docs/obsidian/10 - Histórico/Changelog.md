@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026-10-15] - Telas do vendedor alinhadas às referências
+
+### Adicionado
+
+- Kit visual compartilhado do vendedor com badges de origem, barras de meta, medidor
+  semicircular de meta mensal, cartões de métrica e cabeçalhos de tabela padronizados.
+- Filtros com efeito real em Prospecção (busca, cidade, origem) e em Agendamentos
+  (busca, origem e seleção de dia pelo calendário).
+- Calendário mensal lateral em Agendamentos, com contador de agendamentos por dia.
+
+### Alterado
+
+- Dashboard do vendedor reorganizada em agendamentos, follow-ups, metas do dia, meta do
+  mês e resumo de desempenho.
+- Funil passou a exibir banner de metas e cartões com origem e tempo desde a última ação.
+- Agendamentos passou a listar os registros agrupados por dia, com cinco métricas no topo.
+
+### Segurança
+
+- As telas do vendedor continuam sem qualquer ação de cadastro de metas, faixas de bônus
+  ou comissões; essas operações permanecem exclusivas do administrador.
+
 ## [2026-10-15] - Navegação pela marca
 
 ### Alterado

@@ -7,6 +7,15 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Telas do vendedor alinhadas às referências — 15/10/2026
+
+- Dashboard, Prospecção, Agendamentos e Funil reorganizados conforme as capturas enviadas
+  pela operação, com kit visual compartilhado em `frontend/src/components/VendedorUi.tsx`.
+- Métricas sem endpoint correspondente foram substituídas por equivalentes reais; nenhum
+  dado fictício foi introduzido.
+- Cadastro de metas, faixas de bônus e comissões continua exclusivo do administrador.
+- Frontend: 38 testes aprovados em 16 arquivos; lint, typecheck e build aprovados.
+
 ### Barreiras de qualidade e importação administrativa — 15/10/2026
 
 - Commit `6929999` integrado à `main` e publicado em `funil.zhattiver.com`.

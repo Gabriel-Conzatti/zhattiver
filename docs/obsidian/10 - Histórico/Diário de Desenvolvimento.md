@@ -1,5 +1,47 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Telas do vendedor alinhadas às referências visuais
+
+### Realizado
+
+- Analisadas as quatro capturas enviadas pela operação (Dashboard, Prospecção,
+  Agendamentos e Funil) e registrado o padrão visual identificado no Vault.
+- Criado o kit compartilhado `VendedorUi` com badges, barras de meta, medidor semicircular,
+  cartões de métrica, contagem de dias e cabeçalhos de tabela.
+- Dashboard reorganizada em duas colunas: agendamentos e follow-ups à esquerda; metas do
+  dia, meta do mês e desempenho à direita.
+- Prospecção ganhou banner com meta do dia e filtros de busca, cidade e origem.
+- Agendamentos ganhou cinco métricas, lista agrupada por dia e calendário mensal lateral
+  com contador e seleção de dia.
+- Funil ganhou banner de metas e cartões com origem e tempo desde a última ação.
+- Mantida a restrição de não oferecer cadastro de metas, faixas de bônus ou comissões ao
+  vendedor.
+
+### Arquivos principais
+
+- `frontend/src/components/VendedorUi.tsx`
+- `frontend/src/components/VendedorUi.test.tsx`
+- `frontend/src/features/vendedor/VendedorDashboard.tsx`
+- `frontend/src/features/vendedor/ProspeccaoPage.tsx`
+- `frontend/src/features/vendedor/AgendamentosPage.tsx`
+- `frontend/src/features/vendedor/FunilPage.tsx`
+- `docs/obsidian/03 - Funcionalidades/Telas do Vendedor.md`
+
+### Testes executados
+
+- `npm run lint` — aprovado.
+- `npm run typecheck` — aprovado.
+- `npm run test -- --run` — 38 testes aprovados em 16 arquivos.
+- `npm run build` — aprovado, maior chunk em 188 kB.
+
+### Resultado
+
+- Aprovado localmente.
+
+### Próximos passos
+
+- Publicar em produção e validar as telas com a operação.
+
 ## 2026-10-15 - Ajuste da marca no cabeçalho
 
 ### Realizado

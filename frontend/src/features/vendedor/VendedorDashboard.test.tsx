@@ -11,14 +11,18 @@ const apiMocks = vi.hoisted(() => ({
   followups: vi.fn(),
   production: vi.fn(),
   bonus: vi.fn(),
+  opportunities: vi.fn(),
+  origins: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({
   opportunities: {
     myGoals: apiMocks.goals,
     myFollowups: apiMocks.followups,
+    list: apiMocks.opportunities,
   },
   schedules: { list: apiMocks.schedules },
+  catalog: { origins: apiMocks.origins },
   bonusApi: {
     myProduction: apiMocks.production,
     myBonus: apiMocks.bonus,
@@ -74,6 +78,24 @@ describe('VendedorDashboard', () => {
       goal: { target_count: 6 },
     });
     apiMocks.bonus.mockResolvedValue({ available: false, amount: null });
+    apiMocks.opportunities.mockResolvedValue({
+      items: [{
+        id: 'opportunity-1',
+        lead_id: 'lead-1',
+        product_id: 'product-1',
+        funnel_id: 'funnel-1',
+        current_stage_id: 'stage-1',
+        owner_user_id: 'user-1',
+        state: 'open',
+        origin: 'prospecting',
+        opened_at: '2026-10-10T12:00:00Z',
+        closed_at: null,
+        last_relevant_at: '2026-10-13T15:00:00Z',
+        lead_name: 'Cliente do funil',
+        stage_name: 'Negociação',
+      }],
+    });
+    apiMocks.origins.mockResolvedValue({ items: [{ id: 'origin-1', name: 'Indicação' }] });
   });
 
   it('renderiza agenda, metas e follow-ups retornados pelas APIs', async () => {
@@ -85,6 +107,8 @@ describe('VendedorDashboard', () => {
     expect(screen.getByText('1/3')).toBeVisible();
     expect(screen.getByText('4/4')).toBeVisible();
     expect(screen.getByText('Cliente do follow-up')).toBeVisible();
+    expect(await screen.findByText('Oportunidades abertas')).toBeVisible();
+    expect(screen.getByText('Faltam')).toBeVisible();
   });
 
   it('expõe estado de erro no painel afetado', async () => {
