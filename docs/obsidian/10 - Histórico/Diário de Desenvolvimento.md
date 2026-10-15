@@ -1,5 +1,36 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Novo lead no funil e bônus por negócio
+
+### Realizado
+
+- Restaurado o botão `+` como ação `Novo lead` somente no layout do vendedor.
+- Criado diálogo com nome, telefone, produto, cidade e UF.
+- Criado endpoint transacional que persiste lead e oportunidade própria na etapa inicial.
+- Corrigidos o cálculo de bônus fixo por negócio e os limites superiores das faixas.
+- Ajustada a gestão administrativa para exibir valor por negócio e intervalos `[min, max)`.
+
+### Arquivos principais
+
+- `backend/app/modules/opportunities/routes.py`
+- `backend/app/modules/opportunities/services.py`
+- `backend/app/modules/bonus/services.py`
+- `backend/app/modules/bonus/routes.py`
+- `frontend/src/features/vendedor/NewLeadDialog.tsx`
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/features/admin/AdminBonusPage.tsx`
+
+### Testes executados
+
+- `pytest` — 77 testes backend aprovados.
+- `npm run test` — 40 testes frontend aprovados.
+- Ruff, ESLint e typecheck — aprovados.
+- Build do frontend e configuração dos Compose de produção/desenvolvimento — aprovados.
+
+### Resultado
+
+- Aprovado localmente.
+
 ## 2026-10-15 - Ampliação da logo nos cabeçalhos
 
 ### Realizado

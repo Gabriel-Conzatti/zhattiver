@@ -12,7 +12,7 @@ from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
-from ..users.models import ROLE_ADMIN, Product
+from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product
 from .models import ClientType, Insurer, Origin, Tag, TagCategory
 
 bp = Blueprint("catalog", __name__)
@@ -57,12 +57,13 @@ def _serialize_named(obj) -> dict:
 @login_required
 def list_products():
     ctx = load_context()
-    rows = db.session.execute(
-        select(Product).where(
-            Product.organization_id == ctx.organization_id,
-            Product.archived_at.is_(None),
-        ).order_by(Product.name)
-    ).scalars().all()
+    stmt = select(Product).where(
+        Product.organization_id == ctx.organization_id,
+        Product.archived_at.is_(None),
+    )
+    if ctx.role in (ROLE_SDR, ROLE_VENDEDOR):
+        stmt = stmt.where(Product.id.in_(ctx.product_ids))
+    rows = db.session.execute(stmt.order_by(Product.name)).scalars().all()
     return jsonify(
         {
             "items": [

@@ -40,6 +40,14 @@ histórico. A mutação é exclusiva de administrador e auditada.
 Administrador e SDR podem cadastrar e disponibilizar leads. A interface administrativa
 expõe esse fluxo para que a operação não dependa da existência de um usuário SDR.
 
+## Lead direto do vendedor
+
+- `POST /api/v1/opportunities/direct-lead`
+
+Exclusivo do vendedor. Recebe nome, telefone, produto e localização opcional; valida o
+produto contra as associações do usuário e cria lead + oportunidade na etapa inicial em
+uma única transação.
+
 ## Catálogos administrativos
 
 - `GET /api/v1/admin/catalogs`
@@ -63,4 +71,5 @@ reversível em vez de exclusão.
 
 As mutações são exclusivas de administrador, derivam a organização da sessão e geram
 auditoria. Metas fazem upsert por competência; faixas são versionadas e não aceitam
-sobreposição de vigência e intervalo.
+sobreposição de vigência e intervalo. O limite superior é exclusivo e o valor fixo é
+aplicado por negócio validado.

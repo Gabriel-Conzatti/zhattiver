@@ -30,6 +30,7 @@ Cada linha registra: **requisito** (documento) → **decisão técnica** → **h
 | Tarefa em dia não útil (agendada manualmente) | Avisa na UI; se continuar aberta, entra como pendência na próxima rotina útil | Prompt seção 20. |
 | Eventos após 19h | Preservados no histórico; **não reabrem** meta encerrada; nova exigência entra na próxima rotina útil | RN-003/RN-004. |
 | Bônus sem valores/base definidos | Mecanismo + telas implementados; **apuração exige** configuração válida vigente | Prompt seção 20. |
+| Valor fixo da faixa de bônus | É valor **por negócio validado**: total = valor da faixa × quantidade de negócios; limite inferior inclusivo e superior exclusivo | Confirmação da operação em 15/10/2026. |
 | Mudança de meta/faixa dentro do mês | Vigência por **competência mensal**, sem sobreposição; alteração passa a valer no mês seguinte | Prompt seção 20. |
 | Bônus previsto em fim de semana/feriado | Previsão permanece **dia 20**; pagamento real é registro à parte, marcado quando efetivado | Prompt seção 20. |
 | Crédito em substituições | **Atividade** = executor; **produção** = vendedor definido no registro da venda, preservado mesmo após transferências | Prompt seção 20. |

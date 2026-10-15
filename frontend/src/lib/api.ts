@@ -191,6 +191,14 @@ export interface CopyMessageResponse {
   reused: boolean;
 }
 
+export interface DirectLeadInput {
+  name: string;
+  phone: string;
+  product_id: string;
+  city?: string | null;
+  state?: string | null;
+}
+
 export interface DailyGoals {
   prospecting: { done: number; target: number };
   schedules: { done: number; target: number };
@@ -199,6 +207,11 @@ export interface DailyGoals {
 }
 
 export const opportunities = {
+  createDirectLead: (input: DirectLeadInput) =>
+    api<{ lead: { id: string; name: string }; opportunity: Opportunity }>(
+      '/opportunities/direct-lead',
+      { method: 'POST', body: input },
+    ),
   copyMessage: (input: {
     lead_id: string;
     product_id: string;

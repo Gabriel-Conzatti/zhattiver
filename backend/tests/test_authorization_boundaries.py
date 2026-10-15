@@ -10,9 +10,10 @@ from app.extensions import db
 from app.modules.audit.models import AuditLog
 from app.modules.bonus.models import METRIC_NET_PREMIUM, BonusPayment
 from app.modules.catalog.models import ClientType, Insurer, Origin
-from app.modules.funnel.models import Funnel
-from app.modules.leads.models import Lead
+from app.modules.funnel.models import Funnel, FunnelStage
+from app.modules.leads.models import Lead, LeadPhone
 from app.modules.notifications.models import Notification
+from app.modules.opportunities.models import Opportunity
 from app.modules.orgs.models import Organization
 from app.modules.sales.models import (
     STATE_CANCELLED,
@@ -259,6 +260,82 @@ def test_seller_cannot_open_lead_record_directly(client, seeded_data):
     response = client.get(f"/api/v1/leads/{seeded_data['lead_a']['id']}")
 
     assert response.status_code == 403
+
+
+def test_seller_creates_lead_directly_in_own_funnel(app, client, seeded_data):
+    with app.app_context():
+        funnel = Funnel(
+            organization_id=seeded_data["org_a"]["id"],
+            product_id=seeded_data["product_a"]["id"],
+            name="Funil padrão",
+            is_default=True,
+        )
+        db.session.add(funnel)
+        db.session.flush()
+        db.session.add(
+            FunnelStage(
+                organization_id=seeded_data["org_a"]["id"],
+                funnel_id=funnel.id,
+                name="Mensagem inicial",
+                order_index=0,
+                is_initial=True,
+            )
+        )
+        db.session.commit()
+
+    _login(client, seeded_data["seller_a"])
+    response = client.post(
+        "/api/v1/opportunities/direct-lead",
+        json={
+            "name": "Novo cliente",
+            "phone": "(51) 99999-1234",
+            "product_id": seeded_data["product_a"]["id"],
+            "city": "Porto Alegre",
+            "state": "rs",
+        },
+        headers=_csrf_headers(client),
+    )
+
+    assert response.status_code == 201, response.get_json()
+    body = response.get_json()
+    assert body["lead"]["name"] == "Novo cliente"
+    assert body["opportunity"]["owner_user_id"] == seeded_data["seller_a"]["id"]
+    assert body["opportunity"]["product_id"] == seeded_data["product_a"]["id"]
+    assert body["opportunity"]["state"] == "open"
+    assert body["opportunity"]["origin"] == "prospecting"
+    assert body["opportunity"]["stage_name"] == "Mensagem inicial"
+
+    with app.app_context():
+        lead = db.session.get(Lead, body["lead"]["id"])
+        opportunity = db.session.get(Opportunity, body["opportunity"]["id"])
+        phone = db.session.execute(
+            select(LeadPhone).where(LeadPhone.lead_id == lead.id)
+        ).scalar_one()
+        assert lead.organization_id == seeded_data["org_a"]["id"]
+        assert lead.created_by == seeded_data["seller_a"]["id"]
+        assert lead.state == "RS"
+        assert phone.phone_e164 == "+5551999991234"
+        assert opportunity.lead_id == lead.id
+
+
+def test_direct_lead_rolls_back_when_product_has_no_funnel(app, client, seeded_data):
+    _login(client, seeded_data["seller_a"])
+    response = client.post(
+        "/api/v1/opportunities/direct-lead",
+        json={
+            "name": "Lead sem funil",
+            "phone": "(51) 98888-4321",
+            "product_id": seeded_data["product_a"]["id"],
+        },
+        headers=_csrf_headers(client),
+    )
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "no_funnel"
+    with app.app_context():
+        assert db.session.execute(
+            select(Lead).where(Lead.name == "Lead sem funil")
+        ).scalar_one_or_none() is None
 
 
 def test_other_organization_cannot_read_sale(client, seeded_data):
@@ -809,7 +886,7 @@ def test_admin_bonus_rules_reject_overlaps_and_cross_tenant_products(
         "name": "Faixa inicial",
         "base": "net_premium",
         "bracket_min": "0",
-        "bracket_max": "9999.99",
+        "bracket_max": "10000",
         "bonus_kind": "fixed",
         "value": "500.00",
         "effective_from": date.today().replace(day=1).isoformat(),

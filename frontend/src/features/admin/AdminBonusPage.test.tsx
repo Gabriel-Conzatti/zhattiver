@@ -132,7 +132,7 @@ describe('AdminBonusPage', () => {
     fireEvent.change(screen.getByLabelText('Nome da faixa'), {
       target: { value: 'Faixa ouro' },
     });
-    fireEvent.change(screen.getByLabelText('Valor do bônus'), {
+    fireEvent.change(screen.getByLabelText('Valor por negócio'), {
       target: { value: '500' },
     });
     fireEvent.change(screen.getByLabelText('Competência inicial'), {

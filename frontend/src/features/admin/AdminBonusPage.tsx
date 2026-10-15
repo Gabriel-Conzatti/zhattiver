@@ -356,7 +356,7 @@ function RulesSection({ products }: { products: Array<{ id: string; name: string
   const queryClient = useQueryClient();
   const [productId, setProductId] = useState('');
   const [name, setName] = useState('');
-  const [base, setBase] = useState<'count' | 'net_premium'>('net_premium');
+  const [base, setBase] = useState<'count' | 'net_premium'>('count');
   const [bracketMin, setBracketMin] = useState('0');
   const [bracketMax, setBracketMax] = useState('');
   const [kind, setKind] = useState<'fixed' | 'percent'>('fixed');
@@ -427,7 +427,7 @@ function RulesSection({ products }: { products: Array<{ id: string; name: string
         <NumberField label="Início da faixa" value={bracketMin} onChange={setBracketMin} min="0" step="0.01" />
         <NumberField label="Fim da faixa (opcional)" value={bracketMax} onChange={setBracketMax} min="0" step="0.01" />
         <NumberField
-          label={kind === 'percent' ? 'Percentual decimal (0,10 = 10%)' : 'Valor do bônus'}
+          label={kind === 'percent' ? 'Percentual decimal (0,10 = 10%)' : 'Valor por negócio'}
           value={value}
           onChange={setValue}
           min="0.0001"
@@ -606,7 +606,11 @@ function RulesTable({
             <Cell strong>{rule.name}</Cell>
             <Cell>{rule.base === 'net_premium' ? 'Prêmio líquido' : 'Quantidade'}</Cell>
             <Cell>{formatBracket(rule)}</Cell>
-            <Cell>{rule.bonus_kind === 'fixed' ? money(rule.value) : `${Number(rule.value) * 100}%`}</Cell>
+            <Cell>
+              {rule.bonus_kind === 'fixed'
+                ? `${money(rule.value)} por negócio`
+                : `${Number(rule.value) * 100}%`}
+            </Cell>
             <Cell>{formatDate(rule.effective_from)} até {rule.effective_to ? formatDate(rule.effective_to) : 'sem término'}</Cell>
             <Cell align="right">
               {rule.effective_to ? (
@@ -728,7 +732,9 @@ function formatDate(value: string) {
 
 function formatBracket(rule: BonusRuleRow) {
   const format = rule.base === 'net_premium' ? money : (value: string) => Number(value).toLocaleString('pt-BR');
-  return `${format(rule.bracket_min)} até ${rule.bracket_max ? format(rule.bracket_max) : 'sem limite'}`;
+  return rule.bracket_max
+    ? `≥ ${format(rule.bracket_min)} e < ${format(rule.bracket_max)}`
+    : `≥ ${format(rule.bracket_min)}`;
 }
 
 function currentMonthValue() {

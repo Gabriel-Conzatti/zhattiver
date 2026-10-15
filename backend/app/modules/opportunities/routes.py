@@ -13,6 +13,7 @@ from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...extensions import db
 from ..funnel.models import FunnelStage
+from ..leads import services as lead_services
 from ..leads.models import Lead
 from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
 from . import services
@@ -35,6 +36,14 @@ class CopyMessageRequest(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=120)
     schedule_id: str | None = None
     origin: str | None = None
+
+
+class DirectLeadRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=1, max_length=30)
+    product_id: str
+    city: str | None = Field(default=None, max_length=120)
+    state: str | None = Field(default=None, max_length=2)
 
 
 def _serialize_opportunity(
@@ -65,6 +74,58 @@ def _serialize_opportunity(
         else None,
         "message": include_message,
     }
+
+
+# --------------- Lead direto no funil ----------------------------------------
+
+@bp.post("/opportunities/direct-lead")
+@login_required
+def create_direct_lead():
+    ctx = load_context()
+    if ctx.role != ROLE_VENDEDOR:
+        raise BusinessError(
+            "forbidden",
+            "Somente vendedor cria lead direto no funil",
+            status=403,
+        )
+    payload = DirectLeadRequest.model_validate(request.get_json(silent=True) or {})
+    if payload.product_id not in ctx.product_ids:
+        raise BusinessError("forbidden", "Produto fora do seu escopo", status=403)
+
+    with db.session.begin_nested():
+        lead = lead_services.create_lead(
+            organization_id=ctx.organization_id,
+            actor_user_id=ctx.user_id,
+            data=lead_services.LeadInput(
+                name=payload.name,
+                phones=[payload.phone],
+                city=payload.city,
+                state=payload.state,
+            ),
+            request_id=getattr(g, "request_id", None),
+        )
+        opportunity = services.create_direct_opportunity(
+            organization_id=ctx.organization_id,
+            actor_user_id=ctx.user_id,
+            lead_id=str(lead.id),
+            product_id=payload.product_id,
+            request_id=getattr(g, "request_id", None),
+        )
+    stage = db.session.get(FunnelStage, opportunity.current_stage_id)
+    db.session.commit()
+    return jsonify(
+        {
+            "lead": {
+                "id": str(lead.id),
+                "name": lead.name,
+            },
+            "opportunity": _serialize_opportunity(
+                opportunity,
+                lead_name=lead.name,
+                stage_name=stage.name if stage else None,
+            ),
+        }
+    ), 201
 
 
 # --------------- Copiar mensagem (RN-006/007) --------------------------------

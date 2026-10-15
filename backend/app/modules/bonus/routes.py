@@ -208,10 +208,10 @@ def create_bonus_rule():
     product = db.session.get(Product, payload.product_id)
     if product is None or product.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Produto não encontrado", status=404)
-    if payload.bracket_max is not None and payload.bracket_max < payload.bracket_min:
+    if payload.bracket_max is not None and payload.bracket_max <= payload.bracket_min:
         raise BusinessError(
             "invalid_bracket",
-            "O limite máximo deve ser maior ou igual ao limite mínimo",
+            "O limite máximo deve ser maior que o limite mínimo",
             status=422,
         )
     if payload.effective_from.day != 1:
@@ -245,14 +245,14 @@ def create_bonus_rule():
     )
     bracket_overlap = and_(
         BonusRule.bracket_min
-        <= (
+        < (
             payload.bracket_max
             if payload.bracket_max is not None
             else Decimal("999999999999.99")
         ),
         or_(
             BonusRule.bracket_max.is_(None),
-            BonusRule.bracket_max >= payload.bracket_min,
+            BonusRule.bracket_max > payload.bracket_min,
         ),
     )
     overlap = db.session.execute(

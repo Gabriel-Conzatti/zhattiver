@@ -37,10 +37,12 @@ test.describe('Navegação responsiva', () => {
     await expectNoPageOverflow(page);
   });
 
-  test('vendedor não recebe atalho de venda direta', async ({ page }) => {
+  test('vendedor recebe atalho para criar lead no funil', async ({ page }) => {
     await login(page, 'vendedor');
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole('button', { name: 'Nova venda' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Novo lead' }).click();
+    await expect(page.getByRole('heading', { name: 'Novo lead' })).toBeVisible();
     await expectNoPageOverflow(page);
   });
 

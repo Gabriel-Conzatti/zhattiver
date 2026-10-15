@@ -1,7 +1,9 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 
-from app.modules.bonus.services import predicted_payment_date
+from app.modules.bonus.models import BONUS_KIND_FIXED
+from app.modules.bonus.services import _apply_rule, predicted_payment_date
 from app.modules.sales.services import calc_commission, compute_edit_deadline
 
 
@@ -28,6 +30,107 @@ def test_predicted_payment_date_uses_next_month_day_20():
     # RN-039
     assert predicted_payment_date(2026, 3) == date(2026, 4, 20)
     assert predicted_payment_date(2026, 12) == date(2027, 1, 20)
+
+
+def test_fixed_bonus_value_is_paid_per_validated_sale():
+    rule = SimpleNamespace(bonus_kind=BONUS_KIND_FIXED, value=Decimal("10.00"))
+
+    assert _apply_rule(rule, metric_value=Decimal("12"), sale_count=12) == Decimal("120.00")
+
+
+def test_count_brackets_use_exclusive_upper_bound_and_value_per_sale(app, monkeypatch):
+    from sqlalchemy import select
+
+    from app.extensions import db
+    from app.modules.bonus.models import METRIC_COUNT, BonusRule
+    from app.modules.bonus.services import compute_bonus_for_month
+    from app.modules.orgs.models import Organization
+    from app.modules.sales.models import STATE_CANCELLED, STATE_VALIDATED, Sale
+
+    monkeypatch.setenv("LYNK_E2E_RUN_ID", "bonus-count-brackets")
+    monkeypatch.setenv("LYNK_E2E_PASSWORD", "test-password-123")
+    result = app.test_cli_runner().invoke(args=["lynk", "seed-e2e"])
+    assert result.exit_code == 0, result.output
+
+    with app.app_context():
+        organization = db.session.execute(
+            select(Organization).where(Organization.slug == "e2e-bonus-count-brackets")
+        ).scalar_one()
+        seed_sale = db.session.execute(
+            select(Sale).where(Sale.organization_id == organization.id)
+        ).scalar_one()
+        seed_sale.state = STATE_VALIDATED
+        extra_sales = []
+        for _ in range(14):
+            sale = Sale(
+                organization_id=seed_sale.organization_id,
+                lead_id=seed_sale.lead_id,
+                product_id=seed_sale.product_id,
+                seller_user_id=seed_sale.seller_user_id,
+                insurer_id=seed_sale.insurer_id,
+                client_type_id=seed_sale.client_type_id,
+                net_premium=seed_sale.net_premium,
+                commission_pct=seed_sale.commission_pct,
+                commission_amount=seed_sale.commission_amount,
+                closed_on=seed_sale.closed_on,
+                origin="test",
+                registered_at=seed_sale.registered_at,
+                edit_deadline_at=seed_sale.edit_deadline_at,
+                state=STATE_VALIDATED,
+            )
+            db.session.add(sale)
+            extra_sales.append(sale)
+
+        first_rule = BonusRule(
+            organization_id=organization.id,
+            product_id=seed_sale.product_id,
+            name="De 10 até 15",
+            base=METRIC_COUNT,
+            bracket_min=Decimal("10"),
+            bracket_max=Decimal("15"),
+            bonus_kind=BONUS_KIND_FIXED,
+            value=Decimal("10.00"),
+            effective_from=date(seed_sale.closed_on.year, seed_sale.closed_on.month, 1),
+        )
+        second_rule = BonusRule(
+            organization_id=organization.id,
+            product_id=seed_sale.product_id,
+            name="De 15 até 20",
+            base=METRIC_COUNT,
+            bracket_min=Decimal("15"),
+            bracket_max=Decimal("20"),
+            bonus_kind=BONUS_KIND_FIXED,
+            value=Decimal("15.00"),
+            effective_from=date(seed_sale.closed_on.year, seed_sale.closed_on.month, 1),
+        )
+        db.session.add_all([first_rule, second_rule])
+        db.session.commit()
+
+        at_fifteen = compute_bonus_for_month(
+            organization_id=organization.id,
+            user_id=seed_sale.seller_user_id,
+            product_id=seed_sale.product_id,
+            year=seed_sale.closed_on.year,
+            month=seed_sale.closed_on.month,
+            metric_base=METRIC_COUNT,
+        )
+        assert at_fifteen.metric_value == Decimal("15")
+        assert at_fifteen.amount == Decimal("225.00")
+        assert at_fifteen.applied_rule_id == str(second_rule.id)
+
+        extra_sales[0].state = STATE_CANCELLED
+        db.session.commit()
+        at_fourteen = compute_bonus_for_month(
+            organization_id=organization.id,
+            user_id=seed_sale.seller_user_id,
+            product_id=seed_sale.product_id,
+            year=seed_sale.closed_on.year,
+            month=seed_sale.closed_on.month,
+            metric_base=METRIC_COUNT,
+        )
+        assert at_fourteen.metric_value == Decimal("14")
+        assert at_fourteen.amount == Decimal("140.00")
+        assert at_fourteen.applied_rule_id == str(first_rule.id)
 
 
 def test_only_validated_sales_compose_production_goals_and_bonus(app, monkeypatch):

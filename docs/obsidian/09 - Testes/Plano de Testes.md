@@ -16,9 +16,10 @@
 - Validação administrativa de venda e conferência do relatório financeiro.
 - Criação e arquivamento administrativo de produto.
 - Navegação móvel administrativa sem conteúdo cortado.
-- Ação contextual de nova venda disponível somente ao vendedor.
+- Ação contextual de novo lead disponível somente ao vendedor e criação direta no funil.
 - Ausência de controles inertes no perfil SDR.
 - Logout permanece efetivo após recarregar a página.
 - Administração de metas mensais e faixas de bônus.
 - Rejeição de referências externas, faixas sobrepostas e vigência retroativa.
+- Faixas adjacentes com limite superior exclusivo e bônus fixo calculado por negócio.
 - Cancelamento de bônus previsto com justificativa e auditoria.

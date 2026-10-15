@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026-10-15] - Novo lead no funil e bônus por negócio
+
+### Adicionado
+
+- Botão `Novo lead` no cabeçalho do vendedor, com criação direta na etapa inicial do funil.
+- Endpoint transacional e auditado para criar lead e oportunidade própria.
+
+### Alterado
+
+- O valor fixo da faixa de bônus passou a representar o valor por negócio validado.
+- Faixas passaram a usar limite superior exclusivo, permitindo intervalos adjacentes como
+  `>= 10 e < 15` e `>= 15 e < 20`.
+
+### Segurança
+
+- Produto do novo lead validado no backend contra as associações do vendedor.
+
 ## [2026-10-15] - Logo ampliada nos cabeçalhos
 
 ### Alterado

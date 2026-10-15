@@ -7,6 +7,16 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Novo lead no funil e bônus por negócio — 15/10/2026
+
+- Restaurado o botão `+` do vendedor com a ação `Novo lead`; o cadastro cria lead e
+  oportunidade própria diretamente na etapa inicial do funil.
+- A criação é transacional, limitada aos produtos associados ao vendedor e auditada.
+- Faixas de bônus agora usam intervalo `[mínimo, máximo)` e aceitam limites adjacentes.
+- O valor fixo é multiplicado pela quantidade de negócios validados da competência.
+- Validação: 77 testes backend e 40 frontend aprovados, além de Ruff, ESLint,
+  typecheck, build e Compose.
+
 ### Logo ampliada nos cabeçalhos — 15/10/2026
 
 - A logo foi ampliada no cabeçalho compartilhado do vendedor e SDR, no cabeçalho

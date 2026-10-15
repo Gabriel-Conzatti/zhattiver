@@ -100,14 +100,20 @@ def _find_rule(
         BonusRule.effective_from <= on,
         (BonusRule.effective_to.is_(None)) | (BonusRule.effective_to >= on),
         BonusRule.bracket_min <= value,
-        (BonusRule.bracket_max.is_(None)) | (BonusRule.bracket_max >= value),
+        (BonusRule.bracket_max.is_(None)) | (BonusRule.bracket_max > value),
     ).order_by(BonusRule.bracket_min.desc())
     return db.session.execute(stmt).scalars().first()
 
 
-def _apply_rule(rule: BonusRule, metric_value: Decimal) -> Decimal:
+def _apply_rule(
+    rule: BonusRule,
+    metric_value: Decimal,
+    sale_count: int,
+) -> Decimal:
     if rule.bonus_kind == BONUS_KIND_FIXED:
-        return Decimal(rule.value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return (Decimal(rule.value) * Decimal(sale_count)).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
     if rule.bonus_kind == BONUS_KIND_PERCENT:
         return (Decimal(rule.value) * metric_value).quantize(
             Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -157,7 +163,7 @@ def compute_bonus_for_month(
             applied_rule_id=None,
             applied_rule_snapshot=None,
         )
-    amount = _apply_rule(rule, metric_value)
+    amount = _apply_rule(rule, metric_value, len(sales))
     snapshot = {
         "rule_id": str(rule.id),
         "name": rule.name,
@@ -166,6 +172,10 @@ def compute_bonus_for_month(
         "bracket_max": str(rule.bracket_max) if rule.bracket_max is not None else None,
         "bonus_kind": rule.bonus_kind,
         "value": str(rule.value),
+        "fixed_value_basis": "per_validated_sale"
+        if rule.bonus_kind == BONUS_KIND_FIXED
+        else None,
+        "validated_sale_count": len(sales),
         "effective_from": rule.effective_from.isoformat(),
         "effective_to": rule.effective_to.isoformat() if rule.effective_to else None,
     }

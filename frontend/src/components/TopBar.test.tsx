@@ -28,10 +28,10 @@ vi.mock('./NotificationBell', () => ({
   NotificationBell: () => <button type="button">Notificações</button>,
 }));
 
-function renderTopBar() {
+function renderTopBar(action?: { label: string; onClick: () => void }) {
   return render(
     <MemoryRouter>
-      <TopBar>
+      <TopBar action={action}>
         <span>Navegação</span>
       </TopBar>
     </MemoryRouter>,
@@ -44,11 +44,12 @@ describe('TopBar', () => {
     mocks.role = 'sdr';
   });
 
-  it('não renderiza busca nem atalho de venda direta', () => {
+  it('não renderiza busca nem ação quando não configurada', () => {
     renderTopBar();
 
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nova venda' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Novo lead' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Página inicial' })).toHaveAttribute('href', '/sdr');
     expect(screen.getByRole('img', { name: 'Lynk' })).toBeVisible();
     expect(screen.queryByText('Lynk')).not.toBeInTheDocument();
@@ -56,6 +57,15 @@ describe('TopBar', () => {
       'href',
       '/sdr/perfil',
     );
+  });
+
+  it('executa a ação contextual configurada', () => {
+    const onClick = vi.fn();
+    renderTopBar({ label: 'Novo lead', onClick });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Novo lead' }));
+
+    expect(onClick).toHaveBeenCalledOnce();
   });
 
   it('executa o logout', () => {

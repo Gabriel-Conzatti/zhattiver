@@ -72,6 +72,10 @@ Estados:
 | RN-025 | Encerramento (ganho/perda) a partir de qualquer etapa | 🟨 |
 | RN-026..RN-029 | Mensagens com variáveis, fallback e registro por cópia | 🟨 |
 
+Complemento operacional confirmado em 15/10/2026: o vendedor pode cadastrar um novo
+lead pelo atalho do cabeçalho; o cadastro cria, na mesma transação, uma oportunidade
+própria na etapa inicial do funil do produto autorizado.
+
 ### Vendas / produção
 
 | ID | Regra | Estado |
@@ -90,7 +94,7 @@ Estados:
 
 | ID | Regra | Estado |
 |---|---|---|
-| RN-043..RN-051 | Metas com vigência, faixas, bônus fixo/percentual, parcela, estados administrativos | ✅ (gestão administrativa, vigências sem sobreposição, apuração, aprovação, pagamento e cancelamento auditado testados) |
+| RN-043..RN-051 | Metas com vigência, faixas `[mínimo, máximo)`, bônus fixo por negócio validado/percentual, parcela e estados administrativos | ✅ (valor fixo multiplicado pela quantidade de negócios validados; limites adjacentes e apuração cobertos por testes) |
 | RN-052 | Tipos de cliente configuráveis | 🟨 |
 
 ### Perda / reciclagem

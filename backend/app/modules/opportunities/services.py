@@ -87,6 +87,56 @@ def _initial_stage(funnel_id: str) -> FunnelStage:
     return stage
 
 
+def create_direct_opportunity(
+    *,
+    organization_id: str,
+    actor_user_id: str,
+    lead_id: str,
+    product_id: str,
+    request_id: str | None = None,
+) -> Opportunity:
+    lead = db.session.get(Lead, lead_id)
+    if lead is None or lead.organization_id != organization_id:
+        raise BusinessError("not_found", "Lead não encontrado", status=404)
+    if lead.archived_at is not None:
+        raise BusinessError("archived_lead", "Lead arquivado", status=409)
+
+    product = db.session.get(Product, product_id)
+    if product is None or product.organization_id != organization_id:
+        raise BusinessError("not_found", "Produto não encontrado", status=404)
+
+    funnel = _default_funnel(organization_id, product_id)
+    stage = _initial_stage(funnel.id)
+    opportunity = Opportunity(
+        organization_id=organization_id,
+        lead_id=lead.id,
+        product_id=product.id,
+        funnel_id=funnel.id,
+        current_stage_id=stage.id,
+        owner_user_id=actor_user_id,
+        state=STATE_OPEN,
+        origin="prospecting",
+        opened_at=now_utc(),
+        last_relevant_at=now_utc(),
+    )
+    db.session.add(opportunity)
+    db.session.flush()
+    audit_record(
+        organization_id=organization_id,
+        actor_user_id=actor_user_id,
+        entity_type="opportunity",
+        entity_id=str(opportunity.id),
+        action="create_direct_lead",
+        after={
+            "lead_id": str(lead.id),
+            "product_id": str(product.id),
+            "stage_id": str(stage.id),
+        },
+        request_id=request_id,
+    )
+    return opportunity
+
+
 def render_message_for_opportunity(
     opportunity: Opportunity, stage: FunnelStage, *, actor: User, lead: Lead
 ) -> str:

@@ -28,6 +28,8 @@ autorização e sem exibir dados que o backend não fornece.
 2. Em Prospecção, filtra os leads disponíveis e dispara a mensagem inicial.
 3. Em Agendamentos, acompanha as métricas, navega pelo calendário mensal e contata ou resolve.
 4. No Funil, abre o card da oportunidade para registrar contato, mudar etapa ou fechar.
+5. Pelo botão `Novo lead` no cabeçalho, cadastra nome, telefone, produto e localização; o
+   lead entra diretamente na etapa inicial do funil do produto.
 
 ## Referências analisadas
 
@@ -63,7 +65,9 @@ Dashboard, Prospecção, Agendamentos e Funil.
 
 ## Backend
 
-Nenhuma alteração. As telas consomem os contratos já existentes:
+O endpoint transacional `POST /opportunities/direct-lead` cria o lead e a oportunidade
+própria na etapa inicial. Falhas de configuração do funil desfazem todo o cadastro.
+As telas também consomem:
 `GET /me/goals/today`, `GET /me/followups`, `GET /schedules`, `GET /opportunities`,
 `GET /availabilities`, `GET /origins`, `GET /me/production` e `GET /me/bonus`.
 
@@ -74,6 +78,7 @@ Nenhuma alteração. As telas consomem os contratos já existentes:
 - `frontend/src/features/vendedor/ProspeccaoPage.tsx`
 - `frontend/src/features/vendedor/AgendamentosPage.tsx`
 - `frontend/src/features/vendedor/FunilPage.tsx`
+- `frontend/src/features/vendedor/NewLeadDialog.tsx`
 
 ## Banco de dados
 
@@ -81,18 +86,24 @@ Sem impacto.
 
 ## API
 
-Sem novos endpoints.
+- `POST /api/v1/opportunities/direct-lead` — exclusivo do vendedor, limitado aos produtos
+  associados ao usuário e com organização derivada da sessão.
 
 ## Segurança
 
 - Nenhum identificador de organização ou de outro vendedor é enviado pelo cliente.
+- O produto é validado novamente no backend contra as associações do vendedor.
+- Lead e oportunidade são persistidos atomicamente e ambos geram auditoria.
 - O bônus exibido é sempre o do próprio usuário autenticado e some quando indisponível.
 
 ## Testes necessários
 
 - Unitário: componentes do kit visual (`VendedorUi.test.tsx`).
 - Interface: dashboard com dados e com erro (`VendedorDashboard.test.tsx`).
+- Integração: criação transacional do lead no funil e rollback quando não há funil.
+- Interface: envio do formulário de novo lead e ação contextual do cabeçalho.
 
 ## Histórico
 
 - 2026-10-15 - Telas do vendedor alinhadas às referências visuais da operação.
+- 2026-10-15 - Atalho de novo lead ligado à criação direta e transacional no funil.
