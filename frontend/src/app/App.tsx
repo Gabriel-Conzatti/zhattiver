@@ -51,7 +51,10 @@ export function App() {
           <Route path="/agendamentos" element={<AgendamentosPage />} />
           <Route path="/funil" element={<FunilPage />} />
           <Route path="/followups" element={<FollowupsPage />} />
-          <Route path="/sinistros" element={<SinistrosPage readOnly />} />
+          <Route
+            path="/sinistros"
+            element={<SinistrosPage readOnly={!user?.grants.includes('claims.manage')} />}
+          />
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>

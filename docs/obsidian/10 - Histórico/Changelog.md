@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026-10-15] - Designação da equipe de sinistros
+
+### Adicionado
+
+- Campo **Acesso a sinistros** no cadastro e na edição de usuário, com os níveis Sem acesso,
+  Consulta (`claims.read`) e Operação (`claims.manage`).
+- Coluna **Sinistros** na listagem administrativa de usuários.
+- Permissões `claims.read`, `claims.manage` e `claims.view_financial` na tela de concessões.
+
+### Corrigido
+
+- Vendedor com `claims.manage` deixa de ficar preso em somente leitura na tela de sinistros.
+
+### Segurança
+
+- As alterações gravam concessões auditáveis; rebaixar um nível revoga a concessão anterior.
+- O perfil `admin` não pode ser restringido: o backend rejeita com `invalid_claims_access`.
+
 ## [2026-10-15] - Módulo inicial de sinistros
 
 ### Adicionado

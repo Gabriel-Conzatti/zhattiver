@@ -22,6 +22,7 @@ vi.mock('@/lib/api', () => ({
           product_ids: ['product-1'],
           daily_prospecting_quota: null,
           quota_effective_from: null,
+          claims_access: 'none',
         },
       ],
     }),
@@ -76,6 +77,24 @@ describe('AdminUsuariosPage', () => {
           daily_prospecting_quota: 15,
           quota_effective_from: '2026-10-15',
         }),
+      ),
+    );
+  });
+
+  it('designa o usuário para operar sinistros', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Vendedora Exemplo')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.change(screen.getByLabelText('Acesso a sinistros'), {
+      target: { value: 'manage' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(updateUser).toHaveBeenCalledWith(
+        'seller-1',
+        expect.objectContaining({ claims_access: 'manage' }),
       ),
     );
   });

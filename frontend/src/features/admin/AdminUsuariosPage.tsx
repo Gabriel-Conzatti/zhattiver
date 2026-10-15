@@ -4,6 +4,52 @@ import { UserPlus, X } from 'lucide-react';
 
 import { admin, catalog, type AdminUser } from '@/lib/api';
 
+const CLAIMS_ACCESS_OPTIONS: Array<{ value: AdminUser['claims_access']; label: string }> = [
+  { value: 'none', label: 'Sem acesso' },
+  { value: 'read', label: 'Consulta' },
+  { value: 'manage', label: 'Operação' },
+];
+
+const CLAIMS_ACCESS_LABELS: Record<AdminUser['claims_access'], string> = {
+  none: 'Sem acesso',
+  read: 'Consulta',
+  manage: 'Operação',
+};
+
+function ClaimsAccessField({
+  value,
+  role,
+  onChange,
+}: {
+  value: AdminUser['claims_access'];
+  role: string;
+  onChange: (value: AdminUser['claims_access']) => void;
+}) {
+  const isAdmin = role === 'admin';
+  return (
+    <Field label="Acesso a sinistros">
+      <select
+        aria-label="Acesso a sinistros"
+        className="input"
+        value={isAdmin ? 'manage' : value}
+        disabled={isAdmin}
+        onChange={(e) => onChange(e.target.value as AdminUser['claims_access'])}
+      >
+        {CLAIMS_ACCESS_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <p className="mt-1 text-xs text-text-secondary">
+        {isAdmin
+          ? 'Administrador sempre opera sinistros.'
+          : 'Consulta permite acompanhar; Operação permite cadastrar, atribuir e concluir.'}
+      </p>
+    </Field>
+  );
+}
+
 export function AdminUsuariosPage() {
   const qc = useQueryClient();
   const users = useQuery({ queryKey: ['admin', 'users'], queryFn: admin.users });
@@ -41,6 +87,7 @@ export function AdminUsuariosPage() {
                 <th className="px-4 py-2 text-left">Email</th>
                 <th className="px-4 py-2 text-left">Perfil</th>
                 <th className="px-4 py-2 text-left">Produtos</th>
+                <th className="px-4 py-2 text-left">Sinistros</th>
                 <th className="px-4 py-2 text-left">Meta/dia</th>
                 <th className="px-4 py-2 text-left">Estado</th>
                 <th className="px-4 py-2 text-right">Ações</th>
@@ -58,6 +105,9 @@ export function AdminUsuariosPage() {
                     {u.product_ids.length === 0
                       ? '—'
                       : u.product_ids.map((id) => productMap[id] ?? id.slice(0, 8)).join(', ')}
+                  </td>
+                  <td className="px-4 py-2">
+                    {CLAIMS_ACCESS_LABELS[u.claims_access] ?? 'Sem acesso'}
                   </td>
                   <td className="px-4 py-2">
                     {u.role === 'vendedor' ? (u.daily_prospecting_quota ?? 'Não definida') : '—'}
@@ -82,7 +132,7 @@ export function AdminUsuariosPage() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-text-secondary">
+                  <td colSpan={8} className="py-8 text-center text-text-secondary">
                     Nenhum usuário.
                   </td>
                 </tr>
@@ -132,6 +182,7 @@ function CreateDialog({
     role: 'vendedor',
     password: '',
     product_ids: [] as string[],
+    claims_access: 'none' as AdminUser['claims_access'],
   });
   const [error, setError] = useState<string | null>(null);
   const mut = useMutation({
@@ -142,6 +193,7 @@ function CreateDialog({
         role: form.role,
         password: form.password,
         product_ids: form.product_ids,
+        claims_access: form.role === 'admin' ? undefined : form.claims_access,
       }),
     onSuccess: onDone,
     onError: (err) => setError((err as Error).message),
@@ -184,6 +236,11 @@ function CreateDialog({
           />
         </Field>
       </div>
+      <ClaimsAccessField
+        value={form.claims_access}
+        role={form.role}
+        onChange={(value) => setForm({ ...form, claims_access: value })}
+      />
       <Field label="Produtos autorizados">
         <div className="mt-1 flex flex-wrap gap-2">
           {products.map((p) => {
@@ -245,6 +302,7 @@ function EditDialog({
     is_active: user.is_active,
     product_ids: user.product_ids,
     reset_password: '',
+    claims_access: user.claims_access,
     new_prospecting_quota: '',
     quota_effective_from: new Date().toLocaleDateString('en-CA', {
       timeZone: 'America/Sao_Paulo',
@@ -259,6 +317,7 @@ function EditDialog({
         is_active: form.is_active,
         product_ids: form.product_ids,
         reset_password: form.reset_password || undefined,
+        claims_access: form.role === 'admin' ? undefined : form.claims_access,
         daily_prospecting_quota:
           form.new_prospecting_quota === ''
             ? undefined
@@ -299,6 +358,11 @@ function EditDialog({
         />
         Usuário ativo
       </label>
+      <ClaimsAccessField
+        value={form.claims_access}
+        role={form.role}
+        onChange={(value) => setForm({ ...form, claims_access: value })}
+      />
       <Field label="Produtos autorizados">
         <div className="mt-1 flex flex-wrap gap-2">
           {products.map((p) => {

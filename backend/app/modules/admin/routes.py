@@ -39,12 +39,22 @@ def _require_admin() -> None:
 
 # ---------------- Usuários --------------------------------------------------
 
+CLAIMS_ACCESS_NONE = "none"
+CLAIMS_ACCESS_READ = "read"
+CLAIMS_ACCESS_MANAGE = "manage"
+CLAIMS_ACCESS_PERMISSIONS = {
+    CLAIMS_ACCESS_READ: "claims.read",
+    CLAIMS_ACCESS_MANAGE: "claims.manage",
+}
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     name: str = Field(min_length=1, max_length=200)
     role: str
     password: str = Field(min_length=10, max_length=200)
     product_ids: list[str] = Field(default_factory=list)
+    claims_access: str | None = Field(default=None, pattern="^(none|read|manage)$")
 
 
 class UserUpdate(BaseModel):
@@ -55,6 +65,72 @@ class UserUpdate(BaseModel):
     reset_password: str | None = Field(default=None, min_length=10, max_length=200)
     daily_prospecting_quota: int | None = Field(default=None, ge=0, le=10_000)
     quota_effective_from: date | None = None
+    claims_access: str | None = Field(default=None, pattern="^(none|read|manage)$")
+
+
+def _active_claims_grants(user_id: str) -> list[PermissionGrant]:
+    now = now_utc()
+    return list(
+        db.session.execute(
+            select(PermissionGrant).where(
+                PermissionGrant.user_id == user_id,
+                PermissionGrant.permission.in_(
+                    tuple(CLAIMS_ACCESS_PERMISSIONS.values())
+                ),
+                PermissionGrant.revoked_at.is_(None),
+                or_(
+                    PermissionGrant.starts_at.is_(None),
+                    PermissionGrant.starts_at <= now,
+                ),
+                or_(PermissionGrant.ends_at.is_(None), PermissionGrant.ends_at > now),
+            )
+        ).scalars().all()
+    )
+
+
+def _claims_access(user: User) -> str:
+    """Acesso efetivo a sinistros: o perfil admin já opera sem concessão."""
+    if user.role == ROLE_ADMIN:
+        return CLAIMS_ACCESS_MANAGE
+    permissions = {grant.permission for grant in _active_claims_grants(user.id)}
+    if CLAIMS_ACCESS_PERMISSIONS[CLAIMS_ACCESS_MANAGE] in permissions:
+        return CLAIMS_ACCESS_MANAGE
+    if CLAIMS_ACCESS_PERMISSIONS[CLAIMS_ACCESS_READ] in permissions:
+        return CLAIMS_ACCESS_READ
+    return CLAIMS_ACCESS_NONE
+
+
+def _set_claims_access(
+    *,
+    organization_id: str,
+    actor_user_id: str,
+    user: User,
+    access: str,
+) -> None:
+    if user.role == ROLE_ADMIN and access != CLAIMS_ACCESS_MANAGE:
+        raise BusinessError(
+            "invalid_claims_access",
+            "Administrador sempre opera sinistros; altere o perfil antes de restringir",
+            status=422,
+        )
+    desired = CLAIMS_ACCESS_PERMISSIONS.get(access)
+    now = now_utc()
+    for grant in _active_claims_grants(user.id):
+        if desired is not None and grant.permission == desired:
+            desired = None
+            continue
+        grant.revoked_at = now
+    if desired is not None:
+        db.session.add(
+            PermissionGrant(
+                organization_id=organization_id,
+                user_id=user.id,
+                granted_by=actor_user_id,
+                permission=desired,
+                scope={},
+                reason="Acesso a sinistros definido no cadastro do usuário",
+            )
+        )
 
 
 def _serialize_user(u: User) -> dict:
@@ -69,6 +145,7 @@ def _serialize_user(u: User) -> dict:
         "product_ids": [str(p.id) for p in u.products],
         "daily_prospecting_quota": quota.quota if quota else None,
         "quota_effective_from": quota.effective_from.isoformat() if quota else None,
+        "claims_access": _claims_access(u),
     }
 
 
@@ -175,13 +252,26 @@ def create_user():
         ).scalars().all()
         user.products = list(products)
 
+    if payload.claims_access:
+        _set_claims_access(
+            organization_id=ctx.organization_id,
+            actor_user_id=ctx.user_id,
+            user=user,
+            access=payload.claims_access,
+        )
+
     audit_record(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
         entity_type="user",
         entity_id=str(user.id),
         action="create",
-        after={"email": user.email, "role": user.role, "products": payload.product_ids},
+        after={
+            "email": user.email,
+            "role": user.role,
+            "products": payload.product_ids,
+            "claims_access": _claims_access(user),
+        },
         request_id=getattr(g, "request_id", None),
     )
     db.session.commit()
@@ -207,6 +297,7 @@ def update_user(user_id: str):
         "quota_effective_from": (
             previous_quota.effective_from.isoformat() if previous_quota else None
         ),
+        "claims_access": _claims_access(user),
     }
     if payload.name is not None:
         user.name = payload.name.strip()
@@ -251,6 +342,13 @@ def update_user(user_id: str):
             quota=payload.daily_prospecting_quota,
             effective_from=effective_from,
         )
+    if payload.claims_access is not None:
+        _set_claims_access(
+            organization_id=ctx.organization_id,
+            actor_user_id=ctx.user_id,
+            user=user,
+            access=payload.claims_access,
+        )
     audit_record(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
@@ -278,6 +376,7 @@ def update_user(user_id: str):
                     else None
                 )
             ),
+            "claims_access": _claims_access(user),
         },
         request_id=getattr(g, "request_id", None),
     )

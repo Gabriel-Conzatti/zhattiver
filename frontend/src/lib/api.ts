@@ -688,6 +688,7 @@ export interface AdminUser {
   product_ids: string[];
   daily_prospecting_quota: number | null;
   quota_effective_from: string | null;
+  claims_access: 'none' | 'read' | 'manage';
 }
 
 export interface AuditLogEntry {
@@ -836,6 +837,7 @@ export const admin = {
     role: string;
     password: string;
     product_ids?: string[];
+    claims_access?: string;
   }) => api<AdminUser>('/admin/users', { method: 'POST', body: input }),
   updateUser: (id: string, changes: Partial<{
     name: string;
@@ -845,6 +847,7 @@ export const admin = {
     reset_password: string;
     daily_prospecting_quota: number;
     quota_effective_from: string;
+    claims_access: string;
   }>) => api<AdminUser>(`/admin/users/${id}`, { method: 'PATCH', body: changes }),
   grants: () =>
     api<{

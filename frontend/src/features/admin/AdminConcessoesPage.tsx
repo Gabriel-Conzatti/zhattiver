@@ -13,6 +13,9 @@ const KNOWN_PERMISSIONS = [
   'sales.view_commission_pct',
   'sales.view_commission_amount',
   'bonus.view_own',
+  'claims.read',
+  'claims.manage',
+  'claims.view_financial',
 ];
 
 export function AdminConcessoesPage() {

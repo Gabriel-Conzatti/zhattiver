@@ -378,10 +378,12 @@ Publicado em `funil.zhattiver.com` a partir do commit `e23d4ae`.
 
 ## Próximo passo
 
-1. Definir, na tela Equipe, a meta diária de prospecção da vendedora.
-2. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
-3. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
-4. A recuperação de senha por e-mail foi **adiada por decisão da operação**: o sistema
+1. Designar a equipe de sinistros em Administração > Usuários, no campo **Acesso a sinistros**
+   (Consulta ou Operação), e homologar o módulo com um usuário real.
+2. Definir, na tela Equipe, a meta diária de prospecção da vendedora.
+3. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
+4. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.
+5. A recuperação de senha por e-mail foi **adiada por decisão da operação**: o sistema
    entra em produção sem SMTP e o caminho oficial para esquecimento de senha é a
    redefinição administrativa em Equipe > Editar, já validada em produção. Se a decisão
    for revista, basta criar uma senha exclusiva da caixa remetente na Locaweb e executar

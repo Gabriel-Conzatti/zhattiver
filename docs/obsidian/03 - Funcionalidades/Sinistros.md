@@ -36,6 +36,23 @@ vendedor. Valores de indenização exigem administrador, `claims.manage` ou
 - Vendedor possui consulta limitada ao próprio escopo comercial.
 - SDR visualiza o menu somente quando possui `claims.read` ou `claims.manage`.
 
+## Como designar a equipe de sinistros
+
+O administrador abre **Administração → Usuários**, cria ou edita o usuário e escolhe o campo
+**Acesso a sinistros**:
+
+| Opção | Permissão concedida | O que o usuário faz |
+| --- | --- | --- |
+| Sem acesso | nenhuma | não enxerga o módulo |
+| Consulta | `claims.read` | acompanha os registros sem escrever |
+| Operação | `claims.manage` | cadastra, atribui, movimenta e conclui |
+
+O campo grava concessões em `permission_grants`, com auditoria do ator e dos valores anterior
+e novo. Rebaixar um nível revoga a concessão anterior em vez de apagá-la. O perfil
+`admin` sempre opera sinistros, por isso o campo aparece bloqueado em **Operação** e o backend
+rejeita restringi-lo com `invalid_claims_access` (422). As mesmas permissões continuam
+disponíveis em **Administração → Concessões** para vigências temporárias.
+
 ## Banco de dados
 
 - Tabelas para sinistro, estados, participantes, eventos, tarefas e metadados de documentos.
