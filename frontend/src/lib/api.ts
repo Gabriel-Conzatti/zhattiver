@@ -183,6 +183,8 @@ export const claims = {
     insurer: string;
     opened_on: string;
     claim_number?: string;
+    team_id?: string | null;
+    responsible_user_id?: string | null;
     service_type?: string;
     has_third_party?: boolean;
     workshop?: string;

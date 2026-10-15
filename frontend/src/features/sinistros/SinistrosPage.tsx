@@ -341,6 +341,7 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
       {showForm && (
         <NewClaimForm
           statuses={statusQuery.data?.items ?? []}
+          assignees={assigneesQuery.data}
           loading={createMutation.isPending}
           error={createMutation.error instanceof Error ? createMutation.error.message : undefined}
           onClose={() => setShowForm(false)}
@@ -742,12 +743,17 @@ function ClaimDetails({
 
 function NewClaimForm({
   statuses,
+  assignees,
   loading,
   onClose,
   onSubmit,
   error,
 }: {
   statuses: ClaimStatus[];
+  assignees?: {
+    users: Array<{ id: string; name: string }>;
+    teams: Array<{ id: string; name: string }>;
+  };
   loading: boolean;
   onClose: () => void;
   onSubmit: (input: CreateClaimInput) => void;
@@ -758,6 +764,8 @@ function NewClaimForm({
     branch: '',
     insurer: '',
     opened_on: new Date().toISOString().slice(0, 10),
+    responsible_user_id: '',
+    team_id: '',
     expected_on: '',
     claim_number: '',
     service_type: '',
@@ -790,6 +798,8 @@ function NewClaimForm({
       branch: form.branch.trim(),
       insurer: form.insurer.trim(),
       opened_on: form.opened_on,
+      responsible_user_id: form.responsible_user_id || null,
+      team_id: form.team_id || null,
       expected_on: form.expected_on || null,
       claim_number: form.claim_number.trim() || undefined,
       service_type: form.service_type.trim() || undefined,
@@ -891,6 +901,36 @@ function NewClaimForm({
               {statuses.map((status) => (
                 <option key={status.id} value={status.id}>
                   {status.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-[#b7cce0]">
+            Responsável
+            <select
+              value={form.responsible_user_id}
+              onChange={(event) => update('responsible_user_id', event.target.value)}
+              className="input mt-1 w-full"
+            >
+              <option value="">Sem responsável</option>
+              {assignees?.users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-[#b7cce0]">
+            Equipe
+            <select
+              value={form.team_id}
+              onChange={(event) => update('team_id', event.target.value)}
+              className="input mt-1 w-full"
+            >
+              <option value="">Sem equipe</option>
+              {assignees?.teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
                 </option>
               ))}
             </select>

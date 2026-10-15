@@ -18,6 +18,7 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
   {
     label: 'Gestão',
     items: [
+      { to: '/admin/sinistros', label: 'Sinistros' },
       { to: '/admin/producao', label: 'Produção' },
       { to: '/admin/bonus', label: 'Bônus' },
       { to: '/admin/relatorios', label: 'Relatórios' },
@@ -26,7 +27,6 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
       { to: '/admin/concessoes', label: 'Concessões' },
       { to: '/admin/auditoria', label: 'Auditoria' },
       { to: '/admin/configuracoes', label: 'Configurações' },
-      { to: '/admin/sinistros', label: 'Sinistros' },
     ],
   },
 ];

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SinistrosPage } from './SinistrosPage';
@@ -23,7 +23,10 @@ vi.mock('@/lib/api', () => ({
         },
       ],
     }),
-    assignees: vi.fn().mockResolvedValue({ users: [], teams: [] }),
+    assignees: vi.fn().mockResolvedValue({
+      users: [{ id: 'user-1', name: 'Usuário de teste' }],
+      teams: [{ id: 'team-1', name: 'Equipe de sinistros' }],
+    }),
     list: vi.fn().mockResolvedValue({
       items: [],
       page: 1,
@@ -77,5 +80,19 @@ describe('SinistrosPage', () => {
 
     expect(screen.queryByRole('button', { name: /Novo sinistro/i })).not.toBeInTheDocument();
     expect(await screen.findByText('Nenhum sinistro encontrado para os filtros atuais.')).toBeVisible();
+  });
+
+  it('exibe o cadastro com responsável e equipe para o administrador', async () => {
+    renderPage();
+
+    const newClaimButton = await screen.findByRole('button', { name: /Novo sinistro/i });
+    await waitFor(() => expect(newClaimButton).not.toBeDisabled());
+    fireEvent.click(newClaimButton);
+
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Novo sinistro' })).toBeVisible(),
+    );
+    expect(screen.getByLabelText('Responsável')).toBeVisible();
+    expect(screen.getByLabelText('Equipe')).toBeVisible();
   });
 });
