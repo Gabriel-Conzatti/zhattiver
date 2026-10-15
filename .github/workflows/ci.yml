@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend (pytest)
+    name: Backend (lint + pytest)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -43,6 +43,9 @@ jobs:
       - name: Validate migrations
         working-directory: backend
         run: flask --app wsgi:app db upgrade
+      - name: Ruff
+        working-directory: backend
+        run: python -m ruff check .
       - name: Run tests
         working-directory: backend
         run: python -m pytest -q
@@ -63,6 +66,9 @@ jobs:
       - name: Typecheck
         working-directory: frontend
         run: npm run typecheck
+      - name: ESLint
+        working-directory: frontend
+        run: npm run lint
       - name: Build
         working-directory: frontend
         run: npm run build

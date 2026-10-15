@@ -4,7 +4,7 @@
 2. Cadastrar metas mensais e faixas de bônus antes da primeira apuração.
 3. Executar os cenários E2E contra o domínio público.
 4. Homologar os fluxos comerciais e converter as RN `🟨` em `✅`.
-5. Incluir Ruff e ESLint no workflow de CI.
+5. Code splitting e observabilidade contínua do bundle frontend.
 
 ## Adiados pela operação
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
@@ -242,7 +242,7 @@ def create_next_action(opp_id: str):
     payload = NextActionRequest.model_validate(request.get_json(silent=True) or {})
     due = payload.due_at
     if due.tzinfo is None:
-        due = due.replace(tzinfo=timezone.utc)
+        due = due.replace(tzinfo=UTC)
     na = services.create_next_action(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
@@ -308,7 +308,10 @@ def list_opportunities():
     lead_ids = list({o.lead_id for o in opps})
     stage_ids = list({o.current_stage_id for o in opps})
     leads_by_id = (
-        {l.id: l for l in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()}
+        {
+            lead.id: lead
+            for lead in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()
+        }
         if lead_ids
         else {}
     )
@@ -429,7 +432,10 @@ def my_followups():
 
     lead_ids = list({o.lead_id for o in pending})
     leads_by_id = (
-        {l.id: l for l in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()}
+        {
+            lead.id: lead
+            for lead in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()
+        }
         if lead_ids
         else {}
     )

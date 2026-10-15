@@ -1,5 +1,28 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Correção das barreiras de qualidade e publicação
+
+### Realizado
+
+- Corrigido o passivo de lint Ruff no backend e incluído `ruff check` na validação local
+  e na CI.
+- ESLint passou a ser executado também na CI e pelo verificador local.
+- O build Vite passou a separar React, consultas, formulários e ícones em chunks próprios,
+  eliminando o alerta de chunk principal acima de 500 kB.
+- Removida a desativação global de redirecionamentos HTTP do Caddy.
+- Sincronizadas as contagens de testes e as pendências operacionais no Vault.
+
+### Testes executados
+
+- `scripts/verify.ps1` — aprovado.
+- Backend: 73 testes, Ruff aprovado.
+- Frontend: ESLint, typecheck, 32 testes e build aprovados.
+- Compose de produção e desenvolvimento — aprovado.
+
+### Resultado
+
+- Aprovado localmente e pronto para publicação Git.
+
 ## 2026-10-14 - Importação de planilhas para o administrador
 
 ### Realizado

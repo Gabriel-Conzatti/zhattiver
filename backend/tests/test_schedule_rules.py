@@ -1,14 +1,11 @@
 from datetime import date
 
+from app.modules.funnel.rendering import render_template
 from app.modules.schedules.rules import (
-    CONTACT_LIMIT_BUSINESS_DAYS,
-    WINDOW_MAX_BUSINESS_DAYS,
-    WINDOW_MIN_BUSINESS_DAYS,
     contact_limit_on,
     evaluate_schedule,
     window_opens_on,
 )
-from app.modules.funnel.rendering import render_template
 
 
 def test_window_between_5_and_7_business_days():

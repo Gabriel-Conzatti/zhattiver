@@ -5,7 +5,7 @@ from flask_login import login_required
 from sqlalchemy import func, select
 
 from ...core.authz import load_context
-from ...core.errors import BusinessError, api_error
+from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
 from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
@@ -97,7 +97,7 @@ def list_leads():
     stmt = stmt.order_by(Lead.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
 
     leads = db.session.execute(stmt).scalars().all()
-    lead_ids = [l.id for l in leads]
+    lead_ids = [lead.id for lead in leads]
     phones_by_lead: dict[str, list[LeadPhone]] = {}
     if lead_ids:
         rows = db.session.execute(
@@ -108,15 +108,15 @@ def list_leads():
 
     items = [
         LeadListItem(
-            id=str(l.id),
-            name=l.name,
-            kind=l.kind,
-            city=l.city,
-            state=l.state,
-            phones=[p.phone_e164 for p in phones_by_lead.get(l.id, [])],
-            archived=l.archived_at is not None,
+            id=str(lead.id),
+            name=lead.name,
+            kind=lead.kind,
+            city=lead.city,
+            state=lead.state,
+            phones=[p.phone_e164 for p in phones_by_lead.get(lead.id, [])],
+            archived=lead.archived_at is not None,
         )
-        for l in leads
+        for lead in leads
     ]
     return jsonify(
         LeadListResponse(items=items, page=page, per_page=per_page, total=total).model_dump()

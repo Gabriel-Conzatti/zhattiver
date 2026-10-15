@@ -4,7 +4,7 @@ from datetime import date
 
 from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from ...core.authz import load_context

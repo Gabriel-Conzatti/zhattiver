@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from sqlalchemy import select
 
@@ -43,7 +43,7 @@ def _normalize_phones(raws: Iterable[str]) -> list[tuple[str, str]]:
                 f"Telefone inválido: {raw}",
                 status=422,
                 details={"phone": raw, "reason": str(exc)},
-            )
+            ) from exc
         if e164 in seen:
             continue
         seen.add(e164)

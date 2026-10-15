@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import csv
 import io
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from openpyxl import load_workbook
 
 from ...core.phones import PhoneNormalizationError, normalize_phone
-
 
 EXPECTED_COLUMNS = {
     "name": ["nome", "cliente", "lead", "name"],

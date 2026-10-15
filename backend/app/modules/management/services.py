@@ -10,7 +10,7 @@ from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
 from ..notifications.services import notify
-from ..opportunities.models import NA_STATE_OPEN, NextAction, Opportunity, STATE_OPEN
+from ..opportunities.models import NA_STATE_OPEN, STATE_OPEN, NextAction, Opportunity
 from ..schedules.models import STATE_SCHEDULED, Schedule
 from ..users.models import User
 from .models import Absence

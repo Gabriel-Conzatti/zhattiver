@@ -12,14 +12,14 @@ from ...extensions import db
 from ..leads import services as lead_services
 from ..users.models import ROLE_ADMIN, ROLE_SDR
 from .models import (
-    ImportBatch,
-    ImportRow,
     ROW_STATUS_DUPLICATE,
     ROW_STATUS_ERROR,
     ROW_STATUS_OK,
     STATUS_CONFIRMED,
     STATUS_REVIEWING,
     TYPE_LEADS,
+    ImportBatch,
+    ImportRow,
 )
 from .parser import parse_leads_file
 

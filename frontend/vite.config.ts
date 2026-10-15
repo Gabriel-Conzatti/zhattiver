@@ -22,6 +22,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          query: ['@tanstack/react-query'],
+          forms: ['react-hook-form', 'zod'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',

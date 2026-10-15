@@ -27,6 +27,13 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ## [Não publicado]
 
+### Qualidade e operação
+
+- Ruff e ESLint passaram a fazer parte das barreiras locais e da CI.
+- O bundle frontend passou a separar vendors em chunks independentes, removendo o alerta
+  de tamanho do chunk principal.
+- O Caddy voltou a emitir o redirecionamento automático de HTTP para HTTPS.
+
 ### Alterado
 
 - Tela de Importações movida para o módulo compartilhado

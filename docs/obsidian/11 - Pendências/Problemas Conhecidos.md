@@ -14,10 +14,8 @@
   prévio, metas e apuração de bônus não produzem resultado.
 - A meta diária de prospecção da vendedora ainda precisa receber o valor definido pela
   operação. A configuração passa a ser feita em **Equipe > Editar vendedor**.
-- A porta 80 não responde externamente e o Caddy roda com `auto_https disable_redirects`.
-  Quem digita o domínio sem `https://` não é redirecionado. A emissão e a renovação do
-  certificado funcionam por TLS-ALPN-01 na porta 443, então não há risco de expiração.
-- Ruff e ESLint não fazem parte do workflow de CI, então erros de lint não bloqueiam merge.
+- O bundle frontend deve continuar sendo acompanhado quando novas dependências ou rotas
+  forem adicionadas; o build agora separa os principais vendors em chunks independentes.
 
 ## Resolvidos
 

@@ -52,15 +52,15 @@ def list_lists():
         {
             "items": [
                 {
-                    "id": str(l.id),
-                    "name": l.name,
-                    "target_product_id": str(l.target_product_id),
-                    "state": l.state,
-                    "total_items": l.total_items,
-                    "released_items": l.released_items,
-                    "created_at": l.created_at.isoformat(),
+                    "id": str(cross_sell_list.id),
+                    "name": cross_sell_list.name,
+                    "target_product_id": str(cross_sell_list.target_product_id),
+                    "state": cross_sell_list.state,
+                    "total_items": cross_sell_list.total_items,
+                    "released_items": cross_sell_list.released_items,
+                    "created_at": cross_sell_list.created_at.isoformat(),
                 }
-                for l in rows
+                for cross_sell_list in rows
             ]
         }
     )
@@ -113,15 +113,15 @@ def get_list(list_id: str):
             "items": [
                 {
                     "id": str(i.id),
-                    "lead_id": str(l.id),
-                    "lead_name": l.name,
-                    "city": l.city,
-                    "state": l.state,
+                    "lead_id": str(lead.id),
+                    "lead_name": lead.name,
+                    "city": lead.city,
+                    "state": lead.state,
                     "item_state": i.state,
                     "last_contact_at": i.last_contact_at.isoformat() if i.last_contact_at else None,
                     "released_at": i.released_at.isoformat() if i.released_at else None,
                 }
-                for i, l in items
+                for i, lead in items
             ],
         }
     )

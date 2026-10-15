@@ -24,6 +24,7 @@ function Invoke-External {
 
 Push-Location (Join-Path $repoRoot "backend")
 try {
+    Invoke-External "lint backend" { & .\.venv\Scripts\ruff.exe check . }
     Invoke-External "pytest backend" { & .\.venv\Scripts\python.exe -m pytest }
 } finally {
     Pop-Location
@@ -32,6 +33,7 @@ try {
 if (-not $SkipFrontend) {
     Push-Location (Join-Path $repoRoot "frontend")
     try {
+        Invoke-External "lint frontend" { & npm run lint }
         Invoke-External "typecheck frontend" { & npm run typecheck }
         Invoke-External "testes frontend" { & npm run test }
         Invoke-External "build frontend" { & npm run build }

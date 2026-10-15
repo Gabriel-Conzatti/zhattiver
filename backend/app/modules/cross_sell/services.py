@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import select
 
 from ...core.audit import record as audit_record
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
-from ..leads.models import Availability, Lead, LeadProduct, STATUS_HAS, STATUS_NONE
+from ..leads.models import STATUS_HAS, STATUS_NONE, Availability, Lead, LeadProduct
 from ..notifications.services import notify
 from ..opportunities.models import Activity
 from .models import (
@@ -104,7 +103,7 @@ def generate_list(
             stmt = stmt.where(Lead.id.in_(with_none))
 
     leads = db.session.execute(stmt).scalars().all()
-    lead_ids = [l.id for l in leads]
+    lead_ids = [lead.id for lead in leads]
     last_contact = _last_contact_map(organization_id, lead_ids)
     for lead in leads:
         db.session.add(

@@ -179,7 +179,7 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 
 ## Verificado
 
-- Backend: `pytest` executado em `backend/` — 53 testes aprovados.
+- Backend: `pytest` executado em `backend/` — 73 testes aprovados.
 - Playwright: sete cenários aprovados em execução local isolada (login/logout,
   credencial inválida, cadastro/disponibilização/duplicidade SDR, cópia de
   mensagem e metas do vendedor).
@@ -206,9 +206,10 @@ Funil semeado, `copy_message` idempotente, regras de janela de agendamento (5–
 - Serviços administrativos validam que origem/destino de transferências e usuário substituído
   em concessões pertençam à organização ativa. Agendamentos também validam lead, produto,
   responsável e origem antes da gravação.
-- Lint dos arquivos backend alterados aprovado com `ruff check`.
-- Verificador local único: `scripts/verify.ps1` executado com sucesso — pytest backend,
-  typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.
+- Ruff de todo o backend e ESLint de todo o frontend aprovados; ambos também bloqueiam
+  a CI e o verificador local.
+- Verificador local único: `scripts/verify.ps1` executado com sucesso — lint, pytest
+  backend, typecheck/test/build frontend e configuração Compose de produção/desenvolvimento.
 - Barreira de lint frontend restaurada com configuração flat do ESLint 9. Vite 6.4.3,
   Vitest 4.1.11 e Tailwind CSS 4.3.3 substituem versões com CVEs conhecidos; os scans
   finais do `appmod-cve-assessment` e `npm audit` não encontraram vulnerabilidades.

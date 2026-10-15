@@ -17,10 +17,8 @@ from ..leads.models import Availability, Lead
 from ..schedules.models import STATE_CONTACTED, Schedule
 from ..users.models import Product, User
 from .models import (
-    Activity,
-    LossReason,
-    NextAction,
-    Opportunity,
+    NA_STATE_DONE,
+    NA_STATE_OPEN,
     RELEVANT_ACTIVITY_TYPES,
     STATE_LOST,
     STATE_OPEN,
@@ -35,10 +33,11 @@ from .models import (
     TYPE_RESULT,
     TYPE_SCHEDULE_CONTACT,
     TYPE_STAGE_CHANGE,
-    NA_STATE_DONE,
-    NA_STATE_OPEN,
+    Activity,
+    LossReason,
+    NextAction,
+    Opportunity,
 )
-
 
 METRIC_PROSPECTING = "prospecting"
 METRIC_SCHEDULES = "schedules"
@@ -359,8 +358,8 @@ def compute_daily_goals(
         )
     ).scalar_one()
 
-    from ..schedules.rules import evaluate_schedule
     from ..schedules.models import STATE_SCHEDULED
+    from ..schedules.rules import evaluate_schedule
 
     schedules_open = db.session.execute(
         select(Schedule).where(

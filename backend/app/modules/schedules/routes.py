@@ -84,8 +84,8 @@ def list_schedules():
     lead_ids = list({r.lead_id for r in rows})
     leads_by_id = (
         {
-            l.id: l
-            for l in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()
+            lead.id: lead
+            for lead in db.session.execute(select(Lead).where(Lead.id.in_(lead_ids))).scalars().all()
         }
         if lead_ids
         else {}

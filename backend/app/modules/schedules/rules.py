@@ -8,7 +8,6 @@ from datetime import date
 from ...core.calendar import add_business_days, business_days_between
 from ...core.time import today_local
 
-
 WINDOW_MIN_BUSINESS_DAYS = 5
 WINDOW_MAX_BUSINESS_DAYS = 7
 CONTACT_LIMIT_BUSINESS_DAYS = 2
