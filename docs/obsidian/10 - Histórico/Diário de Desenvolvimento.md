@@ -1,5 +1,39 @@
 # Diário de Desenvolvimento
 
+## 2026-10-16 - Designação da equipe de sinistros
+
+### Realizado
+
+- Identificada a causa raiz do relato "não tem aonde designar o sinistro": a lista fixa
+  `KNOWN_PERMISSIONS` da tela de concessões omitia todas as permissões `claims.*`, de modo
+  que somente o perfil `admin` conseguia operar o módulo.
+- Optado por conceder acesso pelo sistema de `PermissionGrant` existente, em vez de criar um
+  quarto perfil, mantendo a decisão reversível e auditável.
+- Adicionado o campo **Acesso a sinistros** na criação e na edição de usuário, com os níveis
+  Sem acesso, Consulta (`claims.read`) e Operação (`claims.manage`), além da coluna
+  correspondente na listagem.
+- Incluídas as permissões `claims.read`, `claims.manage` e `claims.view_financial` na tela
+  de concessões e alinhada a rota do vendedor ao backend (`readOnly` derivado da concessão).
+
+### Arquivos principais
+
+- `backend/app/modules/admin/routes.py`
+- `backend/tests/test_admin_claims_access.py`
+- `frontend/src/features/admin/AdminUsuariosPage.tsx`
+- `frontend/src/features/admin/AdminConcessoesPage.tsx`
+- `frontend/src/app/App.tsx`
+
+### Testes executados
+
+- `pytest` — 85 aprovados; `ruff check` sem apontamentos.
+- `npm test -- --run` — 44 aprovados; `typecheck`, `lint` e `build` aprovados.
+
+### Publicado
+
+- Commit `1b8d063` publicado em produção pelo `scripts/deploy.sh`.
+- `GET https://funil.zhattiver.com/api/v1/health` — HTTP 200; SPA — HTTP 200;
+  `GET /api/v1/admin/users` sem sessão — HTTP 401.
+
 ## 2026-10-16 - Módulo inicial de sinistros
 
 ### Realizado
