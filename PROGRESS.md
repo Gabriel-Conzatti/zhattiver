@@ -14,6 +14,13 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 - Validação local: 83 testes backend, 42 frontend, Ruff, ESLint, typecheck, build,
   configuração do Compose e ciclo upgrade/downgrade/upgrade da migration em PostgreSQL
   aprovados.
+- Publicado em produção em 15/10/2026 com o commit `33ecab3`, após backup do banco.
+  Migration `7d2f4c8a91be` aplicada, seis tabelas criadas e seis estados padrão semeados.
+- Verificado em produção: `/api/v1/health` e a aplicação respondem 200, `/api/v1/claims`
+  exige autenticação (401) e os serviços `api`, `worker`, `scheduler`, `web`, `db` e
+  `redis` estão saudáveis.
+- Pendente: homologação comercial do módulo com dados reais e decisão sobre importação
+  do histórico da planilha.
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 

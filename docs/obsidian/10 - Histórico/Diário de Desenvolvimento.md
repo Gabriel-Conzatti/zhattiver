@@ -26,7 +26,12 @@
 
 ### Resultado
 
-- Implementação local aprovada; migration e deploy pendentes.
+- Implementação local aprovada.
+- Publicado em produção em 2026-10-15 com o commit `33ecab3`. O `scripts/deploy.sh` fez
+  backup do banco, aplicou a migration `7d2f4c8a91be` e recriou `api`, `worker`,
+  `scheduler` e `web`. O healthcheck passou e as seis tabelas de sinistros existem.
+- Aprendizado: o acesso à VPS exige a chave dedicada `~/.ssh/funil_vps_ed25519` passada
+  explicitamente com `-i`, pois não há `~/.ssh/config` apontando para ela.
 
 ## 2026-10-15 - Novo lead no funil e bônus por negócio
 

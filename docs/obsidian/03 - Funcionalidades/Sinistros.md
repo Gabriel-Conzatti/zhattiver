@@ -50,4 +50,6 @@ vendedor. Valores de indenização exigem administrador, `claims.manage` ou
 
 ## Histórico
 
-- 2026-10-16 — implementação local concluída para novos sinistros; deploy ainda pendente.
+- 2026-10-16 — implementação local concluída para novos sinistros.
+- 2026-10-15 — publicado em produção com o commit `33ecab3`; migration `7d2f4c8a91be`
+  aplicada e seis estados padrão semeados na organização existente.

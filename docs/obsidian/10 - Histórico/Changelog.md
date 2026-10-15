@@ -1,6 +1,6 @@
 # Changelog
 
-## [Não publicado] - Módulo inicial de sinistros
+## [2026-10-15] - Módulo inicial de sinistros
 
 ### Adicionado
 
@@ -14,9 +14,11 @@
 - Organização derivada da sessão, negação por padrão e isolamento comercial do vendedor.
 - Indenização omitida sem autorização financeira.
 
-### Pendente
+### Publicado
 
-- Aplicar a migration com backup e publicar o módulo.
+- Commit `33ecab3` publicado em produção com backup prévio do banco.
+- Migration `7d2f4c8a91be` aplicada; seis tabelas de sinistros criadas e os seis estados
+  padrão semeados na organização existente.
 
 ## [2026-10-15] - Novo lead no funil e bônus por negócio
 
