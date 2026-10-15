@@ -324,9 +324,17 @@ A aplicação usa credencial sem privilégios `UPDATE`/`DELETE` sobre `audit_log
 - Nenhuma consulta aceita `organization_id` externo. O middleware injeta a partir da sessão em cada request.
 # Módulo de sinistros
 
-O módulo `claims` adiciona `claim_statuses`, `claims`, `claim_parties`, `claim_events`,
-`claim_tasks` e `claim_documents`. Cada tabela possui `organization_id`; sinistro pode
-ter vínculos opcionais com lead, oportunidade e venda. Valores de indenização usam
-`NUMERIC(14,2)`, e mudanças relevantes são preservadas em eventos e auditoria.
+O módulo `claims` adiciona `claim_statuses`, `claim_branches`, `claim_workshops`,
+`claim_workshop_insurers`, `claims`, `claim_parties`, `claim_events`, `claim_tasks` e
+`claim_documents`. Cada entidade de negócio possui `organization_id`; sinistro pode ter
+vínculos opcionais com lead, oportunidade e venda.
+
+`claims.branch_id` referencia `claim_branches`, `claims.insurer_id` reutiliza o catálogo
+global `insurers` e `claims.workshop_id` referencia `claim_workshops`. Os campos textuais
+`branch`, `insurer` e `workshop` permanecem como fotografia histórica. Oficinas se
+relacionam N:N com seguradoras por `claim_workshop_insurers`.
+
+Valores de indenização usam `NUMERIC(14,2)`, e mudanças relevantes são preservadas em
+eventos e auditoria.
 `claim_documents` mantém somente metadados; os binários dependerão de storage privado
 com autorização e URLs temporárias em uma entrega posterior.

@@ -8,7 +8,9 @@ Acompanhar sinistros no mesmo ambiente do Funil Sustentare, com registro de segu
 
 - Equipe com `claims.manage` cadastra e opera os registros.
 - Administrador possui acesso administrativo.
-- Vendedor consulta somente sinistros vinculados a leads/operações que já pode visualizar.
+- Vendedor sem concessão não acessa o módulo. Com `claims.read`, consulta somente
+  sinistros vinculados a leads/operações que já pode visualizar; com `claims.manage`,
+  acumula a função comercial e a operação de sinistros.
 - Usuário com `claims.read` consulta o módulo sem ações de escrita.
 - O vínculo com lead, oportunidade ou venda é opcional.
 - A primeira versão inicia novos sinistros; a planilha histórica não é importada.
@@ -28,12 +30,19 @@ vendedor. Valores de indenização exigem administrador, `claims.manage` ou
 
 - API paginada com busca, status, responsável, seguradora e filtro de atraso.
 - Atribuição de responsável/equipe, timeline, participantes, tarefas e arquivamento.
+- Ramos iniciais: Auto, RE e RCO ONIBUS.
+- Seguradoras iniciais: Allianz, Azul, Bradesco, HDI, Porto, Sura, Tokio, Yelum, Zurich,
+  Aliro, ESSOR/LIVONIUS, EZZE, Mapfre e Suhai.
+- Oficinas registram nome, telefone, endereço, responsável e seguradoras referenciadoras.
+  Uma oficina só pode ser usada com seguradora vinculada.
 - Registros comerciais são arquivados, não excluídos.
 
 ## Frontend
 
 - Tela administrativa com cadastro, filtros, paginação, detalhe e ações operacionais.
-- Vendedor possui consulta limitada ao próprio escopo comercial.
+- Botão **Oficinas** permite cadastrar e arquivar oficinas referenciadas.
+- Cadastro de sinistro usa seletores de ramo, seguradora e oficina compatível.
+- Vendedor só vê o menu quando possui `claims.read` ou `claims.manage`.
 - SDR visualiza o menu somente quando possui `claims.read` ou `claims.manage`.
 
 ## Como designar a equipe de sinistros

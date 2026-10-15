@@ -7,8 +7,23 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 10 — Módulo inicial de sinistros**
 
+### Catálogos, oficinas e autorização exclusiva — 15/10/2026
+
+- Ramos configurados: Auto, RE e RCO ONIBUS.
+- Seguradoras configuradas conforme a referência: Allianz, Azul, Bradesco, HDI, Porto,
+  Sura, Tokio, Yelum, Zurich, Aliro, ESSOR/LIVONIUS, EZZE, Mapfre e Suhai.
+- Cadastro de oficinas com nome, telefone, endereço, responsável e seguradoras
+  referenciadoras; seleção no sinistro limitada à seguradora compatível.
+- Perfil comercial não concede mais acesso implícito. Usuários combinam vendedor/SDR com
+  `claims.read` ou `claims.manage`; somente administradores e concessões válidas acessam.
+- Migration `b4c91e8d2f60` validada em PostgreSQL 16 com upgrade/downgrade/upgrade e
+  semeadura exata de 3 ramos e 14 seguradoras.
+- Validação local: 86 testes backend e 45 frontend aprovados; Ruff, ESLint, typecheck,
+  build, grafo Alembic e Compose config aprovados.
+- Pendente: commit, push e deploy da migration/interface.
+
 - Criado o módulo `claims` no mesmo monólito, com sinistros, envolvidos, eventos, tarefas e estados configuráveis.
-- Acesso administrativo para operação e consulta limitada do vendedor por vínculo autorizado.
+- Acesso administrativo e por concessões individuais; vendedor sem concessão não acessa.
 - Cadastro, edição, status, eventos, tarefas e auditoria disponíveis por API; telas administrativas e de consulta adicionadas.
 - A planilha `Sinistros.xlsx` foi analisada somente estruturalmente e não será importada na V1.
 - Validação local: 83 testes backend, 42 frontend, Ruff, ESLint, typecheck, build,

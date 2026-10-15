@@ -164,8 +164,17 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
 # Módulo de sinistros (V1)
 
 - Equipe administrativa/sinistros pode cadastrar, editar, atribuir, acompanhar e concluir sinistros.
-- Administrador possui acesso administrativo; vendedor somente consulta registros vinculados ao seu escopo comercial.
+- Administrador possui acesso administrativo. Demais usuários só acessam o módulo com
+  `claims.read` ou `claims.manage`; o perfil comercial, sozinho, não concede acesso.
+- As funções são acumuláveis: um usuário pode continuar vendedor ou SDR e também receber
+  acesso de consulta ou operação em sinistros.
 - Sinistro pode ser independente ou ter vínculo opcional com lead, oportunidade e venda.
+- Ramos iniciais obrigatórios: Auto, RE e RCO ONIBUS.
+- Seguradoras iniciais obrigatórias: Allianz, Azul, Bradesco, HDI, Porto, Sura, Tokio,
+  Yelum, Zurich, Aliro, ESSOR/LIVONIUS, EZZE, Mapfre e Suhai.
+- Oficinas são cadastradas com nome, telefone opcional, endereço, responsável e uma ou
+  mais seguradoras que as referenciam. A oficina só pode ser vinculada a um sinistro da
+  seguradora correspondente.
 - Estados padrão são configuráveis por organização: Em acompanhamento, Verificar, Aguardando seguradora, Aguardando terceiro, Concluído e Finalizado.
 - Histórico de eventos e auditoria são preservados.
 - Registros são arquivados, nunca excluídos pela operação.

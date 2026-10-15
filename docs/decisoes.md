@@ -35,6 +35,9 @@ Cada linha registra: **requisito** (documento) → **decisão técnica** → **h
 | Bônus previsto em fim de semana/feriado | Previsão permanece **dia 20**; pagamento real é registro à parte, marcado quando efetivado | Prompt seção 20. |
 | Crédito em substituições | **Atividade** = executor; **produção** = vendedor definido no registro da venda, preservado mesmo após transferências | Prompt seção 20. |
 | Meta durante ausência | Meta de prospecção **não** é transferida; qualquer isenção/redução deve ser configuração administrativa explícita | Prompt seção 20. |
+| Função de sinistros acumulável | Manter o perfil comercial (`vendedor` ou `sdr`) e anexar `claims.read`/`claims.manage`; administrador possui operação implícita | Evita perfis combinatórios e preserva as permissões comerciais existentes. |
+| Catálogos do sinistro | Ramo e seguradora usam IDs de catálogos da organização; o sinistro preserva também o nome como fotografia histórica | Permite configuração e integridade sem reescrever o histórico quando um catálogo muda. |
+| Oficinas referenciadas | Oficina pertence à organização e se relaciona N:N com seguradoras; só pode ser escolhida para seguradora vinculada | Impede indicação de oficina não referenciada pela seguradora do sinistro. |
 
 ## Escolhas visuais
 

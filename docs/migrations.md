@@ -12,6 +12,25 @@ API, worker e scheduler.
 
 ## Histórico
 
+### `b4c91e8d2f60` — catálogos e oficinas de sinistros
+
+- Cria `claim_branches`, `claim_workshops` e `claim_workshop_insurers`.
+- Adiciona `branch_id`, `insurer_id` e `workshop_id` a `claims`, preservando os campos de
+  nome existentes como fotografia histórica.
+- Semeia Auto, RE e RCO ONIBUS, além das 14 seguradoras confirmadas pela operação,
+  incluindo Suhai, para todas as organizações existentes.
+- Converte ramos e seguradoras já usados em sinistros em entradas de catálogo antes de
+  tornar as novas FKs obrigatórias.
+- Rollback: `flask --app wsgi:app db downgrade 7d2f4c8a91be`.
+- O downgrade remove os vínculos e cadastros de oficinas criados após o upgrade, mas não
+  altera os nomes históricos já armazenados em `claims`.
+
+### `7d2f4c8a91be` — módulo inicial de sinistros
+
+- Cria estados, sinistros, participantes, eventos, tarefas e metadados de documentos.
+- Semeia seis estados padrão para organizações existentes.
+- Rollback: `flask --app wsgi:app db downgrade 6c9e0b4d7a12`.
+
 ### `6c9e0b4d7a12` — unicidade de metas mensais
 
 - Adiciona índices únicos parciais separados para metas gerais e metas por produto.
@@ -44,5 +63,7 @@ API, worker e scheduler.
 
 - O grafo Alembic deve possuir um único head.
 - A migration deve ser executada em PostgreSQL 16 na CI/homologação antes da produção.
+- Para `b4c91e8d2f60`, validar três ramos, 14 seguradoras e o ciclo
+  upgrade/downgrade/upgrade antes do deploy.
 - Após upgrade, validar login, troca de senha, recuperação por email, invalidação de uma
   segunda sessão e cadastro de meta geral/por produto.

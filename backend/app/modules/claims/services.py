@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from ...core.audit import record
 from ...core.errors import BusinessError
 from ...core.time import now_utc, today_local
 from ...extensions import db
+from ..catalog.models import Insurer
 from ..leads.models import Lead
 from ..opportunities.models import Opportunity
 from ..sales.models import Sale
-from ..users.models import Team, User
+from ..users.models import ROLE_ADMIN, PermissionGrant, Team, User
 from .models import (
     CLAIM_STATUS_CLOSED,
     CLAIM_STATUS_COMPLETED,
@@ -20,10 +21,12 @@ from .models import (
     CLAIM_STATUS_THIRD_PARTY,
     CLAIM_STATUS_VERIFY,
     Claim,
+    ClaimBranch,
     ClaimEvent,
     ClaimParty,
     ClaimStatus,
     ClaimTask,
+    ClaimWorkshop,
 )
 
 DEFAULT_STATUSES = (
@@ -34,7 +37,6 @@ DEFAULT_STATUSES = (
     ("Concluído", CLAIM_STATUS_COMPLETED, True),
     ("Finalizado", CLAIM_STATUS_CLOSED, True),
 )
-
 
 def ensure_default_statuses(organization_id: str) -> list[ClaimStatus]:
     statuses = list(
@@ -77,6 +79,77 @@ def get_status(status_id: str, organization_id: str) -> ClaimStatus:
     return status
 
 
+def get_branch(branch_id: str, organization_id: str) -> ClaimBranch:
+    branch = db.session.scalar(
+        select(ClaimBranch).where(
+            ClaimBranch.id == branch_id,
+            ClaimBranch.organization_id == organization_id,
+            ClaimBranch.is_active.is_(True),
+            ClaimBranch.archived_at.is_(None),
+        )
+    )
+    if branch is None:
+        raise BusinessError("invalid_branch", "Ramo de sinistro inválido", status=422)
+    return branch
+
+
+def get_insurer(insurer_id: str, organization_id: str) -> Insurer:
+    insurer = db.session.scalar(
+        select(Insurer).where(
+            Insurer.id == insurer_id,
+            Insurer.organization_id == organization_id,
+            Insurer.is_active.is_(True),
+            Insurer.archived_at.is_(None),
+        )
+    )
+    if insurer is None:
+        raise BusinessError(
+            "invalid_insurer", "Seguradora de sinistro inválida", status=422
+        )
+    return insurer
+
+
+def get_workshop(workshop_id: str, organization_id: str) -> ClaimWorkshop:
+    workshop = db.session.scalar(
+        select(ClaimWorkshop).where(
+            ClaimWorkshop.id == workshop_id,
+            ClaimWorkshop.organization_id == organization_id,
+            ClaimWorkshop.archived_at.is_(None),
+        )
+    )
+    if workshop is None:
+        raise BusinessError("invalid_workshop", "Oficina inválida", status=422)
+    return workshop
+
+
+def resolve_claim_catalogs(
+    data: dict,
+    organization_id: str,
+    claim: Claim | None = None,
+) -> tuple[ClaimBranch, Insurer, ClaimWorkshop | None]:
+    branch_id = data.get("branch_id", claim.branch_id if claim else None)
+    insurer_id = data.get("insurer_id", claim.insurer_id if claim else None)
+    workshop_id = data.get("workshop_id", claim.workshop_id if claim else None)
+    if not branch_id or not insurer_id:
+        raise BusinessError(
+            "missing_claim_catalog",
+            "Ramo e seguradora são obrigatórios",
+            status=422,
+        )
+    branch = get_branch(branch_id, organization_id)
+    insurer = get_insurer(insurer_id, organization_id)
+    workshop = get_workshop(workshop_id, organization_id) if workshop_id else None
+    if workshop is not None and insurer.id not in {
+        item.id for item in workshop.insurers
+    }:
+        raise BusinessError(
+            "workshop_insurer_mismatch",
+            "A oficina não é referenciada pela seguradora selecionada",
+            status=422,
+        )
+    return branch, insurer, workshop
+
+
 def create_claim(
     *,
     organization_id: str,
@@ -85,6 +158,7 @@ def create_claim(
     request_id: str | None,
 ) -> Claim:
     status = get_status(data["status_id"], organization_id)
+    branch, insurer, workshop = resolve_claim_catalogs(data, organization_id)
     validate_links(data, organization_id)
     validate_dates(data)
     amount = data.get("indemnified_amount")
@@ -93,17 +167,20 @@ def create_claim(
     claim = Claim(
         organization_id=organization_id,
         status_id=status.id,
+        branch_id=branch.id,
+        insurer_id=insurer.id,
+        workshop_id=workshop.id if workshop else None,
         team_id=data.get("team_id"),
         responsible_user_id=data.get("responsible_user_id"),
         lead_id=data.get("lead_id"),
         opportunity_id=data.get("opportunity_id"),
         sale_id=data.get("sale_id"),
         claim_number=(data.get("claim_number") or "").strip() or None,
-        branch=data["branch"].strip(),
-        insurer=data["insurer"].strip(),
+        branch=branch.name,
+        insurer=insurer.name,
         service_type=(data.get("service_type") or "").strip() or None,
         has_third_party=data.get("has_third_party", False),
-        workshop=(data.get("workshop") or "").strip() or None,
+        workshop=workshop.name if workshop else None,
         opened_on=data["opened_on"],
         expected_on=data.get("expected_on"),
         concluded_on=data.get("concluded_on"),
@@ -159,6 +236,41 @@ def validate_links(data: dict, organization_id: str) -> None:
             select(model).where(model.id == value, model.organization_id == organization_id)
         ):
             raise BusinessError("invalid_link", f"{label} fora da organização", status=422)
+    responsible_user_id = data.get("responsible_user_id")
+    if responsible_user_id:
+        now = now_utc()
+        allowed = db.session.scalar(
+            select(User.id).where(
+                User.id == responsible_user_id,
+                User.organization_id == organization_id,
+                User.is_active.is_(True),
+                User.archived_at.is_(None),
+                or_(
+                    User.role == ROLE_ADMIN,
+                    User.id.in_(
+                        select(PermissionGrant.user_id).where(
+                            PermissionGrant.organization_id == organization_id,
+                            PermissionGrant.permission == "claims.manage",
+                            PermissionGrant.revoked_at.is_(None),
+                            or_(
+                                PermissionGrant.starts_at.is_(None),
+                                PermissionGrant.starts_at <= now,
+                            ),
+                            or_(
+                                PermissionGrant.ends_at.is_(None),
+                                PermissionGrant.ends_at > now,
+                            ),
+                        )
+                    ),
+                ),
+            )
+        )
+        if not allowed:
+            raise BusinessError(
+                "invalid_claim_assignee",
+                "O responsável precisa ter permissão de operação em sinistros",
+                status=422,
+            )
 
 
 def validate_dates(data: dict, claim: Claim | None = None) -> None:

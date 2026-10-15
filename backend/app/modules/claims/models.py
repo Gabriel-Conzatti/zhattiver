@@ -8,17 +8,19 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    ForeignKey,
     Index,
     Numeric,
     String,
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ...extensions import db
 from .._shared import ArchivableMixin, TimestampMixin, uuid_fk, uuid_pk
+from ..catalog.models import Insurer
 
 CLAIM_STATUS_FOLLOW_UP = "em_acompanhamento"
 CLAIM_STATUS_VERIFY = "verificar"
@@ -34,6 +36,52 @@ CLAIM_STATUSES = (
     CLAIM_STATUS_COMPLETED,
     CLAIM_STATUS_CLOSED,
 )
+
+
+class ClaimBranch(db.Model, TimestampMixin, ArchivableMixin):
+    __tablename__ = "claim_branches"
+
+    id: Mapped[str] = uuid_pk()
+    organization_id: Mapped[str] = uuid_fk("organizations.id")
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    __table_args__ = (
+        Index("ix_claim_branches_org_name", "organization_id", "name", unique=True),
+    )
+
+
+claim_workshop_insurers = db.Table(
+    "claim_workshop_insurers",
+    db.Column(
+        "workshop_id",
+        UUID(as_uuid=False),
+        ForeignKey("claim_workshops.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "insurer_id",
+        UUID(as_uuid=False),
+        ForeignKey("insurers.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
+class ClaimWorkshop(db.Model, TimestampMixin, ArchivableMixin):
+    __tablename__ = "claim_workshops"
+
+    id: Mapped[str] = uuid_pk()
+    organization_id: Mapped[str] = uuid_fk("organizations.id")
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    address: Mapped[str] = mapped_column(String(500), nullable=False)
+    responsible_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    insurers = relationship(Insurer, secondary=claim_workshop_insurers)
+
+    __table_args__ = (
+        Index("ix_claim_workshops_org_name", "organization_id", "name", unique=True),
+    )
 
 
 class ClaimStatus(db.Model, TimestampMixin):
@@ -59,6 +107,9 @@ class Claim(db.Model, TimestampMixin, ArchivableMixin):
     id: Mapped[str] = uuid_pk()
     organization_id: Mapped[str] = uuid_fk("organizations.id")
     status_id: Mapped[str] = uuid_fk("claim_statuses.id")
+    branch_id: Mapped[str] = uuid_fk("claim_branches.id")
+    insurer_id: Mapped[str] = uuid_fk("insurers.id")
+    workshop_id: Mapped[str | None] = uuid_fk("claim_workshops.id", nullable=True)
     team_id: Mapped[str | None] = uuid_fk("teams.id", nullable=True)
     responsible_user_id: Mapped[str | None] = uuid_fk("users.id", nullable=True)
     lead_id: Mapped[str | None] = uuid_fk("leads.id", nullable=True)
@@ -90,6 +141,9 @@ class Claim(db.Model, TimestampMixin, ArchivableMixin):
         Index("ix_claims_org_team", "organization_id", "team_id"),
         Index("ix_claims_org_responsible", "organization_id", "responsible_user_id"),
         Index("ix_claims_org_insurer", "organization_id", "insurer"),
+        Index("ix_claims_org_branch_id", "organization_id", "branch_id"),
+        Index("ix_claims_org_insurer_id", "organization_id", "insurer_id"),
+        Index("ix_claims_org_workshop_id", "organization_id", "workshop_id"),
     )
 
 

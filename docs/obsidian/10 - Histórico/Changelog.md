@@ -1,5 +1,27 @@
 # Changelog
 
+## [Não publicado] - Catálogos e oficinas de sinistros
+
+### Adicionado
+
+- Ramos Auto, RE e RCO ONIBUS no cadastro de sinistro.
+- Seguradoras da referência operacional, incluindo Suhai.
+- Cadastro de oficinas com nome, telefone, endereço, responsável e seguradoras
+  referenciadoras.
+- Seleção de oficina compatível com a seguradora do sinistro.
+
+### Alterado
+
+- Ramo, seguradora e oficina deixaram de aceitar texto livre em novos sinistros.
+- Vendedor e SDR podem acumular a função de sinistros por concessão, sem trocar o perfil
+  comercial.
+
+### Segurança
+
+- Vendedor sem `claims.read` ou `claims.manage` não acessa mais sinistros.
+- A lista de responsáveis aceita somente administradores e usuários com `claims.manage`.
+- Backend rejeita oficina não referenciada pela seguradora selecionada.
+
 ## [2026-10-15] - Designação da equipe de sinistros
 
 ### Adicionado

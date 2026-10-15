@@ -77,6 +77,10 @@ aplicado por negócio validado.
 
 - `GET /api/v1/claims/statuses`
 - `POST/PATCH /api/v1/claims/statuses`
+- `GET /api/v1/claims/catalogs`
+- `POST /api/v1/claims/workshops`
+- `PATCH /api/v1/claims/workshops/{id}`
+- `POST /api/v1/claims/workshops/{id}/archive`
 - `GET/POST /api/v1/claims`
 - `GET /api/v1/claims/assignees`
 - `GET/PATCH /api/v1/claims/{id}`
@@ -89,5 +93,7 @@ aplicado por negócio validado.
 - `POST /api/v1/claims/{id}/archive`
 
 Todas as rotas derivam a organização da sessão. Operações exigem administrador ou
-`claims.manage`; consulta aceita `claims.read` e o vendedor somente dentro do escopo
-comercial próprio.
+`claims.manage`; consulta exige administrador, `claims.read` ou `claims.manage`. O perfil
+de vendedor, isoladamente, não concede acesso. Quando o vendedor recebe `claims.read`, a
+consulta continua limitada ao escopo comercial próprio; com `claims.manage`, ele opera o
+módulo como segunda função.

@@ -11,13 +11,29 @@ from sqlalchemy import func, or_, select
 from ...core.audit import record
 from ...core.authz import load_context
 from ...core.errors import BusinessError
-from ...core.time import today_local
+from ...core.phones import PhoneNormalizationError, normalize_phone
+from ...core.time import now_utc, today_local
 from ...extensions import db
+from ..catalog.models import Insurer
 from ..opportunities.models import Opportunity
 from ..sales.models import Sale
-from ..users.models import ROLE_ADMIN, ROLE_VENDEDOR, Team, User
+from ..users.models import (
+    ROLE_ADMIN,
+    ROLE_VENDEDOR,
+    PermissionGrant,
+    Team,
+    User,
+)
 from . import services
-from .models import Claim, ClaimEvent, ClaimParty, ClaimStatus, ClaimTask
+from .models import (
+    Claim,
+    ClaimBranch,
+    ClaimEvent,
+    ClaimParty,
+    ClaimStatus,
+    ClaimTask,
+    ClaimWorkshop,
+)
 
 bp = Blueprint("claims", __name__)
 
@@ -33,8 +49,9 @@ class ClaimInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     status_id: str
-    branch: str = Field(min_length=1, max_length=80)
-    insurer: str = Field(min_length=1, max_length=160)
+    branch_id: str
+    insurer_id: str
+    workshop_id: str | None = None
     opened_on: date
     claim_number: str | None = Field(default=None, max_length=100)
     team_id: str | None = None
@@ -44,7 +61,6 @@ class ClaimInput(BaseModel):
     sale_id: str | None = None
     service_type: str | None = Field(default=None, max_length=120)
     has_third_party: bool = False
-    workshop: str | None = Field(default=None, max_length=200)
     expected_on: date | None = None
     concluded_on: date | None = None
     closed_on: date | None = None
@@ -61,8 +77,9 @@ class StatusInput(BaseModel):
 class ClaimUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    branch: str | None = Field(default=None, min_length=1, max_length=80)
-    insurer: str | None = Field(default=None, min_length=1, max_length=160)
+    branch_id: str | None = None
+    insurer_id: str | None = None
+    workshop_id: str | None = None
     opened_on: date | None = None
     lead_id: str | None = None
     opportunity_id: str | None = None
@@ -75,7 +92,6 @@ class ClaimUpdate(BaseModel):
     closed_on: date | None = None
     indemnified_on: date | None = None
     indemnified_amount: Decimal | None = Field(default=None, ge=0)
-    workshop: str | None = Field(default=None, max_length=200)
     notes: str | None = Field(default=None, max_length=10000)
 
 
@@ -125,13 +141,33 @@ class StatusUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class WorkshopCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=200)
+    phone: str | None = Field(default=None, max_length=40)
+    address: str = Field(min_length=1, max_length=500)
+    responsible_name: str = Field(min_length=1, max_length=200)
+    insurer_ids: list[str] = Field(min_length=1, max_length=50)
+
+
+class WorkshopUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    phone: str | None = Field(default=None, max_length=40)
+    address: str | None = Field(default=None, min_length=1, max_length=500)
+    responsible_name: str | None = Field(default=None, min_length=1, max_length=200)
+    insurer_ids: list[str] | None = Field(default=None, min_length=1, max_length=50)
+
+
 def _can_manage(ctx) -> bool:
     return ctx.role == ROLE_ADMIN or "claims.manage" in ctx.grants
 
 
 def _can_read(ctx) -> bool:
     return (
-        ctx.role in (ROLE_ADMIN, ROLE_VENDEDOR)
+        ctx.role == ROLE_ADMIN
         or "claims.read" in ctx.grants
         or "claims.manage" in ctx.grants
     )
@@ -198,6 +234,9 @@ def _serialize(claim: Claim, ctx) -> dict:
     return {
         "id": str(claim.id),
         "status_id": str(claim.status_id),
+        "branch_id": str(claim.branch_id),
+        "insurer_id": str(claim.insurer_id),
+        "workshop_id": str(claim.workshop_id) if claim.workshop_id else None,
         "status": status.slug if status else None,
         "status_name": status.name if status else None,
         "team_id": str(claim.team_id) if claim.team_id else None,
@@ -225,6 +264,49 @@ def _serialize(claim: Claim, ctx) -> dict:
         "created_at": claim.created_at.isoformat(),
         "updated_at": claim.updated_at.isoformat(),
     }
+
+
+def _serialize_workshop(workshop: ClaimWorkshop) -> dict:
+    return {
+        "id": str(workshop.id),
+        "name": workshop.name,
+        "phone": workshop.phone,
+        "address": workshop.address,
+        "responsible_name": workshop.responsible_name,
+        "insurer_ids": [str(insurer.id) for insurer in workshop.insurers],
+    }
+
+
+def _workshop_insurers(insurer_ids: list[str], organization_id: str) -> list[Insurer]:
+    unique_ids = set(insurer_ids)
+    insurers = list(
+        db.session.scalars(
+            select(Insurer).where(
+                Insurer.organization_id == organization_id,
+                Insurer.id.in_(unique_ids),
+                Insurer.is_active.is_(True),
+                Insurer.archived_at.is_(None),
+            )
+        )
+    )
+    if len(insurers) != len(unique_ids):
+        raise BusinessError(
+            "invalid_insurer",
+            "Uma ou mais seguradoras não pertencem à organização",
+            status=422,
+        )
+    return insurers
+
+
+def _workshop_phone(value: str | None) -> str | None:
+    if not value or not value.strip():
+        return None
+    try:
+        return normalize_phone(value)
+    except PhoneNormalizationError as exc:
+        raise BusinessError(
+            "invalid_phone", f"Telefone da oficina inválido: {exc}", status=422
+        ) from exc
 
 
 def _detail(claim: Claim, ctx) -> dict:
@@ -281,6 +363,187 @@ def _detail(claim: Claim, ctx) -> dict:
         )
     ]
     return result
+
+
+@bp.get("/claims/catalogs")
+@login_required
+def list_claim_catalogs():
+    ctx = load_context()
+    if not _can_read(ctx):
+        raise BusinessError("forbidden", "Sem acesso a sinistros", status=403)
+    branches = db.session.scalars(
+        select(ClaimBranch)
+        .where(
+            ClaimBranch.organization_id == ctx.organization_id,
+            ClaimBranch.is_active.is_(True),
+            ClaimBranch.archived_at.is_(None),
+        )
+        .order_by(ClaimBranch.name)
+    ).all()
+    insurers = db.session.scalars(
+        select(Insurer)
+        .where(
+            Insurer.organization_id == ctx.organization_id,
+            Insurer.is_active.is_(True),
+            Insurer.archived_at.is_(None),
+        )
+        .order_by(Insurer.name)
+    ).all()
+    workshops = db.session.scalars(
+        select(ClaimWorkshop)
+        .where(
+            ClaimWorkshop.organization_id == ctx.organization_id,
+            ClaimWorkshop.archived_at.is_(None),
+        )
+        .order_by(ClaimWorkshop.name)
+    ).all()
+    return jsonify(
+        {
+            "branches": [
+                {"id": str(branch.id), "name": branch.name} for branch in branches
+            ],
+            "insurers": [
+                {"id": str(insurer.id), "name": insurer.name}
+                for insurer in insurers
+            ],
+            "workshops": [_serialize_workshop(workshop) for workshop in workshops],
+        }
+    )
+
+
+@bp.post("/claims/workshops")
+@login_required
+def create_workshop():
+    ctx = load_context()
+    if not _can_manage(ctx):
+        raise BusinessError(
+            "forbidden", "Sem permissão para cadastrar oficinas", status=403
+        )
+    payload = WorkshopCreate.model_validate(request.get_json(silent=True) or {})
+    name = payload.name.strip()
+    duplicate = db.session.scalar(
+        select(ClaimWorkshop.id).where(
+            ClaimWorkshop.organization_id == ctx.organization_id,
+            func.lower(ClaimWorkshop.name) == name.lower(),
+            ClaimWorkshop.archived_at.is_(None),
+        )
+    )
+    if duplicate:
+        raise BusinessError(
+            "duplicate_workshop", "Já existe uma oficina com esse nome", status=409
+        )
+    workshop = ClaimWorkshop(
+        organization_id=ctx.organization_id,
+        name=name,
+        phone=_workshop_phone(payload.phone),
+        address=payload.address.strip(),
+        responsible_name=payload.responsible_name.strip(),
+        insurers=_workshop_insurers(payload.insurer_ids, ctx.organization_id),
+    )
+    db.session.add(workshop)
+    db.session.flush()
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="claim_workshop",
+        entity_id=str(workshop.id),
+        action="create",
+        after=_serialize_workshop(workshop),
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify(_serialize_workshop(workshop)), 201
+
+
+@bp.patch("/claims/workshops/<workshop_id>")
+@login_required
+def update_workshop(workshop_id: str):
+    ctx = load_context()
+    if not _can_manage(ctx):
+        raise BusinessError(
+            "forbidden", "Sem permissão para editar oficinas", status=403
+        )
+    workshop = db.session.scalar(
+        select(ClaimWorkshop).where(
+            ClaimWorkshop.id == workshop_id,
+            ClaimWorkshop.organization_id == ctx.organization_id,
+            ClaimWorkshop.archived_at.is_(None),
+        )
+    )
+    if workshop is None:
+        raise BusinessError("not_found", "Oficina não encontrada", status=404)
+    payload = WorkshopUpdate.model_validate(request.get_json(silent=True) or {})
+    changes = payload.model_dump(exclude_unset=True)
+    before = _serialize_workshop(workshop)
+    if "name" in changes:
+        name = changes["name"].strip()
+        duplicate = db.session.scalar(
+            select(ClaimWorkshop.id).where(
+                ClaimWorkshop.organization_id == ctx.organization_id,
+                func.lower(ClaimWorkshop.name) == name.lower(),
+                ClaimWorkshop.id != workshop.id,
+                ClaimWorkshop.archived_at.is_(None),
+            )
+        )
+        if duplicate:
+            raise BusinessError(
+                "duplicate_workshop", "Já existe uma oficina com esse nome", status=409
+            )
+        workshop.name = name
+    if "phone" in changes:
+        workshop.phone = _workshop_phone(changes["phone"])
+    if "address" in changes:
+        workshop.address = changes["address"].strip()
+    if "responsible_name" in changes:
+        workshop.responsible_name = changes["responsible_name"].strip()
+    if "insurer_ids" in changes:
+        workshop.insurers = _workshop_insurers(
+            changes["insurer_ids"], ctx.organization_id
+        )
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="claim_workshop",
+        entity_id=str(workshop.id),
+        action="update",
+        before=before,
+        after=_serialize_workshop(workshop),
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify(_serialize_workshop(workshop))
+
+
+@bp.post("/claims/workshops/<workshop_id>/archive")
+@login_required
+def archive_workshop(workshop_id: str):
+    ctx = load_context()
+    if not _can_manage(ctx):
+        raise BusinessError(
+            "forbidden", "Sem permissão para arquivar oficinas", status=403
+        )
+    workshop = db.session.scalar(
+        select(ClaimWorkshop).where(
+            ClaimWorkshop.id == workshop_id,
+            ClaimWorkshop.organization_id == ctx.organization_id,
+            ClaimWorkshop.archived_at.is_(None),
+        )
+    )
+    if workshop is None:
+        raise BusinessError("not_found", "Oficina não encontrada", status=404)
+    workshop.archived_at = now_utc()
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="claim_workshop",
+        entity_id=str(workshop.id),
+        action="archive",
+        before=_serialize_workshop(workshop),
+        after={"archived_at": workshop.archived_at.isoformat()},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return "", 204
 
 
 @bp.get("/claims/statuses")
@@ -452,12 +715,21 @@ def list_assignees():
     ctx = load_context()
     if not _can_manage(ctx):
         raise BusinessError("forbidden", "Sem permissão para atribuir sinistros", status=403)
+    now = now_utc()
+    claims_managers = select(PermissionGrant.user_id).where(
+        PermissionGrant.organization_id == ctx.organization_id,
+        PermissionGrant.permission == "claims.manage",
+        PermissionGrant.revoked_at.is_(None),
+        or_(PermissionGrant.starts_at.is_(None), PermissionGrant.starts_at <= now),
+        or_(PermissionGrant.ends_at.is_(None), PermissionGrant.ends_at > now),
+    )
     users = db.session.scalars(
         select(User)
         .where(
             User.organization_id == ctx.organization_id,
             User.is_active.is_(True),
             User.archived_at.is_(None),
+            or_(User.role == ROLE_ADMIN, User.id.in_(claims_managers)),
         )
         .order_by(User.name)
     ).all()
@@ -512,11 +784,16 @@ def update_claim(claim_id: str):
     claim = _load_claim(claim_id, ctx)
     payload = ClaimUpdate.model_validate(request.get_json(silent=True) or {})
     changes = payload.model_dump(exclude_unset=True)
+    branch, insurer, workshop = services.resolve_claim_catalogs(
+        changes, ctx.organization_id, claim
+    )
     services.validate_links(changes, ctx.organization_id)
     services.validate_dates(changes, claim)
     before = {
         "branch": claim.branch,
+        "branch_id": str(claim.branch_id),
         "insurer": claim.insurer,
+        "insurer_id": str(claim.insurer_id),
         "opened_on": claim.opened_on.isoformat(),
         "lead_id": str(claim.lead_id) if claim.lead_id else None,
         "opportunity_id": str(claim.opportunity_id) if claim.opportunity_id else None,
@@ -530,10 +807,19 @@ def update_claim(claim_id: str):
         "indemnified_on": claim.indemnified_on.isoformat() if claim.indemnified_on else None,
         "indemnified_amount": str(claim.indemnified_amount) if claim.indemnified_amount is not None else None,
         "workshop": claim.workshop,
+        "workshop_id": str(claim.workshop_id) if claim.workshop_id else None,
         "notes": claim.notes,
     }
     for field, value in changes.items():
+        if field in {"branch_id", "insurer_id", "workshop_id"}:
+            continue
         setattr(claim, field, value)
+    claim.branch_id = branch.id
+    claim.branch = branch.name
+    claim.insurer_id = insurer.id
+    claim.insurer = insurer.name
+    claim.workshop_id = workshop.id if workshop else None
+    claim.workshop = workshop.name if workshop else None
     record(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,

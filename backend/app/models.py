@@ -16,11 +16,13 @@ from .modules.catalog.models import (  # noqa: F401
 )
 from .modules.claims.models import (  # noqa: F401
     Claim,
+    ClaimBranch,
     ClaimDocument,
     ClaimEvent,
     ClaimParty,
     ClaimStatus,
     ClaimTask,
+    ClaimWorkshop,
 )
 from .modules.cross_sell.models import CrossSellItem, CrossSellList  # noqa: F401
 from .modules.funnel.models import Funnel, FunnelStage  # noqa: F401

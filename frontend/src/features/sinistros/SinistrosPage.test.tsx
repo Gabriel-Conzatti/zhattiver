@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SinistrosPage } from './SinistrosPage';
 
 const useAuth = vi.fn();
+const { createWorkshop } = vi.hoisted(() => ({
+  createWorkshop: vi.fn(),
+}));
 
 vi.mock('@/app/AuthProvider', () => ({
   useAuth: () => useAuth(),
@@ -22,6 +25,18 @@ vi.mock('@/lib/api', () => ({
           is_terminal: false,
         },
       ],
+    }),
+    catalogs: vi.fn().mockResolvedValue({
+      branches: [
+        { id: 'branch-auto', name: 'Auto' },
+        { id: 'branch-re', name: 'RE' },
+        { id: 'branch-rco', name: 'RCO ONIBUS' },
+      ],
+      insurers: [
+        { id: 'insurer-allianz', name: 'Allianz' },
+        { id: 'insurer-suhai', name: 'Suhai' },
+      ],
+      workshops: [],
     }),
     assignees: vi.fn().mockResolvedValue({
       users: [{ id: 'user-1', name: 'Usuário de teste' }],
@@ -41,6 +56,9 @@ vi.mock('@/lib/api', () => ({
     addTask: vi.fn(),
     updateTask: vi.fn(),
     archive: vi.fn(),
+    createWorkshop,
+    updateWorkshop: vi.fn(),
+    archiveWorkshop: vi.fn(),
   },
 }));
 
@@ -57,6 +75,15 @@ function renderPage(readOnly = false) {
 
 describe('SinistrosPage', () => {
   beforeEach(() => {
+    createWorkshop.mockReset();
+    createWorkshop.mockResolvedValue({
+      id: 'workshop-1',
+      name: 'Oficina Teste',
+      phone: '(11) 3333-4444',
+      address: 'Rua Teste, 100',
+      responsible_name: 'Responsável Teste',
+      insurer_ids: ['insurer-allianz'],
+    });
     useAuth.mockReturnValue({
       user: {
         id: 'user-1',
@@ -94,5 +121,50 @@ describe('SinistrosPage', () => {
     );
     expect(screen.getByLabelText('Responsável')).toBeVisible();
     expect(screen.getByLabelText('Equipe')).toBeVisible();
+    expect(screen.getByLabelText('Ramo')).toHaveTextContent('RCO ONIBUS');
+    expect(screen.getByLabelText('Seguradora')).toHaveTextContent('Suhai');
+  });
+
+  it('exibe cadastro de oficina com seguradoras referenciadas', async () => {
+    renderPage();
+
+    const workshopsButton = await screen.findByRole('button', { name: /Oficinas/i });
+    await waitFor(() => expect(workshopsButton).not.toBeDisabled());
+    fireEvent.click(workshopsButton);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Oficinas referenciadas' }),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Nome da oficina')).toBeVisible();
+    expect(screen.getByLabelText('Responsável')).toBeVisible();
+    expect(screen.getByLabelText('Telefone')).toBeVisible();
+    expect(screen.getByLabelText('Endereço')).toBeVisible();
+    expect(screen.getByText('Allianz')).toBeVisible();
+    expect(screen.getByText('Suhai')).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText('Nome da oficina'), {
+      target: { value: 'Oficina Teste' },
+    });
+    fireEvent.change(screen.getByLabelText('Responsável'), {
+      target: { value: 'Responsável Teste' },
+    });
+    fireEvent.change(screen.getByLabelText('Telefone'), {
+      target: { value: '(11) 3333-4444' },
+    });
+    fireEvent.change(screen.getByLabelText('Endereço'), {
+      target: { value: 'Rua Teste, 100' },
+    });
+    fireEvent.click(screen.getByLabelText('Allianz'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar oficina' }));
+
+    await waitFor(() =>
+      expect(createWorkshop.mock.calls[0]?.[0]).toEqual({
+          name: 'Oficina Teste',
+          phone: '(11) 3333-4444',
+          address: 'Rua Teste, 100',
+          responsible_name: 'Responsável Teste',
+          insurer_ids: ['insurer-allianz'],
+        }),
+    );
   });
 });

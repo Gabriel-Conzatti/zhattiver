@@ -14,6 +14,7 @@ from ..core.auth import hash_password
 from ..core.time import now_utc
 from ..extensions import db
 from ..modules.catalog.models import ClientType, Insurer, Origin
+from ..modules.claims.models import ClaimBranch
 from ..modules.funnel.models import Funnel, FunnelStage
 from ..modules.leads.models import Availability, Lead, LeadPhone
 from ..modules.opportunities.models import LossReason, NextActionType
@@ -23,7 +24,23 @@ from ..modules.users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product,
 
 DEFAULT_ORIGINS = ["Placas", "Indicação", "Renovação", "Prospecção", "Cliente ativo", "Novo"]
 DEFAULT_CLIENT_TYPES = ["Novo", "Recuperado", "Cliente ativo"]
-DEFAULT_INSURERS = ["Porto Seguro", "Bradesco", "Allianz", "SulAmérica", "Tokio Marine"]
+DEFAULT_INSURERS = [
+    "Allianz",
+    "Azul",
+    "Bradesco",
+    "HDI",
+    "Porto",
+    "Sura",
+    "Tokio",
+    "Yelum",
+    "Zurich",
+    "Aliro",
+    "ESSOR/LIVONIUS",
+    "EZZE",
+    "Mapfre",
+    "Suhai",
+]
+DEFAULT_CLAIM_BRANCHES = ["Auto", "RE", "RCO ONIBUS"]
 DEFAULT_PRODUCTS = [("Seguro Automóvel", "auto")]
 DEFAULT_LOSS_REASONS = [
     "Preço",
@@ -357,6 +374,21 @@ def _seed_defaults(organization_id: str) -> None:
         ).scalar_one_or_none()
         if exists is None:
             db.session.add(Insurer(organization_id=organization_id, name=name))
+    for name in DEFAULT_CLAIM_BRANCHES:
+        exists = db.session.execute(
+            select(ClaimBranch).where(
+                ClaimBranch.organization_id == organization_id,
+                ClaimBranch.name == name,
+            )
+        ).scalar_one_or_none()
+        if exists is None:
+            db.session.add(
+                ClaimBranch(
+                    organization_id=organization_id,
+                    name=name,
+                    is_active=True,
+                )
+            )
     for name, slug in DEFAULT_PRODUCTS:
         product = db.session.execute(
             select(Product).where(

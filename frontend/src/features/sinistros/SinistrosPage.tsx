@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   Archive,
+  Building2,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -17,11 +18,14 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/app/AuthProvider';
+import { formatPhone } from '@/lib/format';
 import {
   claims,
   type ClaimDetail,
+  type ClaimCatalogs,
   type ClaimListItem,
   type ClaimStatus,
+  type ClaimWorkshop,
 } from '@/lib/api';
 
 const PAGE_SIZE = 20;
@@ -39,10 +43,15 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showWorkshops, setShowWorkshops] = useState(false);
 
   const statusQuery = useQuery({
     queryKey: ['claims', 'statuses'],
     queryFn: claims.statuses,
+  });
+  const catalogQuery = useQuery({
+    queryKey: ['claims', 'catalogs'],
+    queryFn: claims.catalogs,
   });
   const listQuery = useQuery({
     queryKey: ['claims', 'list', q, status, overdue, page],
@@ -155,6 +164,18 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
       await refreshClaims();
     },
   });
+  const createWorkshopMutation = useMutation({
+    mutationFn: claims.createWorkshop,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['claims', 'catalogs'] });
+    },
+  });
+  const archiveWorkshopMutation = useMutation({
+    mutationFn: claims.archiveWorkshop,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['claims', 'catalogs'] });
+    },
+  });
 
   const items = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
@@ -185,14 +206,30 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
             </p>
           </div>
           {canManage && (
-            <button
-              type="button"
-              className="btn-orange inline-flex items-center gap-2 rounded-xl"
-              onClick={() => setShowForm(true)}
-              disabled={statusQuery.isLoading || !statusQuery.data?.items.length}
-            >
-              <Plus className="h-4 w-4" /> Novo sinistro
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn-ghost inline-flex items-center gap-2 rounded-xl"
+                onClick={() => setShowWorkshops(true)}
+                disabled={catalogQuery.isLoading || catalogQuery.isError}
+              >
+                <Building2 className="h-4 w-4" /> Oficinas
+              </button>
+              <button
+                type="button"
+                className="btn-orange inline-flex items-center gap-2 rounded-xl"
+                onClick={() => setShowForm(true)}
+                disabled={
+                  statusQuery.isLoading ||
+                  catalogQuery.isLoading ||
+                  !statusQuery.data?.items.length ||
+                  !catalogQuery.data?.branches.length ||
+                  !catalogQuery.data?.insurers.length
+                }
+              >
+                <Plus className="h-4 w-4" /> Novo sinistro
+              </button>
+            </div>
           )}
         </div>
 
@@ -247,6 +284,12 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
           </button>
         </div>
       </section>
+
+      {catalogQuery.isError && (
+        <Message kind="error">
+          Não foi possível carregar ramos, seguradoras e oficinas.
+        </Message>
+      )}
 
       {listQuery.isLoading ? (
         <Message>Carregando sinistros…</Message>
@@ -341,11 +384,33 @@ export function SinistrosPage({ readOnly = false }: { readOnly?: boolean }) {
       {showForm && (
         <NewClaimForm
           statuses={statusQuery.data?.items ?? []}
+          catalogs={
+            catalogQuery.data ?? { branches: [], insurers: [], workshops: [] }
+          }
           assignees={assigneesQuery.data}
           loading={createMutation.isPending}
           error={createMutation.error instanceof Error ? createMutation.error.message : undefined}
           onClose={() => setShowForm(false)}
           onSubmit={(input) => createMutation.mutate(input)}
+        />
+      )}
+      {showWorkshops && catalogQuery.data && (
+        <WorkshopManager
+          catalogs={catalogQuery.data}
+          saving={createWorkshopMutation.isPending}
+          archiving={archiveWorkshopMutation.isPending}
+          error={
+            createWorkshopMutation.error instanceof Error
+              ? createWorkshopMutation.error.message
+              : archiveWorkshopMutation.error instanceof Error
+                ? archiveWorkshopMutation.error.message
+                : undefined
+          }
+          onClose={() => setShowWorkshops(false)}
+          onCreate={(input, onSuccess) =>
+            createWorkshopMutation.mutate(input, { onSuccess })
+          }
+          onArchive={(id) => archiveWorkshopMutation.mutate(id)}
         />
       )}
     </div>
@@ -743,6 +808,7 @@ function ClaimDetails({
 
 function NewClaimForm({
   statuses,
+  catalogs,
   assignees,
   loading,
   onClose,
@@ -750,6 +816,7 @@ function NewClaimForm({
   error,
 }: {
   statuses: ClaimStatus[];
+  catalogs: ClaimCatalogs;
   assignees?: {
     users: Array<{ id: string; name: string }>;
     teams: Array<{ id: string; name: string }>;
@@ -761,15 +828,15 @@ function NewClaimForm({
 }) {
   const [form, setForm] = useState({
     status_id: statuses[0]?.id || '',
-    branch: '',
-    insurer: '',
+    branch_id: catalogs.branches[0]?.id || '',
+    insurer_id: catalogs.insurers[0]?.id || '',
     opened_on: new Date().toISOString().slice(0, 10),
     responsible_user_id: '',
     team_id: '',
     expected_on: '',
     claim_number: '',
     service_type: '',
-    workshop: '',
+    workshop_id: '',
     insured_name: '',
     insured_phone: '',
     has_third_party: false,
@@ -795,8 +862,9 @@ function NewClaimForm({
     }
     onSubmit({
       status_id: form.status_id,
-      branch: form.branch.trim(),
-      insurer: form.insurer.trim(),
+      branch_id: form.branch_id,
+      insurer_id: form.insurer_id,
+      workshop_id: form.workshop_id || null,
       opened_on: form.opened_on,
       responsible_user_id: form.responsible_user_id || null,
       team_id: form.team_id || null,
@@ -804,7 +872,6 @@ function NewClaimForm({
       claim_number: form.claim_number.trim() || undefined,
       service_type: form.service_type.trim() || undefined,
       has_third_party: form.has_third_party,
-      workshop: form.workshop.trim() || undefined,
       notes: form.notes.trim() || undefined,
       parties,
     });
@@ -839,18 +906,49 @@ function NewClaimForm({
         </div>
         {error && <Message kind="error">{error}</Message>}
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field
-            label="Seguradora"
-            value={form.insurer}
-            onChange={(value) => update('insurer', value)}
-            required
-          />
-          <Field
-            label="Ramo"
-            value={form.branch}
-            onChange={(value) => update('branch', value)}
-            required
-          />
+          <label className="text-sm text-[#b7cce0]">
+            Seguradora
+            <select
+              value={form.insurer_id}
+              onChange={(event) => {
+                update('insurer_id', event.target.value);
+                const selectedWorkshop = catalogs.workshops.find(
+                  (workshop) => workshop.id === form.workshop_id,
+                );
+                if (
+                  selectedWorkshop &&
+                  !selectedWorkshop.insurer_ids.includes(event.target.value)
+                ) {
+                  update('workshop_id', '');
+                }
+              }}
+              className="input mt-1 w-full"
+              required
+              aria-label="Seguradora"
+            >
+              {catalogs.insurers.map((insurer) => (
+                <option key={insurer.id} value={insurer.id}>
+                  {insurer.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-[#b7cce0]">
+            Ramo
+            <select
+              value={form.branch_id}
+              onChange={(event) => update('branch_id', event.target.value)}
+              className="input mt-1 w-full"
+              required
+              aria-label="Ramo"
+            >
+              {catalogs.branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field
             label="Data de abertura"
             type="date"
@@ -885,11 +983,26 @@ function NewClaimForm({
             value={form.insured_phone}
             onChange={(value) => update('insured_phone', value)}
           />
-          <Field
-            label="Oficina / prestador"
-            value={form.workshop}
-            onChange={(value) => update('workshop', value)}
-          />
+          <label className="text-sm text-[#b7cce0]">
+            Oficina / prestador
+            <select
+              value={form.workshop_id}
+              onChange={(event) => update('workshop_id', event.target.value)}
+              className="input mt-1 w-full"
+              aria-label="Oficina / prestador"
+            >
+              <option value="">Sem oficina definida</option>
+              {catalogs.workshops
+                .filter((workshop) =>
+                  workshop.insurer_ids.includes(form.insurer_id),
+                )
+                .map((workshop) => (
+                  <option key={workshop.id} value={workshop.id}>
+                    {workshop.name}
+                  </option>
+                ))}
+            </select>
+          </label>
           <label className="text-sm text-[#b7cce0]">
             Status
             <select
@@ -970,6 +1083,221 @@ function NewClaimForm({
         </div>
       </form>
     </div>
+  );
+}
+
+function WorkshopManager({
+  catalogs,
+  saving,
+  archiving,
+  error,
+  onClose,
+  onCreate,
+  onArchive,
+}: {
+  catalogs: ClaimCatalogs;
+  saving: boolean;
+  archiving: boolean;
+  error?: string;
+  onClose: () => void;
+  onCreate: (
+    input: Parameters<typeof claims.createWorkshop>[0],
+    onSuccess: () => void,
+  ) => void;
+  onArchive: (id: string) => void;
+}) {
+  const emptyForm = {
+    name: '',
+    phone: '',
+    address: '',
+    responsible_name: '',
+    insurer_ids: [] as string[],
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    onCreate(
+      {
+        name: form.name.trim(),
+        phone: form.phone.trim() || undefined,
+        address: form.address.trim(),
+        responsible_name: form.responsible_name.trim(),
+        insurer_ids: form.insurer_ids,
+      },
+      () => setForm(emptyForm),
+    );
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal
+      aria-labelledby="workshops-title"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4"
+    >
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#244766] bg-[#081d30] p-5 shadow-2xl">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="workshops-title" className="text-lg font-semibold text-white">
+              Oficinas referenciadas
+            </h2>
+            <p className="text-xs text-[#8faac4]">
+              Cadastre contatos e vincule cada oficina às seguradoras que a referenciam.
+            </p>
+          </div>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Fechar">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {error && <Message kind="error">{error}</Message>}
+
+        <form
+          onSubmit={submit}
+          className="mt-4 rounded-xl border border-[#18314d] bg-[#0b1d2d] p-4"
+        >
+          <h3 className="font-semibold text-white">Nova oficina</h3>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field
+              label="Nome da oficina"
+              value={form.name}
+              onChange={(value) => setForm((current) => ({ ...current, name: value }))}
+              required
+            />
+            <Field
+              label="Responsável"
+              value={form.responsible_name}
+              onChange={(value) =>
+                setForm((current) => ({ ...current, responsible_name: value }))
+              }
+              required
+            />
+            <Field
+              label="Telefone"
+              value={form.phone}
+              onChange={(value) => setForm((current) => ({ ...current, phone: value }))}
+            />
+            <Field
+              label="Endereço"
+              value={form.address}
+              onChange={(value) =>
+                setForm((current) => ({ ...current, address: value }))
+              }
+              required
+            />
+          </div>
+          <fieldset className="mt-3">
+            <legend className="text-sm text-[#b7cce0]">Seguradoras referenciadas</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {catalogs.insurers.map((insurer) => {
+                const selected = form.insurer_ids.includes(insurer.id);
+                return (
+                  <label
+                    key={insurer.id}
+                    className={`cursor-pointer rounded-lg border px-3 py-2 text-sm ${
+                      selected
+                        ? 'border-[#00CBFF] bg-[#00CBFF]/10 text-white'
+                        : 'border-[#18314d] text-[#9fb7cf]'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={selected}
+                      onChange={() =>
+                        setForm((current) => ({
+                          ...current,
+                          insurer_ids: selected
+                            ? current.insurer_ids.filter((id) => id !== insurer.id)
+                            : [...current.insurer_ids, insurer.id],
+                        }))
+                      }
+                    />
+                    {insurer.name}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="submit"
+              className="btn-orange rounded-xl"
+              disabled={
+                saving ||
+                !form.name.trim() ||
+                !form.address.trim() ||
+                !form.responsible_name.trim() ||
+                form.insurer_ids.length === 0
+              }
+            >
+              {saving ? 'Salvando…' : 'Cadastrar oficina'}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-4 grid gap-3">
+          {catalogs.workshops.length === 0 ? (
+            <SmallEmpty>Nenhuma oficina cadastrada.</SmallEmpty>
+          ) : (
+            catalogs.workshops.map((workshop) => (
+              <WorkshopCard
+                key={workshop.id}
+                workshop={workshop}
+                insurers={catalogs.insurers}
+                disabled={archiving}
+                onArchive={() => onArchive(workshop.id)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkshopCard({
+  workshop,
+  insurers,
+  disabled,
+  onArchive,
+}: {
+  workshop: ClaimWorkshop;
+  insurers: ClaimCatalogs['insurers'];
+  disabled: boolean;
+  onArchive: () => void;
+}) {
+  const insurerNames = insurers
+    .filter((insurer) => workshop.insurer_ids.includes(insurer.id))
+    .map((insurer) => insurer.name)
+    .join(', ');
+  return (
+    <article className="rounded-xl border border-[#18314d] bg-[#0b1d2d] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-white">{workshop.name}</h3>
+          <p className="mt-1 text-sm text-[#9fb7cf]">
+            Responsável: {workshop.responsible_name}
+          </p>
+          <p className="text-sm text-[#9fb7cf]">
+            {workshop.phone ? formatPhone(workshop.phone) : 'Telefone não informado'} ·{' '}
+            {workshop.address}
+          </p>
+          <p className="mt-1 text-xs text-[#6f89a5]">
+            Seguradoras: {insurerNames || 'Nenhuma'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-ghost rounded-lg text-red-200"
+          disabled={disabled}
+          onClick={onArchive}
+        >
+          Arquivar
+        </button>
+      </div>
+    </article>
   );
 }
 

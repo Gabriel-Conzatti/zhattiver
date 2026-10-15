@@ -7,8 +7,13 @@ from app.core.auth import hash_password
 from app.core.time import now_utc
 from app.extensions import db
 from app.modules.audit.models import AuditLog
+from app.modules.catalog.models import Insurer
 from app.modules.claims import services
-from app.modules.claims.models import CLAIM_STATUS_COMPLETED, ClaimTask
+from app.modules.claims.models import (
+    CLAIM_STATUS_COMPLETED,
+    ClaimBranch,
+    ClaimTask,
+)
 from app.modules.funnel.models import Funnel, FunnelStage
 from app.modules.leads.models import Lead
 from app.modules.opportunities.models import STATE_OPEN, Opportunity
@@ -34,7 +39,29 @@ def claims_data(app):
 
         product = Product(organization_id=organization.id, name="Auto", slug="auto")
         team = Team(organization_id=organization.id, name="Sinistros")
-        db.session.add_all([product, team])
+        branch = ClaimBranch(
+            organization_id=organization.id,
+            name="Auto",
+            is_active=True,
+        )
+        insurer = Insurer(
+            organization_id=organization.id,
+            name="Allianz",
+            is_active=True,
+        )
+        insurer_alpha = Insurer(
+            organization_id=organization.id,
+            name="Seguradora Alfa",
+            is_active=True,
+        )
+        insurer_beta = Insurer(
+            organization_id=organization.id,
+            name="Seguradora Beta",
+            is_active=True,
+        )
+        db.session.add_all(
+            [product, team, branch, insurer, insurer_alpha, insurer_beta]
+        )
         db.session.flush()
 
         admin = User(
@@ -48,6 +75,13 @@ def claims_data(app):
             organization_id=organization.id,
             email="claims-seller@example.com",
             name="Claims Seller",
+            password_hash=hash_password("senha-segura"),
+            role=ROLE_VENDEDOR,
+        )
+        seller_without_claims = User(
+            organization_id=organization.id,
+            email="claims-no-access@example.com",
+            name="Seller sem sinistros",
             password_hash=hash_password("senha-segura"),
             role=ROLE_VENDEDOR,
         )
@@ -66,18 +100,30 @@ def claims_data(app):
             role=ROLE_ADMIN,
         )
         seller.products.append(product)
-        db.session.add_all([admin, seller, manager, external_admin])
+        db.session.add_all(
+            [admin, seller, seller_without_claims, manager, external_admin]
+        )
         db.session.flush()
 
-        db.session.add(
-            PermissionGrant(
+        db.session.add_all(
+            [
+                PermissionGrant(
+                    organization_id=organization.id,
+                    user_id=seller.id,
+                    granted_by=admin.id,
+                    permission="claims.read",
+                    scope={},
+                    reason="Vendedor também consulta sinistros",
+                ),
+                PermissionGrant(
                 organization_id=organization.id,
                 user_id=manager.id,
                 granted_by=admin.id,
                 permission="claims.manage",
                 scope={},
                 reason="Equipe de sinistros",
-            )
+                ),
+            ]
         )
         linked_lead = Lead(organization_id=organization.id, name="Cliente vinculado")
         unlinked_lead = Lead(organization_id=organization.id, name="Cliente não vinculado")
@@ -126,6 +172,10 @@ def claims_data(app):
             "organization_id": str(organization.id),
             "admin": {"email": admin.email},
             "seller": {"email": seller.email, "id": str(seller.id)},
+            "seller_without_claims": {
+                "email": seller_without_claims.email,
+                "id": str(seller_without_claims.id),
+            },
             "manager": {"email": manager.email, "id": str(manager.id)},
             "external_admin": {"email": external_admin.email},
             "lead_id": str(linked_lead.id),
@@ -135,6 +185,10 @@ def claims_data(app):
             "team_id": str(team.id),
             "status_id": str(statuses[0].id),
             "completed_status_id": str(completed.id),
+            "branch_id": str(branch.id),
+            "insurer_id": str(insurer.id),
+            "insurer_alpha_id": str(insurer_alpha.id),
+            "insurer_beta_id": str(insurer_beta.id),
         }
 
 
@@ -160,8 +214,8 @@ def _logout(client):
 def _claim_payload(data, **overrides):
     payload = {
         "status_id": data["status_id"],
-        "branch": "Auto",
-        "insurer": "Seguradora de teste",
+        "branch_id": data["branch_id"],
+        "insurer_id": data["insurer_id"],
         "opened_on": "2026-10-16",
         "indemnified_amount": "1250.50",
         "parties": [{"role": "segurado", "name": "Pessoa de teste"}],
@@ -217,21 +271,21 @@ def test_seller_cannot_create_or_read_claim_by_assignment_only(client, claims_da
         headers=_csrf_headers(client),
         json=_claim_payload(
             claims_data,
-            responsible_user_id=claims_data["seller"]["id"],
+            responsible_user_id=claims_data["seller_without_claims"]["id"],
         ),
     )
-    assert created.status_code == 201
-    claim_id = created.get_json()["id"]
+    assert created.status_code == 422
+    assert created.get_json()["error"]["code"] == "invalid_claim_assignee"
 
     _logout(client)
-    _login(client, claims_data["seller"])
+    _login(client, claims_data["seller_without_claims"])
     forbidden = client.post(
         "/api/v1/claims",
         headers=_csrf_headers(client),
         json=_claim_payload(claims_data),
     )
     assert forbidden.status_code == 403
-    assert client.get(f"/api/v1/claims/{claim_id}").status_code == 404
+    assert client.get("/api/v1/claims").status_code == 403
 
 
 def test_claims_manager_operates_assignment_status_timeline_tasks_and_archive(
@@ -241,6 +295,12 @@ def test_claims_manager_operates_assignment_status_timeline_tasks_and_archive(
     assignees = client.get("/api/v1/claims/assignees")
     assert assignees.status_code == 200
     assert claims_data["manager"]["id"] in {
+        user["id"] for user in assignees.get_json()["users"]
+    }
+    assert claims_data["seller"]["id"] not in {
+        user["id"] for user in assignees.get_json()["users"]
+    }
+    assert claims_data["seller_without_claims"]["id"] not in {
         user["id"] for user in assignees.get_json()["users"]
     }
     assert claims_data["team_id"] in {
@@ -388,13 +448,72 @@ def test_admin_configures_claim_status_without_mutating_get(client, claims_data)
     assert duplicate.status_code == 409
 
 
+def test_claims_manager_registers_workshop_and_links_it_to_claim(
+    client, claims_data
+):
+    _login(client, claims_data["manager"])
+    headers = _csrf_headers(client)
+
+    created_workshop = client.post(
+        "/api/v1/claims/workshops",
+        headers=headers,
+        json={
+            "name": "Oficina Referenciada",
+            "phone": "(11) 3333-4444",
+            "address": "Rua de Teste, 100 - São Paulo/SP",
+            "responsible_name": "Responsável de Teste",
+            "insurer_ids": [claims_data["insurer_id"]],
+        },
+    )
+    assert created_workshop.status_code == 201, created_workshop.get_json()
+    workshop = created_workshop.get_json()
+
+    catalogs = client.get("/api/v1/claims/catalogs")
+    assert catalogs.status_code == 200
+    assert {item["name"] for item in catalogs.get_json()["branches"]} == {"Auto"}
+    assert workshop["id"] in {
+        item["id"] for item in catalogs.get_json()["workshops"]
+    }
+
+    claim = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data, workshop_id=workshop["id"]),
+    )
+    assert claim.status_code == 201, claim.get_json()
+    assert claim.get_json()["workshop_id"] == workshop["id"]
+    assert claim.get_json()["workshop"] == "Oficina Referenciada"
+
+    incompatible = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(
+            claims_data,
+            insurer_id=claims_data["insurer_alpha_id"],
+            workshop_id=workshop["id"],
+        ),
+    )
+    assert incompatible.status_code == 422
+    assert incompatible.get_json()["error"]["code"] == "workshop_insurer_mismatch"
+
+    archived = client.post(
+        f"/api/v1/claims/workshops/{workshop['id']}/archive",
+        headers=headers,
+    )
+    assert archived.status_code == 204
+    catalogs_after = client.get("/api/v1/claims/catalogs")
+    assert workshop["id"] not in {
+        item["id"] for item in catalogs_after.get_json()["workshops"]
+    }
+
+
 def test_claims_list_supports_search_status_and_pagination(client, claims_data):
     _login(client, claims_data["admin"])
     headers = _csrf_headers(client)
-    for claim_number, insurer in (
-        ("SEARCH-001", "Seguradora Alfa"),
-        ("SEARCH-002", "Seguradora Alfa"),
-        ("OTHER-001", "Seguradora Beta"),
+    for claim_number, insurer_id in (
+        ("SEARCH-001", claims_data["insurer_alpha_id"]),
+        ("SEARCH-002", claims_data["insurer_alpha_id"]),
+        ("OTHER-001", claims_data["insurer_beta_id"]),
     ):
         created = client.post(
             "/api/v1/claims",
@@ -402,7 +521,7 @@ def test_claims_list_supports_search_status_and_pagination(client, claims_data):
             json=_claim_payload(
                 claims_data,
                 claim_number=claim_number,
-                insurer=insurer,
+                insurer_id=insurer_id,
             ),
         )
         assert created.status_code == 201

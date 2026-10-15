@@ -101,6 +101,9 @@ export interface ClaimStatus {
 export interface ClaimListItem {
   id: string;
   status_id: string;
+  branch_id: string;
+  insurer_id: string;
+  workshop_id: string | null;
   status: string | null;
   status_name: string | null;
   team_id: string | null;
@@ -125,6 +128,21 @@ export interface ClaimListItem {
   updated_at: string;
 }
 
+export interface ClaimWorkshop {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string;
+  responsible_name: string;
+  insurer_ids: string[];
+}
+
+export interface ClaimCatalogs {
+  branches: CatalogItem[];
+  insurers: CatalogItem[];
+  workshops: ClaimWorkshop[];
+}
+
 export interface ClaimDetail extends ClaimListItem {
   parties: Array<{ id: string; role: string; name: string; phone: string | null; notes: string | null }>;
   events: Array<{ id: string; event_type: string; description: string; occurred_at: string }>;
@@ -140,6 +158,7 @@ export interface ClaimDetail extends ClaimListItem {
 
 export const claims = {
   statuses: () => api<{ items: ClaimStatus[] }>('/claims/statuses'),
+  catalogs: () => api<ClaimCatalogs>('/claims/catalogs'),
   assignees: () =>
     api<{
       users: Array<{ id: string; name: string }>;
@@ -175,19 +194,19 @@ export const claims = {
     }>(`/claims${suffix}`);
   },
   get: (id: string) => api<ClaimDetail>(`/claims/${id}`),
-  update: (id: string, input: { responsible_user_id?: string | null; claim_number?: string | null; expected_on?: string | null; concluded_on?: string | null; indemnified_on?: string | null; indemnified_amount?: string | null; workshop?: string | null; notes?: string | null }) =>
+  update: (id: string, input: { branch_id?: string; insurer_id?: string; workshop_id?: string | null; responsible_user_id?: string | null; claim_number?: string | null; expected_on?: string | null; concluded_on?: string | null; indemnified_on?: string | null; indemnified_amount?: string | null; notes?: string | null }) =>
     api<ClaimDetail>(`/claims/${id}`, { method: 'PATCH', body: input }),
   create: (input: {
     status_id: string;
-    branch: string;
-    insurer: string;
+    branch_id: string;
+    insurer_id: string;
+    workshop_id?: string | null;
     opened_on: string;
     claim_number?: string;
     team_id?: string | null;
     responsible_user_id?: string | null;
     service_type?: string;
     has_third_party?: boolean;
-    workshop?: string;
     expected_on?: string | null;
     indemnified_on?: string | null;
     indemnified_amount?: string | null;
@@ -215,6 +234,25 @@ export const claims = {
   ) => api<{ id: string }>(`/claims/${id}/parties`, { method: 'POST', body: input }),
   archive: (id: string, reason: string) =>
     api<void>(`/claims/${id}/archive`, { method: 'POST', body: { reason } }),
+  createWorkshop: (input: {
+    name: string;
+    phone?: string;
+    address: string;
+    responsible_name: string;
+    insurer_ids: string[];
+  }) => api<ClaimWorkshop>('/claims/workshops', { method: 'POST', body: input }),
+  updateWorkshop: (
+    id: string,
+    input: Partial<{
+      name: string;
+      phone: string | null;
+      address: string;
+      responsible_name: string;
+      insurer_ids: string[];
+    }>,
+  ) => api<ClaimWorkshop>(`/claims/workshops/${id}`, { method: 'PATCH', body: input }),
+  archiveWorkshop: (id: string) =>
+    api<void>(`/claims/workshops/${id}/archive`, { method: 'POST' }),
 };
 
 export const leads = {

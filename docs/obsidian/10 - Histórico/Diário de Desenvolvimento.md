@@ -1,5 +1,43 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Catálogos, oficinas e autorização de sinistros
+
+### Realizado
+
+- Adicionados os ramos Auto, RE e RCO ONIBUS e as 14 seguradoras solicitadas, incluindo
+  Suhai, com isolamento por organização.
+- Criado cadastro de oficinas com telefone, endereço, responsável e relação N:N com
+  seguradoras referenciadoras.
+- Novos sinistros passaram a selecionar ramo, seguradora e oficina por catálogo; o backend
+  valida a compatibilidade oficina/seguradora e preserva nomes históricos.
+- Removida a leitura implícita por perfil vendedor. O acesso exige `claims.read` ou
+  `claims.manage`, permitindo acumular vendedor/SDR e sinistros no mesmo usuário.
+- Menu do vendedor passou a mostrar Sinistros somente quando existe concessão.
+
+### Arquivos principais
+
+- `backend/migrations/versions/b4c91e8d2f60_add_claim_catalogs_and_workshops.py`
+- `backend/app/modules/claims/models.py`
+- `backend/app/modules/claims/routes.py`
+- `backend/app/modules/claims/services.py`
+- `frontend/src/features/sinistros/SinistrosPage.tsx`
+
+### Testes executados
+
+- `pytest -q` — 86 aprovados.
+- `npm test -- --run` — 45 aprovados.
+- Ruff, ESLint, typecheck e build — aprovados.
+- Alembic — head único `b4c91e8d2f60`.
+- PostgreSQL 16 — upgrade/downgrade/upgrade aprovado; semeadura validada com 3 ramos e
+  14 seguradoras.
+- `docker compose config --quiet` — aprovado; avisos esperados pela ausência do `.env`
+  local.
+
+### Resultado
+
+- Implementação local aprovada na branch `feature/catalogos-oficinas-sinistros`.
+- Push e deploy ainda não executados.
+
 ## 2026-10-16 - Designação da equipe de sinistros
 
 ### Realizado
