@@ -51,7 +51,7 @@ export function AdminLayout() {
           aria-label="Página inicial"
           title="Página inicial"
         >
-          <img src="/logo-lynk.svg" alt="Lynk" className="h-7 w-7 object-contain" />
+          <img src="/logo-lynk.svg" alt="Lynk" className="h-10 w-10 object-contain" />
         </Link>
         <NotificationBell />
       </header>
@@ -75,7 +75,7 @@ export function AdminLayout() {
             aria-label="Página inicial"
             title="Página inicial"
           >
-            <img src="/logo-lynk.svg" alt="Lynk" className="h-9 w-9 object-contain" />
+            <img src="/logo-lynk.svg" alt="Lynk" className="h-12 w-12 object-contain" />
           </Link>
           <button
             type="button"

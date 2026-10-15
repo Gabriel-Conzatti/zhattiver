@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-10-15] - Logo ampliada nos cabeçalhos
+
+### Alterado
+
+- Aumentado o tamanho da logo nos cabeçalhos autenticados para melhorar sua
+  legibilidade, mantendo a marca sem texto adicional e o link para a página inicial.
+
 ## [2026-10-15] - Atalho de venda direta removido do vendedor
 
 ### Removido

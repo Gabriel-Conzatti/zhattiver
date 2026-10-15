@@ -7,6 +7,12 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Logo ampliada nos cabeçalhos — 15/10/2026
+
+- A logo foi ampliada no cabeçalho compartilhado do vendedor e SDR, no cabeçalho
+  mobile do administrador e no menu lateral administrativo.
+- A marca continua sem texto adicional e clicável para retornar à página inicial.
+
 ### Atalho de venda direta removido do vendedor — 15/10/2026
 
 - O botão `+` de venda direta saiu do cabeçalho do vendedor; a prop `addAction` do

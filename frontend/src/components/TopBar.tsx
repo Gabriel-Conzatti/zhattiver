@@ -14,7 +14,7 @@ export function TopBar({ children }: { children?: React.ReactNode }) {
         aria-label="Página inicial"
         title="Página inicial"
       >
-        <img src="/logo-lynk.svg" alt="Lynk" className="h-8 w-8 object-contain" />
+        <img src="/logo-lynk.svg" alt="Lynk" className="h-12 w-12 object-contain" />
       </Link>
       <div className="scrollbar-none order-3 w-full min-w-0 overflow-x-auto lg:order-none lg:flex-1">
         {children}

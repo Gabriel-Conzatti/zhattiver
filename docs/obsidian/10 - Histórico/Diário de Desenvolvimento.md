@@ -1,5 +1,29 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Ampliação da logo nos cabeçalhos
+
+### Realizado
+
+- Ampliada a logo no cabeçalho compartilhado do vendedor e SDR.
+- Ajustados os tamanhos da logo no cabeçalho mobile e no menu lateral do administrador.
+- Mantidos o link para a página inicial e a exibição sem texto adicional.
+
+### Arquivos principais
+
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+
+### Testes executados
+
+- `npm run lint` — aprovado.
+- `npm run typecheck` — aprovado.
+- `npm run test -- --run src/components/TopBar.test.tsx` — 2 testes aprovados.
+- `npm run build` — aprovado.
+
+### Resultado
+
+- Aprovado localmente.
+
 ## 2026-10-15 - Remoção do atalho de venda direta do vendedor
 
 ### Realizado
