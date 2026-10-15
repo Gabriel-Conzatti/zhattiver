@@ -21,7 +21,12 @@
 
 ### Resultado
 
-- Aprovado localmente e pronto para publicação Git.
+- Commit `6929999` integrado à `main`, enviado ao GitHub e publicado na VPS.
+- Backup pré-deploy criado e migração confirmada na head `6c9e0b4d7a12`.
+- Serviços `api`, `worker`, `scheduler` e `web` recriados; API e worker saudáveis.
+- Healthcheck público respondeu `200` e o acesso HTTP passou a redirecionar para HTTPS
+  com resposta `308`.
+- Bundle publicado confirmado pelo chunk principal `index-BQEQR4aI.js`.
 
 ## 2026-10-14 - Importação de planilhas para o administrador
 

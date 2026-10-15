@@ -7,6 +7,17 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Barreiras de qualidade e importação administrativa — 15/10/2026
+
+- Commit `6929999` integrado à `main` e publicado em `funil.zhattiver.com`.
+- Importação de planilhas disponibilizada também para o administrador.
+- Ruff e ESLint adicionados às barreiras locais e da CI; validação completa aprovada.
+- Bundle frontend dividido em chunks menores, sem o alerta de arquivo acima de 500 kB.
+- Redirecionamento HTTP para HTTPS restaurado e validado com resposta `308`.
+- Backup pré-deploy criado, migração confirmada na head `6c9e0b4d7a12` e serviços
+  `api`, `worker`, `scheduler` e `web` recriados com sucesso.
+- Healthcheck público aprovado após o deploy.
+
 ### Ajuste visual do login — 14/10/2026
 
 - Aplicada a referência visual enviada para a tela de login: fundo em gradiente,

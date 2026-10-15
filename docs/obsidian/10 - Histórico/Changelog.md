@@ -1,5 +1,26 @@
 # Changelog
 
+## [2026-10-15] - Qualidade e importação administrativa publicadas
+
+Commit `6929999` publicado em `funil.zhattiver.com`.
+
+### Adicionado
+
+- Importação de planilhas disponível para o administrador em `/admin/importacoes`.
+- Ruff e ESLint incluídos nas barreiras locais e da CI.
+
+### Alterado
+
+- Bundle frontend dividido em chunks menores para remover o alerta de arquivo acima de
+  500 kB.
+- Caddy voltou a redirecionar automaticamente HTTP para HTTPS.
+
+### Operação
+
+- Backup pré-deploy concluído.
+- Migração confirmada na head `6c9e0b4d7a12`.
+- Serviços recriados e healthcheck público aprovado.
+
 ## [2026-10-14] - Dashboards publicados em produção
 
 Commit `7b09052` publicado em `funil.zhattiver.com`.
@@ -27,13 +48,6 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ## [Não publicado]
 
-### Qualidade e operação
-
-- Ruff e ESLint passaram a fazer parte das barreiras locais e da CI.
-- O bundle frontend passou a separar vendors em chunks independentes, removendo o alerta
-  de tamanho do chunk principal.
-- O Caddy voltou a emitir o redirecionamento automático de HTTP para HTTPS.
-
 ### Alterado
 
 - Tela de Importações movida para o módulo compartilhado
@@ -56,9 +70,6 @@ Todo o conteúdo listado em "Não publicado" até esta data passou a valer em pr
 
 ### Adicionado
 
-- Importação de planilhas de clientes disponível para o administrador em
-  `/admin/importacoes`, com item no menu Comercial e atalho no painel. O backend
-  já autorizava o perfil; faltava apenas o caminho na interface.
 - Estados de carregamento, envio por Enter, mensagens de erro específicas por
   situação (credenciais, excesso de tentativas, acesso bloqueado) e suporte a
   leitores de tela na tela de login.
