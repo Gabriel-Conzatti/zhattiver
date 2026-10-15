@@ -20,7 +20,12 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
   semeadura exata de 3 ramos e 14 seguradoras.
 - Validação local: 86 testes backend e 45 frontend aprovados; Ruff, ESLint, typecheck,
   build, grafo Alembic e Compose config aprovados.
-- Pendente: commit, push e deploy da migration/interface.
+- Publicado em produção em 15/10/2026 com o commit `96d6376`, após backup do banco.
+  Migration `b4c91e8d2f60` aplicada; o catálogo da organização ficou com os três ramos e
+  as seguradoras da referência, incluindo Suhai, e nenhum sinistro ficou sem ramo ou
+  seguradora.
+- Verificado em produção: `/api/v1/health` e a aplicação respondem 200, `/api/v1/claims` e
+  `/api/v1/claims/catalogs` exigem autenticação (401) e os seis serviços estão saudáveis.
 
 - Criado o módulo `claims` no mesmo monólito, com sinistros, envolvidos, eventos, tarefas e estados configuráveis.
 - Acesso administrativo e por concessões individuais; vendedor sem concessão não acessa.

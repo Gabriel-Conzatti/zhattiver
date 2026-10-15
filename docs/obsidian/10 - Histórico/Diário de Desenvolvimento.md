@@ -36,7 +36,14 @@
 ### Resultado
 
 - Implementação local aprovada na branch `feature/catalogos-oficinas-sinistros`.
-- Push e deploy ainda não executados.
+- Publicado em produção em 2026-10-15 com o commit `96d6376`. O `scripts/deploy.sh` fez
+  backup do banco, aplicou a migration `b4c91e8d2f60` e recriou `api`, `worker`,
+  `scheduler` e `web`. O healthcheck passou e `flask db current` ficou em `b4c91e8d2f60`.
+- Verificado em produção: três ramos cadastrados, Suhai disponível, nenhum sinistro sem
+  ramo ou seguradora, `/api/v1/health` e SPA em 200, `/api/v1/claims` e
+  `/api/v1/claims/catalogs` em 401 sem sessão.
+- Observado: o catálogo de seguradoras é global e já tinha registros do módulo comercial,
+  então a semeadura acrescentou os nomes novos e manteve os antigos em uso.
 
 ## 2026-10-16 - Designação da equipe de sinistros
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Não publicado] - Catálogos e oficinas de sinistros
+## [2026-10-15] - Catálogos e oficinas de sinistros
 
 ### Adicionado
 
@@ -21,6 +21,12 @@
 - Vendedor sem `claims.read` ou `claims.manage` não acessa mais sinistros.
 - A lista de responsáveis aceita somente administradores e usuários com `claims.manage`.
 - Backend rejeita oficina não referenciada pela seguradora selecionada.
+
+### Publicado
+
+- Commit `96d6376` publicado em produção com backup prévio do banco.
+- Migration `b4c91e8d2f60` aplicada; o catálogo ficou com os três ramos e a seguradora
+  Suhai disponível, sem sinistros órfãos de ramo ou seguradora.
 
 ## [2026-10-15] - Designação da equipe de sinistros
 

@@ -77,5 +77,7 @@ disponíveis em **Administração → Concessões** para vigências temporárias
 ## Histórico
 
 - 2026-10-16 — implementação local concluída para novos sinistros.
+- 2026-10-15 — catálogos de ramo e seguradora e cadastro de oficinas publicados com o
+  commit `96d6376`; migration `b4c91e8d2f60` aplicada em produção.
 - 2026-10-15 — publicado em produção com o commit `33ecab3`; migration `7d2f4c8a91be`
   aplicada e seis estados padrão semeados na organização existente.
