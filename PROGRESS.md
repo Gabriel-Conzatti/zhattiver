@@ -7,6 +7,11 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Cabeçalho somente com a logo — 15/10/2026
+
+- Removido o texto `Lynk` abaixo da logo nos cabeçalhos do vendedor, SDR e
+  administrador; a logo permanece clicável e direciona para a página inicial do perfil.
+
 ### Telas do vendedor alinhadas às referências — 15/10/2026
 
 - Dashboard, Prospecção, Agendamentos e Funil reorganizados conforme as capturas enviadas

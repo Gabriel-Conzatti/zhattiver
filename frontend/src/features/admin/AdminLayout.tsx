@@ -47,14 +47,11 @@ export function AdminLayout() {
         </button>
         <Link
           to="/admin"
-          className="flex min-w-0 flex-1 flex-col items-start rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
+          className="flex min-w-0 flex-1 items-center rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
           aria-label="Página inicial"
           title="Página inicial"
         >
           <img src="/logo-lynk.svg" alt="Lynk" className="h-7 w-7 object-contain" />
-          <span className="text-[10px] font-semibold leading-none tracking-wide text-text-primary">
-            Lynk
-          </span>
         </Link>
         <NotificationBell />
       </header>
@@ -74,14 +71,11 @@ export function AdminLayout() {
         <div className="mb-6 flex items-start gap-3">
           <Link
             to="/admin"
-            className="flex flex-col items-center gap-0.5 rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
+            className="flex items-center rounded-md px-1 py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan"
             aria-label="Página inicial"
             title="Página inicial"
           >
             <img src="/logo-lynk.svg" alt="Lynk" className="h-9 w-9 object-contain" />
-            <span className="text-[10px] font-semibold leading-none tracking-wide text-text-primary">
-              Lynk
-            </span>
           </Link>
           <button
             type="button"

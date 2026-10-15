@@ -50,7 +50,8 @@ describe('TopBar', () => {
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nova venda' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Página inicial' })).toHaveAttribute('href', '/sdr');
-    expect(screen.getByText('Lynk')).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Lynk' })).toBeVisible();
+    expect(screen.queryByText('Lynk')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Perfil' })).toHaveAttribute(
       'href',
       '/sdr/perfil',

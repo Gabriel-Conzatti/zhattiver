@@ -1,5 +1,30 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Cabeçalho somente com a logo
+
+### Realizado
+
+- Removido o texto `Lynk` abaixo da logo no cabeçalho compartilhado de vendedor e SDR.
+- Aplicado o mesmo ajuste no cabeçalho mobile e no menu lateral do administrador.
+- Mantido o link da logo para a página inicial correspondente ao perfil.
+
+### Arquivos principais
+
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/components/TopBar.test.tsx`
+- `frontend/src/features/admin/AdminLayout.tsx`
+
+### Testes executados
+
+- `npm run test -- --run src/components/TopBar.test.tsx` — 2 testes aprovados.
+- `npm run lint` — aprovado.
+- `npm run typecheck` — aprovado.
+- `npm run build` — aprovado.
+
+### Resultado
+
+- Aprovado localmente.
+
 ## 2026-10-15 - Telas do vendedor alinhadas às referências visuais
 
 ### Realizado

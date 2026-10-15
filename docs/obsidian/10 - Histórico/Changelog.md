@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026-10-15] - Cabeçalho somente com a logo
+
+### Alterado
+
+- Removido o texto `Lynk` abaixo da logo nos cabeçalhos autenticados.
+- A logo continua clicável e retorna à página inicial do perfil atual.
+
 ## [2026-10-15] - Telas do vendedor alinhadas às referências
 
 ### Adicionado
