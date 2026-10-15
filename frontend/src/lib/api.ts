@@ -90,6 +90,131 @@ export const catalog = {
   insurers: () => api<{ items: CatalogItem[] }>('/insurers'),
 };
 
+export interface ClaimStatus {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  is_terminal: boolean;
+}
+
+export interface ClaimListItem {
+  id: string;
+  status_id: string;
+  status: string | null;
+  status_name: string | null;
+  team_id: string | null;
+  responsible_user_id: string | null;
+  lead_id: string | null;
+  opportunity_id: string | null;
+  sale_id: string | null;
+  claim_number: string | null;
+  branch: string;
+  insurer: string;
+  service_type: string | null;
+  has_third_party: boolean;
+  workshop: string | null;
+  opened_on: string;
+  expected_on: string | null;
+  concluded_on: string | null;
+  closed_on: string | null;
+  indemnified_on: string | null;
+  indemnified_amount: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClaimDetail extends ClaimListItem {
+  parties: Array<{ id: string; role: string; name: string; phone: string | null; notes: string | null }>;
+  events: Array<{ id: string; event_type: string; description: string; occurred_at: string }>;
+  tasks: Array<{
+    id: string;
+    title: string;
+    owner_user_id: string | null;
+    due_on: string | null;
+    priority: string;
+    done_at: string | null;
+  }>;
+}
+
+export const claims = {
+  statuses: () => api<{ items: ClaimStatus[] }>('/claims/statuses'),
+  assignees: () =>
+    api<{
+      users: Array<{ id: string; name: string }>;
+      teams: Array<{ id: string; name: string }>;
+    }>('/claims/assignees'),
+  list: (
+    params: {
+      q?: string;
+      status?: string;
+      responsible_user_id?: string;
+      insurer?: string;
+      overdue?: boolean;
+      page?: number;
+      per_page?: number;
+    } = {},
+  ) => {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set('q', params.q);
+    if (params.status) qs.set('status', params.status);
+    if (params.responsible_user_id) {
+      qs.set('responsible_user_id', params.responsible_user_id);
+    }
+    if (params.insurer) qs.set('insurer', params.insurer);
+    if (params.overdue) qs.set('overdue', 'true');
+    if (params.page) qs.set('page', String(params.page));
+    if (params.per_page) qs.set('per_page', String(params.per_page));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return api<{
+      items: ClaimListItem[];
+      page: number;
+      per_page: number;
+      total: number;
+    }>(`/claims${suffix}`);
+  },
+  get: (id: string) => api<ClaimDetail>(`/claims/${id}`),
+  update: (id: string, input: { responsible_user_id?: string | null; claim_number?: string | null; expected_on?: string | null; concluded_on?: string | null; indemnified_on?: string | null; indemnified_amount?: string | null; workshop?: string | null; notes?: string | null }) =>
+    api<ClaimDetail>(`/claims/${id}`, { method: 'PATCH', body: input }),
+  create: (input: {
+    status_id: string;
+    branch: string;
+    insurer: string;
+    opened_on: string;
+    claim_number?: string;
+    service_type?: string;
+    has_third_party?: boolean;
+    workshop?: string;
+    expected_on?: string | null;
+    indemnified_on?: string | null;
+    indemnified_amount?: string | null;
+    notes?: string;
+    parties?: Array<{ role: string; name: string; phone?: string; notes?: string }>;
+  }) => api<ClaimDetail>('/claims', { method: 'POST', body: input }),
+  changeStatus: (id: string, status_id: string) =>
+    api<ClaimDetail>(`/claims/${id}/status`, { method: 'POST', body: { status_id } }),
+  assign: (
+    id: string,
+    input: { responsible_user_id: string | null; team_id?: string | null },
+  ) => api<ClaimDetail>(`/claims/${id}/assign`, { method: 'POST', body: input }),
+  addEvent: (id: string, description: string) =>
+    api<ClaimDetail>(`/claims/${id}/events`, { method: 'POST', body: { description } }),
+  addTask: (id: string, input: { title: string; due_on?: string; priority?: string }) =>
+    api<{ id: string; title: string }>(`/claims/${id}/tasks`, { method: 'POST', body: input }),
+  updateTask: (claimId: string, taskId: string, done: boolean) =>
+    api<ClaimDetail>(`/claims/${claimId}/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: { done },
+    }),
+  addParty: (
+    id: string,
+    input: { role: string; name: string; phone?: string; notes?: string },
+  ) => api<{ id: string }>(`/claims/${id}/parties`, { method: 'POST', body: input }),
+  archive: (id: string, reason: string) =>
+    api<void>(`/claims/${id}/archive`, { method: 'POST', body: { reason } }),
+};
+
 export const leads = {
   list: (params: { page?: number; per_page?: number; q?: string } = {}) => {
     const qs = new URLSearchParams();

@@ -5,6 +5,16 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 ## Etapa atual
 
+**Etapa 10 — Módulo inicial de sinistros**
+
+- Criado o módulo `claims` no mesmo monólito, com sinistros, envolvidos, eventos, tarefas e estados configuráveis.
+- Acesso administrativo para operação e consulta limitada do vendedor por vínculo autorizado.
+- Cadastro, edição, status, eventos, tarefas e auditoria disponíveis por API; telas administrativas e de consulta adicionadas.
+- A planilha `Sinistros.xlsx` foi analisada somente estruturalmente e não será importada na V1.
+- Validação local: 83 testes backend, 42 frontend, Ruff, ESLint, typecheck, build,
+  configuração do Compose e ciclo upgrade/downgrade/upgrade da migration em PostgreSQL
+  aprovados.
+
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
 ### Novo lead no funil e bônus por negócio — 15/10/2026

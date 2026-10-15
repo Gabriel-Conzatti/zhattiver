@@ -4,5 +4,9 @@ Consulte [migrations.md](../../migrations.md).
 
 Nunca editar migrations já aplicadas em produção.
 
-Head atual: `6c9e0b4d7a12`, que adiciona índices únicos parciais para metas mensais
-gerais e por produto. O rollback para `4b7ac198d21e` remove somente esses índices.
+Head local: `7d2f4c8a91be`, que adiciona o domínio de sinistros, seus índices, constraints
+e os seis estados padrão para organizações existentes. O downgrade remove somente as
+tabelas e índices do módulo. A migration ainda não foi aplicada em produção.
+
+O código, a configuração do Compose e o ciclo upgrade/downgrade/upgrade em PostgreSQL 16
+foram validados localmente em 2026-10-16.

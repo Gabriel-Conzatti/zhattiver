@@ -26,6 +26,7 @@ const GROUPS: Array<{ label: string; items: Array<{ to: string; label: string; e
       { to: '/admin/concessoes', label: 'Concessões' },
       { to: '/admin/auditoria', label: 'Auditoria' },
       { to: '/admin/configuracoes', label: 'Configurações' },
+      { to: '/admin/sinistros', label: 'Sinistros' },
     ],
   },
 ];

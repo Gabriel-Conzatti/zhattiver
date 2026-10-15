@@ -161,3 +161,14 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
   organização recebe `404` ao buscar venda. O relatório financeiro é exclusivo de
   administrador, agrega somente vendas validadas e não cruza organizações. Notificações
   não carregam valores financeiros e são isoladas pelo destinatário.
+# Módulo de sinistros (V1)
+
+- Equipe administrativa/sinistros pode cadastrar, editar, atribuir, acompanhar e concluir sinistros.
+- Administrador possui acesso administrativo; vendedor somente consulta registros vinculados ao seu escopo comercial.
+- Sinistro pode ser independente ou ter vínculo opcional com lead, oportunidade e venda.
+- Estados padrão são configuráveis por organização: Em acompanhamento, Verificar, Aguardando seguradora, Aguardando terceiro, Concluído e Finalizado.
+- Histórico de eventos e auditoria são preservados.
+- Registros são arquivados, nunca excluídos pela operação.
+- Valor de indenização é visível somente para administrador, equipe com `claims.manage`
+  ou concessão `claims.view_financial`.
+- A primeira versão não importa a planilha histórica.

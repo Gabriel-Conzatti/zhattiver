@@ -25,6 +25,7 @@ import { AgendamentosPage } from '@/features/vendedor/AgendamentosPage';
 import { FunilPage } from '@/features/vendedor/FunilPage';
 import { FollowupsPage } from '@/features/vendedor/FollowupsPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
+import { SinistrosPage } from '@/features/sinistros/SinistrosPage';
 
 import { RequireAuth } from './RequireAuth';
 import { useAuth } from './AuthProvider';
@@ -50,6 +51,7 @@ export function App() {
           <Route path="/agendamentos" element={<AgendamentosPage />} />
           <Route path="/funil" element={<FunilPage />} />
           <Route path="/followups" element={<FollowupsPage />} />
+          <Route path="/sinistros" element={<SinistrosPage readOnly />} />
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -59,6 +61,14 @@ export function App() {
           <Route path="prospeccao" element={<SdrProspeccaoPage />} />
           <Route path="agendamentos" element={<SdrAgendamentosPage />} />
           <Route path="importacoes" element={<ImportacoesPage />} />
+          <Route
+            path="sinistros"
+            element={
+              <SinistrosPage
+                readOnly={!user?.grants.includes('claims.manage')}
+              />
+            }
+          />
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -76,6 +86,7 @@ export function App() {
           <Route path="cross-sell" element={<AdminCrossSellPage />} />
           <Route path="auditoria" element={<AdminAuditPage />} />
           <Route path="configuracoes" element={<AdminConfiguracoesPage />} />
+          <Route path="sinistros" element={<SinistrosPage />} />
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>

@@ -23,3 +23,11 @@
 - Rejeição de referências externas, faixas sobrepostas e vigência retroativa.
 - Faixas adjacentes com limite superior exclusivo e bônus fixo calculado por negócio.
 - Cancelamento de bônus previsto com justificativa e auditoria.
+# Módulo de sinistros
+
+- Cobrir autorização por administrador, `claims.manage`, `claims.read` e vendedor.
+- Garantir isolamento entre organizações e negar acesso por mera atribuição.
+- Verificar ocultação do valor indenizado sem permissão financeira.
+- Cobrir status, responsáveis, tarefas, arquivamento, filtros e paginação.
+- Validar interface em modo operacional e somente leitura.
+- Repetir o upgrade da migration após backup no deploy e confirmar a revisão atual.

@@ -68,6 +68,7 @@ def _register_blueprints(app: Flask) -> None:
     from .modules.auth.routes import bp as auth_bp
     from .modules.bonus.routes import bp as bonus_bp
     from .modules.catalog.routes import bp as catalog_bp
+    from .modules.claims.routes import bp as claims_bp
     from .modules.cross_sell.routes import bp as cross_sell_bp
     from .modules.funnel.routes import bp as funnel_bp
     from .modules.health.routes import bp as health_bp
@@ -84,6 +85,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(audit_bp, url_prefix="/api/v1")
     app.register_blueprint(auth_bp, url_prefix="/api/v1/auth")
     app.register_blueprint(catalog_bp, url_prefix="/api/v1")
+    app.register_blueprint(claims_bp, url_prefix="/api/v1")
     app.register_blueprint(leads_bp, url_prefix="/api/v1")
     app.register_blueprint(imports_bp, url_prefix="/api/v1")
     app.register_blueprint(opportunities_bp, url_prefix="/api/v1")

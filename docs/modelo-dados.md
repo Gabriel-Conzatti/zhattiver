@@ -322,3 +322,11 @@ A aplicação usa credencial sem privilégios `UPDATE`/`DELETE` sobre `audit_log
 
 - Todas as FKs cruzam apenas dentro da mesma organização — reforçado por CHECK/trigger ou constraint composta.
 - Nenhuma consulta aceita `organization_id` externo. O middleware injeta a partir da sessão em cada request.
+# Módulo de sinistros
+
+O módulo `claims` adiciona `claim_statuses`, `claims`, `claim_parties`, `claim_events`,
+`claim_tasks` e `claim_documents`. Cada tabela possui `organization_id`; sinistro pode
+ter vínculos opcionais com lead, oportunidade e venda. Valores de indenização usam
+`NUMERIC(14,2)`, e mudanças relevantes são preservadas em eventos e auditoria.
+`claim_documents` mantém somente metadados; os binários dependerão de storage privado
+com autorização e URLs temporárias em uma entrega posterior.

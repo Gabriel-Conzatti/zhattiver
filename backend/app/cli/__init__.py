@@ -85,6 +85,9 @@ def register(app: Flask) -> None:
             org = Organization(name=org_name, slug=org_slug)
             db.session.add(org)
             db.session.flush()
+            from ..modules.claims.services import ensure_default_statuses
+
+            ensure_default_statuses(org.id)
 
         _seed_defaults(org.id)
 
@@ -132,6 +135,9 @@ def register(app: Flask) -> None:
             org = Organization(name=f"Organização E2E {run_id}", slug=org_slug)
             db.session.add(org)
             db.session.flush()
+            from ..modules.claims.services import ensure_default_statuses
+
+            ensure_default_statuses(org.id)
 
         _seed_defaults(org.id)
         product = db.session.execute(

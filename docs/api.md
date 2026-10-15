@@ -97,3 +97,24 @@ IDs vinculados precisam pertencer à organização da sessão.
 - `GET /reports/*` — apenas admin.
 
 Cada endpoint terá documentação detalhada (parâmetros, corpo, códigos) quando o módulo correspondente for implementado.
+# Sinistros
+
+- `GET /api/v1/claims/statuses` — estados disponíveis da organização.
+- `POST/PATCH /api/v1/claims/statuses` — configuração de estados pelo administrador.
+- `GET /api/v1/claims` — lista paginada e filtrável por busca, status, responsável,
+  seguradora e atraso.
+- `GET /api/v1/claims/assignees` — responsáveis e equipes da organização para atribuição.
+- `POST /api/v1/claims` — cadastro por administrador ou concessão `claims.manage`.
+- `GET /api/v1/claims/{id}` — detalhe com participantes, eventos e tarefas.
+- `PATCH /api/v1/claims/{id}` — edição por administrador ou concessão `claims.manage`.
+- `POST /api/v1/claims/{id}/assign` — atribuição de responsável e equipe.
+- `POST /api/v1/claims/{id}/status` — alteração de status.
+- `GET/POST /api/v1/claims/{id}/events` — consulta e registro de acompanhamento.
+- `POST /api/v1/claims/{id}/parties` — inclusão de participante.
+- `GET/POST /api/v1/claims/{id}/tasks` — consulta e criação de pendência.
+- `PATCH /api/v1/claims/{id}/tasks/{task_id}` — conclusão ou reabertura de pendência.
+- `POST /api/v1/claims/{id}/archive` — arquivamento com motivo.
+
+O vendedor consulta somente sinistros ligados a lead, oportunidade ou venda do seu escopo
+comercial. Valores de indenização são omitidos sem perfil administrador, `claims.manage`
+ou concessão `claims.view_financial`.

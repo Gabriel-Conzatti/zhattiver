@@ -11,6 +11,7 @@ const NAV = [
   { to: '/agendamentos', label: 'Agendamentos' },
   { to: '/funil', label: 'Funil' },
   { to: '/followups', label: 'Follow-ups' },
+  { to: '/sinistros', label: 'Sinistros' },
 ];
 
 export function VendedorLayout() {

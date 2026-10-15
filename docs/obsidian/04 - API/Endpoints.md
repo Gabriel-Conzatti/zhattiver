@@ -73,3 +73,21 @@ As mutações são exclusivas de administrador, derivam a organização da sess�
 auditoria. Metas fazem upsert por competência; faixas são versionadas e não aceitam
 sobreposição de vigência e intervalo. O limite superior é exclusivo e o valor fixo é
 aplicado por negócio validado.
+# Sinistros
+
+- `GET /api/v1/claims/statuses`
+- `POST/PATCH /api/v1/claims/statuses`
+- `GET/POST /api/v1/claims`
+- `GET /api/v1/claims/assignees`
+- `GET/PATCH /api/v1/claims/{id}`
+- `POST /api/v1/claims/{id}/assign`
+- `POST /api/v1/claims/{id}/status`
+- `GET/POST /api/v1/claims/{id}/events`
+- `POST /api/v1/claims/{id}/parties`
+- `GET/POST /api/v1/claims/{id}/tasks`
+- `PATCH /api/v1/claims/{id}/tasks/{task_id}`
+- `POST /api/v1/claims/{id}/archive`
+
+Todas as rotas derivam a organização da sessão. Operações exigem administrador ou
+`claims.manage`; consulta aceita `claims.read` e o vendedor somente dentro do escopo
+comercial próprio.

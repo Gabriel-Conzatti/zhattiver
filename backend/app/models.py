@@ -14,6 +14,14 @@ from .modules.catalog.models import (  # noqa: F401
     Tag,
     TagCategory,
 )
+from .modules.claims.models import (  # noqa: F401
+    Claim,
+    ClaimDocument,
+    ClaimEvent,
+    ClaimParty,
+    ClaimStatus,
+    ClaimTask,
+)
 from .modules.cross_sell.models import CrossSellItem, CrossSellList  # noqa: F401
 from .modules.funnel.models import Funnel, FunnelStage  # noqa: F401
 from .modules.goals.models import DailyProspectingQuota  # noqa: F401

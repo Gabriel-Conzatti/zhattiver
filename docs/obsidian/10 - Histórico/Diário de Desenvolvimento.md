@@ -1,5 +1,33 @@
 # Diário de Desenvolvimento
 
+## 2026-10-16 - Módulo inicial de sinistros
+
+### Realizado
+
+- Implementado o domínio `claims` com autorização, auditoria, estados, atribuição,
+  participantes, eventos, tarefas, arquivamento e metadados de documentos.
+- Criadas telas administrativa, de consulta do vendedor e navegação condicional do SDR.
+- Adicionados filtros, paginação e restrição do valor indenizado.
+
+### Arquivos principais
+
+- `backend/app/modules/claims/`
+- `backend/migrations/versions/7d2f4c8a91be_add_claims_module.py`
+- `frontend/src/features/sinistros/`
+- `frontend/src/lib/api.ts`
+
+### Testes executados
+
+- `pytest` — 83 testes backend aprovados.
+- `npm run test` — 42 testes frontend aprovados.
+- Ruff, ESLint, typecheck e build — aprovados.
+- `docker compose config` — aprovado com configuração local temporária.
+- Migration PostgreSQL 16 — upgrade/downgrade/upgrade aprovado em stack isolada.
+
+### Resultado
+
+- Implementação local aprovada; migration e deploy pendentes.
+
 ## 2026-10-15 - Novo lead no funil e bônus por negócio
 
 ### Realizado

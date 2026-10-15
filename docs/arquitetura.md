@@ -65,6 +65,7 @@ Rede: apenas Caddy expõe portas 80/443 no host. `api`, `db`, `redis`, `worker`,
 
 - `src/app/` — bootstrap, providers (QueryClient, Router, Auth), rotas por perfil.
 - `src/features/` — pastas por domínio (`auth`, `dashboard`, `prospeccao`, `agendamentos`, `funil`, `vendas`, `metas`, `bonus`, `cross-sell`, `equipe`, `relatorios`, `configuracoes`, `importacoes`, `perfil`).
+  O domínio `sinistros` contém a operação administrativa e a consulta limitada do vendedor.
 - `src/components/` — primitives (Button, Card, Input, Table, Drawer, Modal, Kanban) e componentes compartilhados (NavPill, Sidebar, TopBar).
 - `src/lib/` — `http.ts` (fetch com CSRF), `queryClient.ts`, `schemas.ts`, `format.ts`, `date.ts`.
 - `src/styles/` — `tokens.css`, `globals.css`, Tailwind config.

@@ -1,5 +1,23 @@
 # Changelog
 
+## [Não publicado] - Módulo inicial de sinistros
+
+### Adicionado
+
+- Cadastro e acompanhamento de sinistros com status, atribuição, participantes, timeline,
+  tarefas e arquivamento.
+- Consulta limitada para vendedor e acesso por concessões `claims.read` e `claims.manage`.
+- Tela responsiva com busca, filtros, paginação e estados de carregamento, vazio e erro.
+
+### Segurança
+
+- Organização derivada da sessão, negação por padrão e isolamento comercial do vendedor.
+- Indenização omitida sem autorização financeira.
+
+### Pendente
+
+- Aplicar a migration com backup e publicar o módulo.
+
 ## [2026-10-15] - Novo lead no funil e bônus por negócio
 
 ### Adicionado
