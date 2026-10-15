@@ -37,14 +37,11 @@ test.describe('Navegação responsiva', () => {
     await expectNoPageOverflow(page);
   });
 
-  test('ação contextual do vendedor funciona sem estouro horizontal', async ({ page }) => {
+  test('vendedor não recebe atalho de venda direta', async ({ page }) => {
     await login(page, 'vendedor');
     await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('button', { name: 'Nova venda' })).toHaveCount(0);
     await expectNoPageOverflow(page);
-
-    await page.getByRole('button', { name: 'Nova venda' }).click();
-    await expect(page.getByRole('heading', { name: 'Venda direta' })).toBeVisible();
-    await page.getByRole('button', { name: 'Fechar' }).click();
   });
 
   test('SDR não recebe controle inerte', async ({ page }) => {

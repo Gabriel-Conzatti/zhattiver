@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-10-15] - Atalho de venda direta removido do vendedor
+
+### Removido
+
+- Botão `+` de venda direta do cabeçalho do vendedor.
+- Prop `addAction` do componente compartilhado `TopBar`, sem consumidores restantes.
+
+### Alterado
+
+- O registro de venda passa a ocorrer somente pelo drawer da oportunidade, no funil.
+
 ## [2026-10-15] - Cabeçalho somente com a logo
 
 ### Alterado

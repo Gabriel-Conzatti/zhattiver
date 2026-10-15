@@ -1,5 +1,33 @@
 # Diário de Desenvolvimento
 
+## 2026-10-15 - Remoção do atalho de venda direta do vendedor
+
+### Realizado
+
+- Removido o botão `+` de venda direta do cabeçalho do vendedor.
+- Removida a prop `addAction` do `TopBar`, que ficou sem consumidores após a mudança.
+- `SaleFormDialog` preservado: o registro de venda continua acessível pelo drawer da
+  oportunidade, no funil.
+- Teste unitário do `TopBar` e teste E2E de navegação ajustados para a nova regra.
+
+### Arquivos principais
+
+- `frontend/src/features/vendedor/VendedorLayout.tsx`
+- `frontend/src/components/TopBar.tsx`
+- `frontend/src/components/TopBar.test.tsx`
+- `frontend/e2e/responsive-navigation.spec.ts`
+
+### Testes executados
+
+- `npm run test -- --run` — 38 testes aprovados em 16 arquivos.
+- `npm run lint` — aprovado.
+- `npm run typecheck` — aprovado.
+- `npm run build` — aprovado.
+
+### Resultado
+
+- Aprovado localmente.
+
 ## 2026-10-15 - Cabeçalho somente com a logo
 
 ### Realizado

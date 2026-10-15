@@ -1,10 +1,10 @@
-import { LogOut, Plus, Settings, User } from 'lucide-react';
+import { LogOut, Settings, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useAuth } from '@/app/AuthProvider';
 import { NotificationBell } from './NotificationBell';
 
-export function TopBar({ children, addAction }: { children?: React.ReactNode; addAction?: () => void }) {
+export function TopBar({ children }: { children?: React.ReactNode }) {
   const { user, logout } = useAuth();
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-border bg-base/90 px-3 py-2 backdrop-blur sm:px-4">
@@ -20,17 +20,6 @@ export function TopBar({ children, addAction }: { children?: React.ReactNode; ad
         {children}
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        {addAction && (
-          <button
-            type="button"
-            className="icon-button text-brand-cyan"
-            aria-label="Nova venda"
-            onClick={addAction}
-            title="Nova venda"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        )}
         <NotificationBell />
         <Link
           to={profilePath(user?.role)}

@@ -28,10 +28,10 @@ vi.mock('./NotificationBell', () => ({
   NotificationBell: () => <button type="button">Notificações</button>,
 }));
 
-function renderTopBar(addAction?: () => void) {
+function renderTopBar() {
   return render(
     <MemoryRouter>
-      <TopBar addAction={addAction}>
+      <TopBar>
         <span>Navegação</span>
       </TopBar>
     </MemoryRouter>,
@@ -44,7 +44,7 @@ describe('TopBar', () => {
     mocks.role = 'sdr';
   });
 
-  it('não renderiza busca ou ação sem funcionamento', () => {
+  it('não renderiza busca nem atalho de venda direta', () => {
     renderTopBar();
 
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
@@ -58,14 +58,11 @@ describe('TopBar', () => {
     );
   });
 
-  it('executa a ação contextual e o logout', () => {
-    const addAction = vi.fn();
-    renderTopBar(addAction);
+  it('executa o logout', () => {
+    renderTopBar();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nova venda' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
 
-    expect(addAction).toHaveBeenCalledOnce();
     expect(mocks.logout).toHaveBeenCalledOnce();
   });
 });

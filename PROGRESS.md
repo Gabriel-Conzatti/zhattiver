@@ -7,6 +7,13 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 9 — Homologação em produção (deploy publicado; validação comercial em andamento)**
 
+### Atalho de venda direta removido do vendedor — 15/10/2026
+
+- O botão `+` de venda direta saiu do cabeçalho do vendedor; a prop `addAction` do
+  `TopBar` foi removida por não ter mais nenhum consumidor.
+- O registro de venda continua disponível pelo drawer da oportunidade, no funil.
+- Teste E2E de navegação ajustado para confirmar a ausência do atalho.
+
 ### Cabeçalho somente com a logo — 15/10/2026
 
 - Removido o texto `Lynk` abaixo da logo nos cabeçalhos do vendedor, SDR e

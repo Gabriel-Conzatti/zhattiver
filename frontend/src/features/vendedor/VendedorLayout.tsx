@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { NavPill } from '@/components/NavPill';
 import { TopBar } from '@/components/TopBar';
-import { SaleFormDialog } from './SaleFormDialog';
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
@@ -14,10 +12,9 @@ const NAV = [
 ];
 
 export function VendedorLayout() {
-  const [showSale, setShowSale] = useState(false);
   return (
     <div className="min-h-screen">
-      <TopBar addAction={() => setShowSale(true)}>
+      <TopBar>
         <div className="flex lg:justify-center">
           <NavPill items={NAV} />
         </div>
@@ -25,7 +22,6 @@ export function VendedorLayout() {
       <main className="mx-auto min-w-0 max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         <Outlet />
       </main>
-      {showSale && <SaleFormDialog onClose={() => setShowSale(false)} />}
     </div>
   );
 }
