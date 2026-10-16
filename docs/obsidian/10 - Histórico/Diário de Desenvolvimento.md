@@ -1,5 +1,44 @@
 # Diário de Desenvolvimento
 
+## 2026-10-16 - Perfil exclusivo de sinistros
+
+### Realizado
+
+- Adicionado o perfil-base `sinistros` para usuários sem função comercial.
+- O seletor de perfis permite remover Vendedor/SDR depois de marcar Sinistros.
+- Criada a área `/area-sinistros`, com navegação restrita ao módulo, perfil pessoal,
+  notificações e logout.
+- Adicionada allowlist central no backend; qualquer outra API retorna `403`.
+- O backend rejeita perfil exclusivo sem `claims.read` ou `claims.manage`.
+
+### Arquivos principais
+
+- `backend/app/core/role_scope.py`
+- `backend/app/modules/users/models.py`
+- `backend/app/modules/admin/routes.py`
+- `frontend/src/features/admin/AdminUsuariosPage.tsx`
+- `frontend/src/features/sinistros/SinistrosLayout.tsx`
+- `frontend/src/app/App.tsx`
+
+### Testes executados
+
+- `pytest -q` — 88 aprovados.
+- `npm test -- --run` — 47 aprovados.
+- Ruff, ESLint, typecheck e build — aprovados.
+
+### Resultado
+
+- Publicado em produção em 2026-10-16 com o commit `a2492fb`.
+- O deploy fez backup, manteve a migration `b4c91e8d2f60` e recriou os serviços.
+- Usuário temporário de homologação: login 200, Sinistros 200, perfil pessoal 200 e
+  Leads 403. A conta e a concessão foram removidas, com contagem final zero.
+- Health e SPA responderam 200; o bundle `index-BFHeSz7m.js` contém a rota
+  `/area-sinistros`.
+
+### Próximos passos
+
+- Homologar o perfil exclusivo com o usuário real da equipe de sinistros.
+
 ## 2026-10-16 - Perfis combináveis no cadastro de usuários
 
 ### Realizado

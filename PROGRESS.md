@@ -16,7 +16,11 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
   importações, vendas ou administração.
 - Backend aplica allowlist central para autenticação, perfil pessoal, notificações e
   `/claims`; qualquer outra API retorna `403`.
-- Pendente: validação completa, commit, push e deploy.
+- Validação aprovada: 88 testes backend, 47 frontend, Ruff, ESLint, typecheck e build.
+- Publicado em produção em 16/10/2026 com o commit `a2492fb`, após backup do banco.
+- Homologação em produção: login 200, Sinistros 200, perfil pessoal 200, Leads 403 e
+  usuário temporário removido; health e SPA em 200 e rota `/area-sinistros` presente no
+  bundle `index-BFHeSz7m.js`.
 
 ### Perfis combináveis no cadastro de usuários — 16/10/2026
 

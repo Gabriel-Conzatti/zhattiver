@@ -1,6 +1,6 @@
 # Changelog
 
-## [Não publicado] - Perfil exclusivo de sinistros
+## [2026-10-16] - Perfil exclusivo de sinistros
 
 ### Adicionado
 
@@ -12,6 +12,12 @@
 - Allowlist central no backend retorna `403` para qualquer outra API acessada por usuário
   com perfil exclusivo de sinistros.
 - O backend rejeita perfil `sinistros` sem `claims.read` ou `claims.manage`.
+
+### Publicado
+
+- Commit `a2492fb` publicado em produção com backup prévio do banco.
+- Homologação temporária confirmou login e Sinistros em 200, Leads em 403 e remoção
+  integral do usuário de teste.
 
 ## [2026-10-16] - Perfis combináveis no cadastro de usuários
 
