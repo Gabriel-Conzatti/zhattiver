@@ -1,5 +1,14 @@
 # Changelog
 
+## [Não publicado] - Perfis combináveis no cadastro de usuários
+
+### Alterado
+
+- O cadastro de usuários reúne Vendedor, SDR, Administrador e Sinistros no seletor
+  **Perfis**.
+- Sinistros pode ser marcado junto de Vendedor ou SDR; o nível Consulta/Operação continua
+  controlando a concessão enviada ao backend.
+
 ## [2026-10-15] - Catálogos e oficinas de sinistros
 
 ### Adicionado

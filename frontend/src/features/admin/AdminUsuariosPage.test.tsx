@@ -81,20 +81,39 @@ describe('AdminUsuariosPage', () => {
     );
   });
 
-  it('designa o usuário para operar sinistros', async () => {
+  it('combina um perfil comercial com a função de sinistros', async () => {
     renderPage();
 
     expect(await screen.findByText('Vendedora Exemplo')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
-    fireEvent.change(screen.getByLabelText('Acesso a sinistros'), {
-      target: { value: 'manage' },
+    fireEvent.click(screen.getByRole('radio', { name: 'SDR' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sinistros' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(updateUser).toHaveBeenCalledWith(
+        'seller-1',
+        expect.objectContaining({ role: 'sdr', claims_access: 'manage' }),
+      ),
+    );
+  });
+
+  it('permite designar apenas consulta de sinistros', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Vendedora Exemplo')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    expect(screen.queryByLabelText('Nível de acesso a sinistros')).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sinistros' }));
+    fireEvent.change(screen.getByLabelText('Nível de acesso a sinistros'), {
+      target: { value: 'read' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() =>
       expect(updateUser).toHaveBeenCalledWith(
         'seller-1',
-        expect.objectContaining({ claims_access: 'manage' }),
+        expect.objectContaining({ role: 'vendedor', claims_access: 'read' }),
       ),
     );
   });

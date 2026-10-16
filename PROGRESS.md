@@ -398,8 +398,8 @@ Publicado em `funil.zhattiver.com` a partir do commit `e23d4ae`.
 
 ## Próximo passo
 
-1. Designar a equipe de sinistros em Administração > Usuários, no campo **Acesso a sinistros**
-   (Consulta ou Operação), e homologar o módulo com um usuário real.
+1. Homologar o seletor combinado de **Perfis** em Administração > Usuários com um usuário
+   real: Vendedor ou SDR pode ser selecionado junto de Sinistros (Consulta ou Operação).
 2. Definir, na tela Equipe, a meta diária de prospecção da vendedora.
 3. Cadastrar metas mensais e faixas de bônus antes de qualquer apuração financeira.
 4. Homologar os fluxos comerciais e marcar as RN confirmadas em `docs/requisitos.md`.

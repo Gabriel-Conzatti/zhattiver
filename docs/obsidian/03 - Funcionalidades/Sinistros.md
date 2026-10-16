@@ -47,12 +47,13 @@ vendedor. Valores de indenização exigem administrador, `claims.manage` ou
 
 ## Como designar a equipe de sinistros
 
-O administrador abre **Administração → Usuários**, cria ou edita o usuário e escolhe o campo
-**Acesso a sinistros**:
+O administrador abre **Administração → Usuários**, cria ou edita o usuário e escolhe os
+**Perfis**. Vendedor, SDR e Administrador são perfis comerciais mutuamente exclusivos;
+**Sinistros** pode ser selecionado junto de Vendedor ou SDR:
 
 | Opção | Permissão concedida | O que o usuário faz |
 | --- | --- | --- |
-| Sem acesso | nenhuma | não enxerga o módulo |
+| Sinistros desmarcado | nenhuma | não enxerga o módulo |
 | Consulta | `claims.read` | acompanha os registros sem escrever |
 | Operação | `claims.manage` | cadastra, atribui, movimenta e conclui |
 

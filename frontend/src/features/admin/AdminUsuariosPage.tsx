@@ -16,35 +16,72 @@ const CLAIMS_ACCESS_LABELS: Record<AdminUser['claims_access'], string> = {
   manage: 'Operação',
 };
 
-function ClaimsAccessField({
+function ProfilesField({
   value,
   role,
+  onRoleChange,
   onChange,
 }: {
   value: AdminUser['claims_access'];
-  role: string;
+  role: AdminUser['role'];
+  onRoleChange: (value: AdminUser['role']) => void;
   onChange: (value: AdminUser['claims_access']) => void;
 }) {
   const isAdmin = role === 'admin';
   return (
-    <Field label="Acesso a sinistros">
-      <select
-        aria-label="Acesso a sinistros"
-        className="input"
-        value={isAdmin ? 'manage' : value}
-        disabled={isAdmin}
-        onChange={(e) => onChange(e.target.value as AdminUser['claims_access'])}
-      >
-        {CLAIMS_ACCESS_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
+    <Field label="Perfis">
+      <div className="mt-1 flex flex-wrap gap-2" role="radiogroup" aria-label="Perfil comercial">
+        {(['vendedor', 'sdr', 'admin'] as const).map((profile) => (
+          <button
+            type="button"
+            key={profile}
+            role="radio"
+            aria-checked={role === profile}
+            onClick={() => onRoleChange(profile)}
+            className={`nav-pill-item ${role === profile ? 'bg-brand-cyan/20 text-brand-cyan' : ''}`}
+          >
+            {profile === 'vendedor'
+              ? 'Vendedor'
+              : profile === 'sdr'
+                ? 'SDR'
+                : 'Administrador'}
+          </button>
         ))}
-      </select>
+        <label
+          className={`nav-pill-item cursor-pointer ${value !== 'none' || isAdmin ? 'bg-brand-cyan/20 text-brand-cyan' : ''}`}
+        >
+          <input
+            type="checkbox"
+            className="sr-only"
+            aria-label="Sinistros"
+            checked={isAdmin || value !== 'none'}
+            disabled={isAdmin}
+            onChange={(e) => onChange(e.target.checked ? 'manage' : 'none')}
+          />
+          Sinistros
+        </label>
+      </div>
+      {(isAdmin || value !== 'none') && (
+        <select
+          aria-label="Nível de acesso a sinistros"
+          className="input mt-2"
+          value={isAdmin ? 'manage' : value}
+          disabled={isAdmin}
+          onChange={(e) => onChange(e.target.value as AdminUser['claims_access'])}
+        >
+          {CLAIMS_ACCESS_OPTIONS.filter((option) => option.value !== 'none').map((option) => (
+            <option key={option.value} value={option.value}>
+              Sinistros: {option.label}
+            </option>
+          ))}
+        </select>
+      )}
       <p className="mt-1 text-xs text-text-secondary">
         {isAdmin
           ? 'Administrador sempre opera sinistros.'
-          : 'Consulta permite acompanhar; Operação permite cadastrar, atribuir e concluir.'}
+          : value === 'none'
+            ? 'Selecione Sinistros para adicionar essa função ao perfil comercial.'
+            : 'Consulta permite acompanhar; Operação permite cadastrar, atribuir e concluir.'}
       </p>
     </Field>
   );
@@ -179,7 +216,7 @@ function CreateDialog({
   const [form, setForm] = useState({
     email: '',
     name: '',
-    role: 'vendedor',
+    role: 'vendedor' as AdminUser['role'],
     password: '',
     product_ids: [] as string[],
     claims_access: 'none' as AdminUser['claims_access'],
@@ -216,17 +253,6 @@ function CreateDialog({
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </Field>
-        <Field label="Perfil" required>
-          <select
-            className="input"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-          >
-            <option value="vendedor">Vendedor</option>
-            <option value="sdr">SDR</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </Field>
         <Field label="Senha (mín. 10)" required>
           <input
             className="input"
@@ -236,9 +262,10 @@ function CreateDialog({
           />
         </Field>
       </div>
-      <ClaimsAccessField
+      <ProfilesField
         value={form.claims_access}
         role={form.role}
+        onRoleChange={(role) => setForm({ ...form, role })}
         onChange={(value) => setForm({ ...form, claims_access: value })}
       />
       <Field label="Produtos autorizados">
@@ -338,17 +365,6 @@ function EditDialog({
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </Field>
-        <Field label="Perfil">
-          <select
-            className="input"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value as AdminUser['role'] })}
-          >
-            <option value="vendedor">Vendedor</option>
-            <option value="sdr">SDR</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </Field>
       </div>
       <label className="mt-3 flex items-center gap-2 text-sm text-text-secondary">
         <input
@@ -358,9 +374,10 @@ function EditDialog({
         />
         Usuário ativo
       </label>
-      <ClaimsAccessField
+      <ProfilesField
         value={form.claims_access}
         role={form.role}
+        onRoleChange={(role) => setForm({ ...form, role })}
         onChange={(value) => setForm({ ...form, claims_access: value })}
       />
       <Field label="Produtos autorizados">
