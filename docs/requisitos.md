@@ -168,6 +168,8 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
   `claims.read` ou `claims.manage`; o perfil comercial, sozinho, não concede acesso.
 - As funções são acumuláveis: um usuário pode continuar vendedor ou SDR e também receber
   acesso de consulta ou operação em sinistros.
+- Um usuário pode ter o perfil-base `sinistros`, sem Vendedor ou SDR. Nesse caso, o backend
+  permite somente autenticação, perfil pessoal, notificações e APIs do módulo de sinistros.
 - Sinistro pode ser independente ou ter vínculo opcional com lead, oportunidade e venda.
 - Ramos iniciais obrigatórios: Auto, RE e RCO ONIBUS.
 - Seguradoras iniciais obrigatórias: Allianz, Azul, Bradesco, HDI, Porto, Sura, Tokio,

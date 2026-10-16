@@ -51,7 +51,14 @@ export function LoginPage() {
     }
     try {
       const user = await login(parsed.data.email, parsed.data.password);
-      const target = user.role === 'admin' ? '/admin' : user.role === 'sdr' ? '/sdr' : '/';
+      const target =
+        user.role === 'admin'
+          ? '/admin'
+          : user.role === 'sdr'
+            ? '/sdr'
+            : user.role === 'sinistros'
+              ? '/area-sinistros'
+              : '/';
       navigate(target, { replace: true });
     } catch (err) {
       setError(messageForError(err));

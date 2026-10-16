@@ -115,10 +115,12 @@ def _register_cli(app: Flask) -> None:
 def _register_request_hooks(app: Flask) -> None:
     from .core.csrf import init_csrf
     from .core.request_context import init_request_context
+    from .core.role_scope import init_role_scope_security
     from .core.session_security import init_session_security
 
     init_request_context(app)
     init_session_security(app)
+    init_role_scope_security(app)
     init_csrf(app)
 
 

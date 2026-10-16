@@ -32,7 +32,7 @@ Convenções gerais:
 | email | CITEXT UNIQUE (por org) | |
 | name | TEXT | |
 | password_hash | TEXT | argon2id |
-| role | ENUM('admin', 'vendedor', 'sdr') | perfil base |
+| role | ENUM('admin', 'vendedor', 'sdr', 'sinistros') | perfil base |
 | is_active | BOOLEAN | |
 | session_version | INTEGER | incrementada em troca/reset de senha para invalidar sessões antigas |
 | last_login_at | TIMESTAMPTZ NULL | |

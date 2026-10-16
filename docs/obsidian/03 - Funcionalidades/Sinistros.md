@@ -48,8 +48,9 @@ vendedor. Valores de indenização exigem administrador, `claims.manage` ou
 ## Como designar a equipe de sinistros
 
 O administrador abre **Administração → Usuários**, cria ou edita o usuário e escolhe os
-**Perfis**. Vendedor, SDR e Administrador são perfis comerciais mutuamente exclusivos;
-**Sinistros** pode ser selecionado junto de Vendedor ou SDR:
+**Perfis**. Vendedor, SDR e Administrador são perfis-base mutuamente exclusivos;
+**Sinistros** pode ser selecionado junto de Vendedor/SDR ou permanecer como único perfil.
+Para deixar apenas Sinistros, marque-o e clique novamente no perfil comercial selecionado:
 
 | Opção | Permissão concedida | O que o usuário faz |
 | --- | --- | --- |
@@ -58,7 +59,9 @@ O administrador abre **Administração → Usuários**, cria ou edita o usuário
 | Operação | `claims.manage` | cadastra, atribui, movimenta e conclui |
 
 O campo grava concessões em `permission_grants`, com auditoria do ator e dos valores anterior
-e novo. Rebaixar um nível revoga a concessão anterior em vez de apagá-la. O perfil
+e novo. No modo exclusivo, `users.role` recebe `sinistros` e uma allowlist central bloqueia
+qualquer API fora de autenticação, perfil pessoal, notificações e sinistros. Rebaixar um
+nível revoga a concessão anterior em vez de apagá-la. O perfil
 `admin` sempre opera sinistros, por isso o campo aparece bloqueado em **Operação** e o backend
 rejeita restringi-lo com `invalid_claims_access` (422). As mesmas permissões continuam
 disponíveis em **Administração → Concessões** para vigências temporárias.

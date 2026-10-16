@@ -26,6 +26,7 @@ import { FunilPage } from '@/features/vendedor/FunilPage';
 import { FollowupsPage } from '@/features/vendedor/FollowupsPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
 import { SinistrosPage } from '@/features/sinistros/SinistrosPage';
+import { SinistrosLayout } from '@/features/sinistros/SinistrosLayout';
 
 import { RequireAuth } from './RequireAuth';
 import { useAuth } from './AuthProvider';
@@ -93,6 +94,12 @@ export function App() {
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
+      <Route element={<RequireAuth roles={['sinistros']} />}>
+        <Route path="/area-sinistros" element={<SinistrosLayout />}>
+          <Route index element={<SinistrosPage />} />
+          <Route path="perfil" element={<ProfilePage />} />
+        </Route>
+      </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
@@ -101,5 +108,6 @@ export function App() {
 function homeFor(role: string) {
   if (role === 'admin') return '/admin';
   if (role === 'sdr') return '/sdr';
+  if (role === 'sinistros') return '/area-sinistros';
   return '/';
 }

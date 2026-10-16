@@ -28,16 +28,27 @@ function ProfilesField({
   onChange: (value: AdminUser['claims_access']) => void;
 }) {
   const isAdmin = role === 'admin';
+  const isClaimsOnly = role === 'sinistros';
+  const claimsSelected = isAdmin || isClaimsOnly || value !== 'none';
+
+  const selectCommercialRole = (profile: Exclude<AdminUser['role'], 'sinistros'>) => {
+    if (role === profile && claimsSelected) {
+      onRoleChange('sinistros');
+      return;
+    }
+    onRoleChange(profile);
+  };
+
   return (
     <Field label="Perfis">
-      <div className="mt-1 flex flex-wrap gap-2" role="radiogroup" aria-label="Perfil comercial">
+      <div className="mt-1 flex flex-wrap gap-2" role="group" aria-label="Perfis do usuário">
         {(['vendedor', 'sdr', 'admin'] as const).map((profile) => (
           <button
             type="button"
             key={profile}
-            role="radio"
+            role="checkbox"
             aria-checked={role === profile}
-            onClick={() => onRoleChange(profile)}
+            onClick={() => selectCommercialRole(profile)}
             className={`nav-pill-item ${role === profile ? 'bg-brand-cyan/20 text-brand-cyan' : ''}`}
           >
             {profile === 'vendedor'
@@ -48,20 +59,20 @@ function ProfilesField({
           </button>
         ))}
         <label
-          className={`nav-pill-item cursor-pointer ${value !== 'none' || isAdmin ? 'bg-brand-cyan/20 text-brand-cyan' : ''}`}
+          className={`nav-pill-item ${isClaimsOnly ? 'cursor-default' : 'cursor-pointer'} ${claimsSelected ? 'bg-brand-cyan/20 text-brand-cyan' : ''}`}
         >
           <input
             type="checkbox"
             className="sr-only"
             aria-label="Sinistros"
-            checked={isAdmin || value !== 'none'}
-            disabled={isAdmin}
+            checked={claimsSelected}
+            disabled={isAdmin || isClaimsOnly}
             onChange={(e) => onChange(e.target.checked ? 'manage' : 'none')}
           />
           Sinistros
         </label>
       </div>
-      {(isAdmin || value !== 'none') && (
+      {claimsSelected && (
         <select
           aria-label="Nível de acesso a sinistros"
           className="input mt-2"
@@ -79,9 +90,11 @@ function ProfilesField({
       <p className="mt-1 text-xs text-text-secondary">
         {isAdmin
           ? 'Administrador sempre opera sinistros.'
-          : value === 'none'
-            ? 'Selecione Sinistros para adicionar essa função ao perfil comercial.'
-            : 'Consulta permite acompanhar; Operação permite cadastrar, atribuir e concluir.'}
+          : isClaimsOnly
+            ? 'Perfil exclusivo: este usuário verá somente o módulo de sinistros.'
+            : value === 'none'
+              ? 'Selecione Sinistros para adicionar essa função ao perfil comercial.'
+              : 'Para deixar somente Sinistros, clique novamente no perfil comercial selecionado.'}
       </p>
     </Field>
   );

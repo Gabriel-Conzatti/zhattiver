@@ -9,6 +9,7 @@ const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrador',
   vendedor: 'Vendedor',
   sdr: 'SDR',
+  sinistros: 'Sinistros',
 };
 
 export function ProfilePage() {

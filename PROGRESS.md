@@ -7,6 +7,17 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 10 — Módulo inicial de sinistros**
 
+### Perfil exclusivo de sinistros — 16/10/2026
+
+- Adicionado perfil-base `sinistros` para usuários sem função comercial.
+- A interface permite marcar Sinistros e desmarcar Vendedor/SDR, deixando somente
+  Sinistros selecionado.
+- Área própria em `/area-sinistros`, sem dashboard, prospecção, agendamentos, funil,
+  importações, vendas ou administração.
+- Backend aplica allowlist central para autenticação, perfil pessoal, notificações e
+  `/claims`; qualquer outra API retorna `403`.
+- Pendente: validação completa, commit, push e deploy.
+
 ### Perfis combináveis no cadastro de usuários — 16/10/2026
 
 - O cadastro de usuários reúne Vendedor, SDR, Administrador e Sinistros no seletor

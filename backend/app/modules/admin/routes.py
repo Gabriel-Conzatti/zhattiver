@@ -21,6 +21,7 @@ from ..sales.models import Sale
 from ..schedules.models import STATE_SCHEDULED, Schedule
 from ..users.models import (
     ROLE_ADMIN,
+    ROLE_SINISTROS,
     ROLE_VENDEDOR,
     ROLES,
     PermissionGrant,
@@ -133,6 +134,15 @@ def _set_claims_access(
         )
 
 
+def _validate_claims_only_access(role: str, access: str) -> None:
+    if role == ROLE_SINISTROS and access == CLAIMS_ACCESS_NONE:
+        raise BusinessError(
+            "invalid_claims_access",
+            "O perfil exclusivo de sinistros precisa de acesso de Consulta ou Operação",
+            status=422,
+        )
+
+
 def _serialize_user(u: User) -> dict:
     quota = _prospecting_quota_at(u.id, today_local())
     return {
@@ -227,6 +237,8 @@ def create_user():
     payload = UserCreate.model_validate(request.get_json(silent=True) or {})
     if payload.role not in ROLES:
         raise BusinessError("invalid_role", "Perfil inválido", status=422)
+    claims_access = payload.claims_access or CLAIMS_ACCESS_NONE
+    _validate_claims_only_access(payload.role, claims_access)
     if db.session.execute(
         select(User).where(User.email == payload.email.lower())
     ).scalar_one_or_none():
@@ -287,6 +299,13 @@ def update_user(user_id: str):
     if user is None or user.organization_id != ctx.organization_id:
         raise BusinessError("not_found", "Usuário não encontrado", status=404)
     payload = UserUpdate.model_validate(request.get_json(silent=True) or {})
+    requested_role = payload.role or user.role
+    requested_claims_access = (
+        payload.claims_access
+        if payload.claims_access is not None
+        else _claims_access(user)
+    )
+    _validate_claims_only_access(requested_role, requested_claims_access)
     previous_quota = _prospecting_quota_at(user.id, today_local())
     before = {
         "name": user.name,

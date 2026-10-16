@@ -75,11 +75,13 @@ export function TopBar({ children, action }: TopBarProps) {
 function profilePath(role?: string) {
   if (role === 'admin') return '/admin/perfil';
   if (role === 'sdr') return '/sdr/perfil';
+  if (role === 'sinistros') return '/area-sinistros/perfil';
   return '/perfil';
 }
 
 function homePath(role?: string) {
   if (role === 'admin') return '/admin';
   if (role === 'sdr') return '/sdr';
+  if (role === 'sinistros') return '/area-sinistros';
   return '/';
 }

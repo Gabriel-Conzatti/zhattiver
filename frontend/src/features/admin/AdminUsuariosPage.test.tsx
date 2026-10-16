@@ -86,7 +86,7 @@ describe('AdminUsuariosPage', () => {
 
     expect(await screen.findByText('Vendedora Exemplo')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
-    fireEvent.click(screen.getByRole('radio', { name: 'SDR' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'SDR' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Sinistros' }));
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
@@ -114,6 +114,23 @@ describe('AdminUsuariosPage', () => {
       expect(updateUser).toHaveBeenCalledWith(
         'seller-1',
         expect.objectContaining({ role: 'vendedor', claims_access: 'read' }),
+      ),
+    );
+  });
+
+  it('permite deixar somente o perfil de sinistros selecionado', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Vendedora Exemplo')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sinistros' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Vendedor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(updateUser).toHaveBeenCalledWith(
+        'seller-1',
+        expect.objectContaining({ role: 'sinistros', claims_access: 'manage' }),
       ),
     );
   });

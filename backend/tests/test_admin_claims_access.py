@@ -100,3 +100,60 @@ def test_admin_profile_always_manages_claims(app):
     )
     assert rejected.status_code == 422
     assert rejected.get_json()["error"]["code"] == "invalid_claims_access"
+
+
+def test_claims_only_profile_cannot_access_other_modules(app):
+    _seed_admin(app)
+    client = app.test_client()
+    headers = _login_admin(client)
+
+    created = client.post(
+        "/api/v1/admin/users",
+        json={
+            "email": "somente.sinistros@example.com",
+            "name": "Somente Sinistros",
+            "role": "sinistros",
+            "password": "senha-segura-1",
+            "claims_access": "manage",
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201
+    assert created.get_json()["role"] == "sinistros"
+    assert created.get_json()["claims_access"] == "manage"
+
+    client.post("/api/v1/auth/logout", headers=headers)
+    login = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "somente.sinistros@example.com",
+            "password": "senha-segura-1",
+        },
+    )
+    assert login.status_code == 200
+    assert login.get_json()["role"] == "sinistros"
+
+    assert client.get("/api/v1/claims/statuses").status_code == 200
+    forbidden = client.get("/api/v1/leads")
+    assert forbidden.status_code == 403
+    assert forbidden.get_json()["error"]["code"] == "forbidden"
+
+
+def test_claims_only_profile_requires_claims_access(app):
+    _seed_admin(app)
+    client = app.test_client()
+    headers = _login_admin(client)
+
+    rejected = client.post(
+        "/api/v1/admin/users",
+        json={
+            "email": "sem-acesso@example.com",
+            "name": "Sem Acesso",
+            "role": "sinistros",
+            "password": "senha-segura-1",
+            "claims_access": "none",
+        },
+        headers=headers,
+    )
+    assert rejected.status_code == 422
+    assert rejected.get_json()["error"]["code"] == "invalid_claims_access"

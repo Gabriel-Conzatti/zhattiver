@@ -14,7 +14,8 @@ from .._shared import ArchivableMixin, TimestampMixin, uuid_fk, uuid_pk
 ROLE_ADMIN = "admin"
 ROLE_VENDEDOR = "vendedor"
 ROLE_SDR = "sdr"
-ROLES = (ROLE_ADMIN, ROLE_VENDEDOR, ROLE_SDR)
+ROLE_SINISTROS = "sinistros"
+ROLES = (ROLE_ADMIN, ROLE_VENDEDOR, ROLE_SDR, ROLE_SINISTROS)
 
 
 class Team(db.Model, TimestampMixin, ArchivableMixin):

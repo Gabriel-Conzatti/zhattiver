@@ -1,5 +1,18 @@
 # Changelog
 
+## [Não publicado] - Perfil exclusivo de sinistros
+
+### Adicionado
+
+- Perfil-base `sinistros` para usuários que não devem acessar módulos comerciais.
+- Área própria com navegação apenas para Sinistros, perfil pessoal, notificações e logout.
+
+### Segurança
+
+- Allowlist central no backend retorna `403` para qualquer outra API acessada por usuário
+  com perfil exclusivo de sinistros.
+- O backend rejeita perfil `sinistros` sem `claims.read` ou `claims.manage`.
+
 ## [2026-10-16] - Perfis combináveis no cadastro de usuários
 
 ### Alterado

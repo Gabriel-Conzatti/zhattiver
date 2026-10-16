@@ -720,7 +720,7 @@ export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'vendedor' | 'sdr';
+  role: 'admin' | 'vendedor' | 'sdr' | 'sinistros';
   is_active: boolean;
   last_login_at: string | null;
   product_ids: string[];

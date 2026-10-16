@@ -18,6 +18,9 @@ eventos e vínculo comercial opcional.
 Administrador e `claims.manage` operam o módulo; `claims.read` permite consulta. Perfis
 comerciais não recebem acesso implícito: a função de sinistros é anexada como concessão,
 permitindo combinações como vendedor + operação de sinistros sem criar papéis compostos.
+Quando a pessoa não exerce função comercial, o perfil-base `sinistros` é usado junto de
+`claims.read` ou `claims.manage`. Esse perfil possui allowlist central: autenticação,
+perfil pessoal, notificações e `/claims`; as demais APIs retornam `403`.
 Quando um vendedor recebe apenas `claims.read`, a consulta permanece limitada a lead,
 oportunidade ou venda do próprio escopo. A indenização exige administrador,
 `claims.manage` ou `claims.view_financial`.
@@ -35,7 +38,8 @@ separada com prévia, normalização, detecção de duplicidades, idempotência 
 
 - Reutiliza autenticação, auditoria, infraestrutura e identidade visual.
 - Permite evoluir o fluxo sem acoplar sinistro a oportunidade ou venda.
-- Permite acumular funções sem multiplicar perfis e mantém negação por padrão.
+- Permite acumular funções ou isolar a equipe exclusiva de sinistros, mantendo negação por
+  padrão.
 - Evita texto livre em ramo, seguradora e oficina sem perder o histórico existente.
 - A importação histórica exigirá uma fase própria de normalização e revisão.
 - Upload de documentos fica indisponível até a infraestrutura privada ser definida.
