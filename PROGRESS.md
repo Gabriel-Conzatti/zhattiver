@@ -17,7 +17,7 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 - Configuração de produção exige segredos de 32 bytes sem placeholders e falha com
   ambiente desconhecido.
 - VPS endurecida e verificada: SSH root somente por chave, senha desativada, fail2ban ativo e UFW sem regras UDP sem servico.
-- O codigo esta na branch `fix/security-hardening`; ainda precisa de push/deploy para aplicar os controles de aplicacao em producao.
+- Publicado em producao em 16/10/2026 (commit `a3a20f1`): backup pre-deploy, migration head `b4c91e8d2f60`, healthcheck aprovado, Flask 3.1.3, Werkzeug 3.1.9 e python-dotenv 1.2.2 confirmados no container e Caddy encaminhando `{remote_host}`.
 
 ## Etapa atual
 

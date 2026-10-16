@@ -1,7 +1,5 @@
 # Problemas Conhecidos
 
-- Correcoes de seguranca no codigo e dependencias estao prontas na branch `fix/security-hardening`, mas ainda nao foram enviadas nem implantadas; ate o deploy, a API de producao continua com as versoes anteriores.
-
 - Identificadores técnicos `LYNK_*` permanecem por compatibilidade.
 - Warnings de depreciação do backend de sessão filesystem aparecem apenas nos testes;
   produção usa Redis.

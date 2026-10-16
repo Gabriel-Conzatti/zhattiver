@@ -31,13 +31,13 @@
 
 ### Resultado
 
-- Correções locais em `fix/security-hardening`; sem commit, push ou deploy de código.
+- Commit `a3a20f1` em `main`, com push e deploy em produção em 16/10/2026.
 - SSH root por chave, fail2ban e regras UFW minimas aplicados e verificados na VPS.
-- Codigo em branch local; producao aguarda push/deploy para receber as correcoes da aplicacao.
+- Produção validada: health 200, migration head `b4c91e8d2f60`, Flask 3.1.3/Werkzeug 3.1.9/python-dotenv 1.2.2 no container, Caddy com `{remote_host}` e sem erros nos logs da API.
 
 ### Próximos passos
 
-- Aplicar hardening SSH e UFW mantendo acesso por chave validado.
+- Adicionar teste concorrente em PostgreSQL para a segunda busca de oportunidade.
 - Rodar configuração do Compose e fechar a verificação da VPS.
 
 ## 2026-10-16 - Perfil exclusivo de sinistros

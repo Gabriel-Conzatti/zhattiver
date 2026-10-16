@@ -1,6 +1,6 @@
 # Changelog
 
-## [Não publicado] - Hardening de segurança
+## [2026-10-16] - Hardening de segurança (publicado)
 
 ### Corrigido
 
