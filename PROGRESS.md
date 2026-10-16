@@ -3,7 +3,7 @@
 Registro vivo do que foi implementado, o que está verificado e o que ainda falta.
 Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de verdade.
 
-## Ajustes de sinistros e do funil — 16/10/2026 (não publicado)
+## Ajustes de sinistros e do funil — 16/10/2026
 
 Sinistros:
 
@@ -36,6 +36,15 @@ Funil de vendas:
 
 Validação local: 132 testes backend e 57 frontend; Ruff, ESLint, typecheck e build
 aprovados.
+- Migration `e5b2a9c4d871` ensaiada em cópia do banco de produção (PostgreSQL 16):
+  upgrade, downgrade e upgrade sem erro, um funil por produto novo e nenhum produto ou
+  seguradora duplicado.
+- Publicado em produção em 16/10/2026 (commit `b9114d6`): backup pré-deploy
+  `pre-upgrade-2026-10-16-1801`, migration head `e5b2a9c4d871`, healthcheck aprovado,
+  telas novas respondendo 200, APIs novas exigindo autenticação (401) e bundle
+  `index-Cb2Sjxq2.js` igual ao build validado.
+- Pendente: associar os produtos novos aos vendedores em Equipe; avaliar o produto "RE"
+  pré-existente, que continua sem funil.
 
 ## Hardening de segurança — 16/10/2026
 
