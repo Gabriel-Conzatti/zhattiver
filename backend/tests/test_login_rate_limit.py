@@ -153,6 +153,22 @@ def test_retry_after_uses_only_the_counter_that_blocked(app, monkeypatch):
     assert status.retry_after == 10
 
 
+def test_ip_rate_limit_keys_ignore_source_port(app):
+    from app.core.login_rate_limit import LoginRateLimiter
+
+    _enable_rate_limit(app)
+    limiter = LoginRateLimiter(app)
+
+    assert limiter._keys(  # noqa: SLF001 - validates normalized per-IP identity
+        email="admin@example.com",
+        remote_addr="203.0.113.7:51234",
+    ) == limiter._keys(email="admin@example.com", remote_addr="203.0.113.7")
+    assert limiter._keys(  # noqa: SLF001 - validates normalized IPv6 identity
+        email="admin@example.com",
+        remote_addr="[2001:db8::7]:51234",
+    ) == limiter._keys(email="admin@example.com", remote_addr="2001:db8::7")
+
+
 def test_login_fails_closed_when_rate_limit_store_is_unavailable(app, client, monkeypatch):
     from app.core import login_rate_limit
 

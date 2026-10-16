@@ -1,5 +1,7 @@
 # Problemas Conhecidos
 
+- Correcoes de seguranca no codigo e dependencias estao prontas na branch `fix/security-hardening`, mas ainda nao foram enviadas nem implantadas; ate o deploy, a API de producao continua com as versoes anteriores.
+
 - Identificadores técnicos `LYNK_*` permanecem por compatibilidade.
 - Warnings de depreciação do backend de sessão filesystem aparecem apenas nos testes;
   produção usa Redis.
@@ -18,6 +20,14 @@
   forem adicionadas; o build agora separa os principais vendors em chunks independentes.
 
 ## Resolvidos
+
+- Revisão de segurança de 2026-10-16: associação de venda/oportunidade, replay de
+  idempotência entre usuários, rate limit por IP com porta, sessão de usuário desativado,
+  referências multiempresa e validação de segredos corrigidos no branch de hardening.
+- `pip-audit` não reporta vulnerabilidades conhecidas nas dependências Python após as
+  atualizações de Flask, Werkzeug, python-dotenv e pytest.
+- Hardening do SSH e limpeza das regras UFW sem serviço associado aplicados à VPS; manter
+  apenas SSH por chave e portas necessárias ao Caddy após validação de acesso.
 
 - Ausência de caminho na interface para o administrador importar planilhas de
   clientes. Em 2026-10-14 a tela de Importações passou a ser exposta também em

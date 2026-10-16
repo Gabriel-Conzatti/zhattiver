@@ -177,7 +177,7 @@ def claims_data(app):
                 "id": str(seller_without_claims.id),
             },
             "manager": {"email": manager.email, "id": str(manager.id)},
-            "external_admin": {"email": external_admin.email},
+            "external_admin": {"email": external_admin.email, "id": str(external_admin.id)},
             "lead_id": str(linked_lead.id),
             "unlinked_lead_id": str(unlinked_lead.id),
             "external_lead_id": str(external_lead.id),
@@ -505,6 +505,31 @@ def test_claims_manager_registers_workshop_and_links_it_to_claim(
     assert workshop["id"] not in {
         item["id"] for item in catalogs_after.get_json()["workshops"]
     }
+
+
+def test_claim_task_cannot_be_assigned_to_user_from_another_organization(
+    client, claims_data
+):
+    _login(client, claims_data["manager"])
+    headers = _csrf_headers(client)
+    created = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data),
+    )
+    assert created.status_code == 201
+
+    response = client.post(
+        f"/api/v1/claims/{created.get_json()['id']}/tasks",
+        headers=headers,
+        json={
+            "title": "Tarefa inválida",
+            "owner_user_id": claims_data["external_admin"]["id"],
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "invalid_link"
 
 
 def test_claims_list_supports_search_status_and_pagination(client, claims_data):

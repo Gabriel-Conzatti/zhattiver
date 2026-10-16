@@ -8,7 +8,8 @@ from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
-from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
+from ..catalog.models import Origin
+from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, Team
 from . import services
 from .models import Availability, Lead, LeadPhone
 from .schemas import (
@@ -237,6 +238,18 @@ def release_lead():
     lead = _load_org_lead(payload.lead_id, ctx.organization_id)
     if lead.archived_at is not None:
         raise BusinessError("archived_lead", "Lead arquivado", status=409)
+    for value, model, label in (
+        (payload.product_id, Product, "Produto"),
+        (payload.team_id, Team, "Equipe"),
+        (payload.origin_id, Origin, "Origem"),
+    ):
+        if value and not db.session.scalar(
+            select(model.id).where(
+                model.id == value,
+                model.organization_id == ctx.organization_id,
+            )
+        ):
+            raise BusinessError("not_found", f"{label} não encontrado", status=404)
 
     existing_open = db.session.execute(
         select(Availability).where(

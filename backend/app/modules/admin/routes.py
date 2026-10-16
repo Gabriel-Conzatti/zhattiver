@@ -320,15 +320,18 @@ def update_user(user_id: str):
     }
     if payload.name is not None:
         user.name = payload.name.strip()
+    security_changed = False
     if payload.role is not None:
         if payload.role not in ROLES:
             raise BusinessError("invalid_role", "Perfil inválido", status=422)
         if user.id == ctx.user_id and payload.role != ROLE_ADMIN:
             raise BusinessError("forbidden", "Não é possível rebaixar o próprio admin", status=403)
+        security_changed = security_changed or payload.role != user.role
         user.role = payload.role
     if payload.is_active is not None:
         if user.id == ctx.user_id and not payload.is_active:
             raise BusinessError("forbidden", "Não é possível desativar o próprio admin", status=403)
+        security_changed = security_changed or payload.is_active != user.is_active
         user.is_active = payload.is_active
     if payload.product_ids is not None:
         products = db.session.execute(
@@ -340,6 +343,8 @@ def update_user(user_id: str):
         user.products = list(products)
     if payload.reset_password:
         user.password_hash = hash_password(payload.reset_password)
+        security_changed = True
+    if security_changed:
         user.session_version += 1
     if payload.daily_prospecting_quota is not None:
         if user.role != ROLE_VENDEDOR:

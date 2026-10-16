@@ -144,6 +144,40 @@ def test_admin_password_reset_invalidates_target_sessions(app):
     assert _login(seller_client, "vendedor@example.com", "senha-redefinida").status_code == 200
 
 
+def test_deactivation_invalidates_session_and_reactivation_rotates_version(app):
+    user_ids = _seed_users(app)
+    seller_client = app.test_client()
+    admin_client = app.test_client()
+    assert _login(seller_client, "vendedor@example.com").status_code == 200
+    assert _login(admin_client, "admin@example.com").status_code == 200
+    deactivated = admin_client.patch(
+        f"/api/v1/admin/users/{user_ids['seller_id']}",
+        json={"is_active": False},
+        headers=_csrf_headers(admin_client),
+    )
+    assert deactivated.status_code == 200
+    with app.app_context():
+        deactivated_user = db.session.get(User, user_ids["seller_id"])
+        assert deactivated_user.is_active is False
+        assert deactivated_user.session_version == 2
+    invalidated = seller_client.get("/api/v1/auth/me")
+    assert invalidated.status_code == 401
+    assert invalidated.get_json()["error"]["code"] == "session_invalidated"
+
+    reactivation_admin = app.test_client()
+    assert _login(reactivation_admin, "admin@example.com").status_code == 200
+    reactivated = reactivation_admin.patch(
+        f"/api/v1/admin/users/{user_ids['seller_id']}",
+        json={"is_active": True},
+        headers=_csrf_headers(reactivation_admin),
+    )
+    assert reactivated.status_code == 200
+    with app.app_context():
+        assert db.session.get(User, user_ids["seller_id"]).session_version == 3
+    fresh_client = app.test_client()
+    assert _login(fresh_client, "vendedor@example.com").status_code == 200
+
+
 def test_password_recovery_does_not_disclose_accounts_and_stores_only_hash(
     app, monkeypatch
 ):

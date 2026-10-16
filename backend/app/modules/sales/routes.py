@@ -125,6 +125,7 @@ def create_sale():
     sale = services.create_sale(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
+        actor_role=ctx.role,
         data=services.SaleInput(
             lead_id=payload.lead_id,
             product_id=payload.product_id,

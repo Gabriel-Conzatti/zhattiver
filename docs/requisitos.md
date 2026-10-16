@@ -161,6 +161,17 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
   organização recebe `404` ao buscar venda. O relatório financeiro é exclusivo de
   administrador, agrega somente vendas validadas e não cruza organizações. Notificações
   não carregam valores financeiros e são isoladas pelo destinatário.
+- Alterações em perfil ou ativação/desativação incrementam `session_version`; o backend
+  invalida sessões antigas antes de executar rotas autenticadas, inclusive após a conta
+  ser reativada.
+- Reutilização de oportunidade e de chave idempotente é limitada ao ator autorizado; uma
+  venda vinculada a oportunidade só pode ser atribuída ao seu vendedor responsável.
+- Referências de vendas, disponibilizações e tarefas de sinistro são verificadas no
+  backend e devem pertencer à mesma organização.
+- Rate limit de login usa o endereço IP normalizado sem porta de origem; Caddy encaminha
+  apenas o host remoto ao backend.
+- Em produção, chaves de sessão/CSRF precisam ter ao menos 32 bytes e não podem ser
+  valores padrão/de exemplo; ambiente desconhecido impede a inicialização.
 # Módulo de sinistros (V1)
 
 - Equipe administrativa/sinistros pode cadastrar, editar, atribuir, acompanhar e concluir sinistros.

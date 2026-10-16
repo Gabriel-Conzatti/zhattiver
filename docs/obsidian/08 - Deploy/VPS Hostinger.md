@@ -26,3 +26,10 @@ ssh -i $key root@179.197.72.43 "cd /opt/lynk/app && bash scripts/deploy.sh < /de
 
 O `< /dev/null` é obrigatório: o script usa `docker compose exec -T`, que consome o stdin
 herdado da sessão SSH.
+
+## Hardening de acesso e firewall
+
+- SSH efetivo: root permitido somente por chave (`PermitRootLogin prohibit-password`); `PasswordAuthentication` e autenticacao interativa desativadas, `MaxAuthTries 5`. Configuracao em `/etc/ssh/sshd_config.d/00-lynk-hardening.conf`.
+- `fail2ban` habilitado com jail `sshd` (5 falhas em 10 minutos, banimento por 1 hora, backend systemd).
+- UFW permite SSH, HTTP/HTTPS e UDP/443 para Caddy/HTTP3; removidas as regras de Nginx Full e UDP 7777, 7778 e 27015 sem servicos associados.
+- Validado com conexao por chave apos reload, `sshd -T`, `fail2ban-client status sshd` e `ufw status numbered`.

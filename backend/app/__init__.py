@@ -51,7 +51,8 @@ def _init_extensions(app: Flask) -> None:
     @login_manager.user_loader
     def _load_user(user_id: str) -> User | None:  # pragma: no cover - trivial
         try:
-            return db.session.get(User, user_id)
+            user = db.session.get(User, user_id)
+            return user if user is not None and user.is_active else None
         except Exception:  # noqa: BLE001
             return None
 

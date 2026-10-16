@@ -1,5 +1,25 @@
 # Changelog
 
+## [Não publicado] - Hardening de segurança
+
+### Corrigido
+
+- Vendedores não podem reutilizar oportunidades abertas de outro responsável nem
+  registrar a venda em nome do dono diferente da oportunidade.
+- Chaves de idempotência de atividade são vinculadas ao usuário que as criou.
+- Contas desativadas e sessões com versão antiga são rejeitadas; mudanças de perfil ou
+  estado ativo invalidam as sessões existentes.
+- FKs enviadas pelo cliente para vendas, disponibilizações e tarefas de sinistro são
+  validadas na organização do usuário autenticado.
+- Endereço IP no rate limit é normalizado sem porta e Caddy encaminha somente o host.
+
+### Segurança
+
+- Flask, Werkzeug, python-dotenv e pytest atualizados para versões sem os avisos
+  encontrados pelo `pip-audit`.
+- Produção rejeita segredos padrão/curtos e valores de `LYNK_ENV` desconhecidos.
+- SSH da VPS configurado para chave, autenticacao por senha desativada, fail2ban ativo e UFW limitado a SSH e portas do Caddy.
+
 ## [2026-10-16] - Perfil exclusivo de sinistros
 
 ### Adicionado

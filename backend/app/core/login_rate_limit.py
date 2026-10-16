@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import ipaddress
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 from flask import Flask
 from redis import Redis
@@ -90,9 +92,22 @@ class LoginRateLimiter:
 
     def _keys(self, *, email: str, remote_addr: str) -> tuple[str, str]:
         return (
-            self._key("ip", remote_addr),
+            self._key("ip", self._normalize_ip(remote_addr)),
             self._key("account", email.strip().lower()),
         )
+
+    @staticmethod
+    def _normalize_ip(remote_addr: str) -> str:
+        try:
+            return ipaddress.ip_address(remote_addr).compressed
+        except ValueError:
+            try:
+                parsed = urlsplit(f"//{remote_addr}")
+                if parsed.port is not None and parsed.hostname:
+                    return ipaddress.ip_address(parsed.hostname).compressed
+            except ValueError:
+                pass
+            return remote_addr
 
     def _key(self, scope: str, value: str) -> str:
         secret = str(self._app.config["SECRET_KEY"]).encode()

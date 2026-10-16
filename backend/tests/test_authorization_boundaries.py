@@ -22,11 +22,17 @@ from app.modules.sales.models import (
     STATE_VALIDATED,
     Sale,
 )
+from app.modules.schedules.models import (
+    STATE_CONTACTED,
+    STATE_SCHEDULED,
+    Schedule,
+)
 from app.modules.users.models import (
     ROLE_ADMIN,
     ROLE_SDR,
     ROLE_VENDEDOR,
     Product,
+    Team,
     User,
 )
 
@@ -41,7 +47,8 @@ def seeded_data(app):
 
         product_a = Product(organization_id=org_a.id, name="Auto", slug="auto")
         product_b = Product(organization_id=org_b.id, name="Auto", slug="auto")
-        db.session.add_all([product_a, product_b])
+        team_b = Team(organization_id=org_b.id, name="Equipe externa")
+        db.session.add_all([product_a, product_b, team_b])
         db.session.flush()
 
         seller_a = User(
@@ -199,6 +206,7 @@ def seeded_data(app):
             "insurer_a": {"id": str(insurer_a.id)},
             "insurer_b": {"id": str(insurer_b.id)},
             "origin_external": {"id": str(origin_external.id)},
+            "team_external": {"id": str(team_b.id)},
             "notification_b": {"id": str(notification_b.id)},
         }
 
@@ -502,6 +510,175 @@ def test_admin_cannot_create_sale_with_external_financial_reference(
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    ("field", "external_key"),
+    [
+        ("insurer_id", "insurer_b"),
+        ("client_type_id", "client_type_b"),
+    ],
+)
+def test_admin_cannot_edit_sale_with_external_financial_reference(
+    client, seeded_data, field, external_key
+):
+    _login(client, seeded_data["admin_a"])
+    response = client.patch(
+        f"/api/v1/sales/{seeded_data['sale_a']['id']}",
+        json={field: seeded_data[external_key]["id"]},
+        headers=_csrf_headers(client),
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    ("field", "external_key"),
+    [
+        ("product_id", "product_b"),
+        ("team_id", "team_external"),
+        ("origin_id", "origin_external"),
+    ],
+)
+def test_admin_cannot_release_lead_with_external_availability_reference(
+    client, seeded_data, field, external_key
+):
+    _login(client, seeded_data["admin_a"])
+    payload = {
+        "lead_id": seeded_data["lead_a"]["id"],
+        "product_id": seeded_data["product_a"]["id"],
+    }
+    payload[field] = seeded_data[external_key]["id"]
+    response = client.post(
+        "/api/v1/availabilities",
+        json=payload,
+        headers=_csrf_headers(client),
+    )
+
+    assert response.status_code == 404
+
+
+def test_seller_cannot_reuse_or_close_another_sellers_opportunity(
+    app, seeded_data
+):
+    with app.app_context():
+        funnel = Funnel(
+            organization_id=seeded_data["org_a"]["id"],
+            product_id=seeded_data["product_a"]["id"],
+            name="Funil de teste",
+            is_default=True,
+        )
+        db.session.add(funnel)
+        db.session.flush()
+        db.session.add(
+            FunnelStage(
+                organization_id=seeded_data["org_a"]["id"],
+                funnel_id=funnel.id,
+                name="Inicial",
+                order_index=0,
+                is_initial=True,
+                message_template="Olá {nome_cliente}",
+            )
+        )
+        schedule = Schedule(
+            organization_id=seeded_data["org_a"]["id"],
+            lead_id=seeded_data["lead_a"]["id"],
+            product_id=seeded_data["product_a"]["id"],
+            owner_user_id=seeded_data["seller_a"]["id"],
+            coverage_end_date=date(2026, 10, 30),
+            state=STATE_SCHEDULED,
+        )
+        other_schedule = Schedule(
+            organization_id=seeded_data["org_a"]["id"],
+            lead_id=seeded_data["lead_a"]["id"],
+            product_id=seeded_data["product_a"]["id"],
+            owner_user_id=seeded_data["seller_a"]["id"],
+            coverage_end_date=date(2026, 10, 30),
+            state=STATE_SCHEDULED,
+        )
+        db.session.add_all([schedule, other_schedule])
+        db.session.flush()
+        schedule_id = str(schedule.id)
+        other_schedule_id = str(other_schedule.id)
+        db.session.commit()
+
+    seller_a = app.test_client()
+    _login(seller_a, seeded_data["seller_a"])
+    copied = seller_a.post(
+        "/api/v1/opportunities/copy-message",
+        json={
+            "lead_id": seeded_data["lead_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "idempotency_key": "seller-a-message-1",
+            "schedule_id": schedule_id,
+        },
+        headers=_csrf_headers(seller_a),
+    )
+    assert copied.status_code == 201, copied.get_json()
+    opportunity_id = copied.get_json()["opportunity"]["id"]
+
+    with app.app_context():
+        contacted_schedule = db.session.get(Schedule, schedule_id)
+        assert contacted_schedule.state == STATE_CONTACTED
+        assert str(contacted_schedule.contacted_opportunity_id) == opportunity_id
+
+    seller_b = app.test_client()
+    _login(seller_b, seeded_data["seller_b"])
+    replayed = seller_b.post(
+        "/api/v1/opportunities/copy-message",
+        json={
+            "lead_id": seeded_data["lead_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "idempotency_key": "seller-a-message-1",
+        },
+        headers=_csrf_headers(seller_b),
+    )
+    assert replayed.status_code == 409
+
+    stolen = seller_b.post(
+        "/api/v1/opportunities/copy-message",
+        json={
+            "lead_id": seeded_data["lead_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "idempotency_key": "seller-b-message-2",
+            "schedule_id": other_schedule_id,
+        },
+        headers=_csrf_headers(seller_b),
+    )
+    assert stolen.status_code == 403
+
+    sale = seller_b.post(
+        "/api/v1/sales",
+        json={
+            "lead_id": seeded_data["lead_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "insurer_id": seeded_data["insurer_a"]["id"],
+            "client_type_id": seeded_data["client_type_a"]["id"],
+            "net_premium": "1000.00",
+            "commission_pct": "0.10",
+            "closed_on": "2026-10-10",
+            "opportunity_id": opportunity_id,
+        },
+        headers=_csrf_headers(seller_b),
+    )
+    assert sale.status_code == 403
+
+    with app.app_context():
+        opportunity = db.session.get(Opportunity, opportunity_id)
+        opportunity.owner_user_id = seeded_data["seller_b"]["id"]
+        db.session.commit()
+    seller_a_after_transfer = app.test_client()
+    _login(seller_a_after_transfer, seeded_data["seller_a"])
+    replay_after_transfer = seller_a_after_transfer.post(
+        "/api/v1/opportunities/copy-message",
+        json={
+            "lead_id": seeded_data["lead_a"]["id"],
+            "product_id": seeded_data["product_a"]["id"],
+            "idempotency_key": "seller-a-message-1",
+        },
+        headers=_csrf_headers(seller_a_after_transfer),
+    )
+    assert replay_after_transfer.status_code == 403
 
 
 def test_audit_logs_are_admin_only_and_organization_scoped(app, client, seeded_data):

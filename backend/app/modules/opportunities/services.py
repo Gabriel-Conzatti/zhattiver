@@ -15,7 +15,7 @@ from ..funnel.models import Funnel, FunnelStage
 from ..funnel.rendering import render_template
 from ..leads.models import Availability, Lead
 from ..schedules.models import STATE_CONTACTED, Schedule
-from ..users.models import Product, User
+from ..users.models import ROLE_ADMIN, Product, User
 from .models import (
     NA_STATE_DONE,
     NA_STATE_OPEN,
@@ -192,7 +192,22 @@ def copy_message(
     ).scalar_one_or_none()
 
     if existing is not None:
+        if existing.actor_user_id != actor_user_id:
+            raise BusinessError(
+                "idempotency_conflict",
+                "Chave de idempotência já utilizada por outra pessoa",
+                status=409,
+            )
         opportunity = db.session.get(Opportunity, existing.opportunity_id)
+        if opportunity is None or opportunity.organization_id != organization_id:
+            raise BusinessError("not_found", "Oportunidade não encontrada", status=404)
+        actor = db.session.get(User, actor_user_id)
+        if actor is None or actor.organization_id != organization_id or not actor.is_active:
+            raise BusinessError("not_found", "Usu?rio n?o encontrado", status=404)
+        if actor.role != ROLE_ADMIN and opportunity.owner_user_id != actor_user_id:
+            raise BusinessError(
+                "forbidden", "Oportunidade pertence a outro vendedor", status=403
+            )
         message = existing.payload.get("message", "") if existing.payload else ""
         return CopyMessageResult(
             opportunity=opportunity,
@@ -215,6 +230,24 @@ def copy_message(
         raise BusinessError("not_found", "Produto não encontrado", status=404)
 
     actor = db.session.get(User, actor_user_id)
+    if actor is None or actor.organization_id != organization_id or not actor.is_active:
+        raise BusinessError("not_found", "Usuário não encontrado", status=404)
+
+    schedule: Schedule | None = None
+    if schedule_id:
+        schedule = db.session.execute(
+            select(Schedule).where(Schedule.id == schedule_id).with_for_update()
+        ).scalar_one_or_none()
+        if schedule is None or schedule.organization_id != organization_id:
+            raise BusinessError("not_found", "Agendamento n?o encontrado", status=404)
+        if schedule.lead_id != lead_id or schedule.product_id != product_id:
+            raise BusinessError(
+                "mismatch", "Agendamento n?o corresponde ao lead/produto", status=422
+            )
+        if schedule.archived_at is not None or schedule.state != "scheduled":
+            raise BusinessError("invalid_state", "Agendamento n?o est? dispon?vel", status=409)
+        if actor.role != ROLE_ADMIN and schedule.owner_user_id != actor_user_id:
+            raise BusinessError("forbidden", "Agendamento pertence a outro vendedor", status=403)
 
     funnel = _default_funnel(organization_id, product_id)
     stage = _initial_stage(funnel.id)
@@ -230,9 +263,16 @@ def copy_message(
         )
         .with_for_update()
     ).scalar_one_or_none()
+    if (
+        opportunity is not None
+        and actor.role != ROLE_ADMIN
+        and opportunity.owner_user_id != actor_user_id
+    ):
+        raise BusinessError(
+            "forbidden", "Oportunidade pertence a outro vendedor", status=403
+        )
 
     availability: Availability | None = None
-    schedule: Schedule | None = None
     is_new_opportunity = False
 
     if opportunity is None:
@@ -262,12 +302,16 @@ def copy_message(
             .with_for_update()
         ).scalar_one_or_none()
 
-        if opportunity is None:
-            if schedule_id:
-                schedule = db.session.get(Schedule, schedule_id)
-                if schedule is None or schedule.organization_id != organization_id:
-                    raise BusinessError("not_found", "Agendamento não encontrado", status=404)
+        if (
+            opportunity is not None
+            and actor.role != ROLE_ADMIN
+            and opportunity.owner_user_id != actor_user_id
+        ):
+            raise BusinessError(
+                "forbidden", "Oportunidade pertence a outro vendedor", status=403
+            )
 
+        if opportunity is None:
             opportunity = Opportunity(
                 organization_id=organization_id,
                 lead_id=lead_id,
@@ -296,9 +340,10 @@ def copy_message(
                 availability.claimed_by = actor_user_id
                 availability.claimed_at = now_utc()
 
-            if schedule is not None:
-                schedule.state = STATE_CONTACTED
-                schedule.contacted_opportunity_id = opportunity.id
+
+    if schedule is not None:
+        schedule.state = STATE_CONTACTED
+        schedule.contacted_opportunity_id = opportunity.id
 
     message = render_message_for_opportunity(opportunity, stage, actor=actor, lead=lead)
 

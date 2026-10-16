@@ -3,6 +3,22 @@
 Registro vivo do que foi implementado, o que está verificado e o que ainda falta.
 Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de verdade.
 
+## Hardening de segurança — 16/10/2026
+
+- Bloqueado o reaproveitamento de oportunidade e chave idempotente de outro vendedor;
+  venda ligada à oportunidade precisa respeitar o responsável.
+- Sessões invalidadas em alteração de perfil, senha, ativação ou desativação. O backend
+  verifica estado e versão atuais da sessão antes de rotas autenticadas.
+- Validação de organização adicionada às referências em vendas editadas, disponibilização
+  de leads e responsáveis de tarefas de sinistros.
+- Caddy encaminha IP sem porta e o rate limiter normaliza IPv4/IPv6.
+- Flask 3.1.3, Werkzeug 3.1.9, python-dotenv 1.2.2 e pytest 9.0.3; `pip-audit` sem
+  vulnerabilidades conhecidas e 100 testes backend aprovados.
+- Configuração de produção exige segredos de 32 bytes sem placeholders e falha com
+  ambiente desconhecido.
+- VPS endurecida e verificada: SSH root somente por chave, senha desativada, fail2ban ativo e UFW sem regras UDP sem servico.
+- O codigo esta na branch `fix/security-hardening`; ainda precisa de push/deploy para aplicar os controles de aplicacao em producao.
+
 ## Etapa atual
 
 **Etapa 10 — Módulo inicial de sinistros**

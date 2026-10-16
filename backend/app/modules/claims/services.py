@@ -446,10 +446,20 @@ def add_task(
     data: dict,
     request_id: str | None,
 ) -> ClaimTask:
+    owner_user_id = data.get("owner_user_id")
+    if owner_user_id and not db.session.scalar(
+        select(User.id).where(
+            User.id == owner_user_id,
+            User.organization_id == organization_id,
+            User.is_active.is_(True),
+            User.archived_at.is_(None),
+        )
+    ):
+        raise BusinessError("invalid_link", "Responsável fora da organização", status=422)
     task = ClaimTask(
         organization_id=organization_id,
         claim_id=claim.id,
-        owner_user_id=data.get("owner_user_id"),
+        owner_user_id=owner_user_id,
         title=data["title"],
         due_on=data.get("due_on"),
         priority=data.get("priority", "normal"),

@@ -123,4 +123,23 @@ _CONFIGS = {
 
 def get_config(name: str | None = None) -> type[BaseConfig]:
     key = (name or os.getenv("LYNK_ENV", "development")).lower()
-    return _CONFIGS.get(key, DevelopmentConfig)
+    config = _CONFIGS.get(key)
+    if config is None:
+        raise RuntimeError(f"Ambiente LYNK_ENV inválido: {key}")
+    if config is ProductionConfig:
+        _validate_production_secrets(config)
+    return config
+
+
+def _validate_production_secrets(config: type[BaseConfig]) -> None:
+    placeholders = ("dev-secret-change-me", "troque-me-em-producao-")
+    for name in ("SECRET_KEY", "LYNK_CSRF_SECRET"):
+        value = str(getattr(config, name, ""))
+        if (
+            len(value.encode("utf-8")) < 32
+            or any(value.startswith(placeholder) for placeholder in placeholders)
+        ):
+            raise RuntimeError(
+                f"{name} deve conter pelo menos 32 bytes e não pode ser um valor padrão "
+                "ou de exemplo em produção"
+            )

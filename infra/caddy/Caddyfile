@@ -17,7 +17,7 @@
   handle /api/* {
     reverse_proxy api:5000 {
       header_up X-Forwarded-Proto {scheme}
-      header_up X-Forwarded-For {remote}
+      header_up X-Forwarded-For {remote_host}
       header_up X-Request-ID {http.request.header.X-Request-ID}
       transport http {
         response_header_timeout 60s

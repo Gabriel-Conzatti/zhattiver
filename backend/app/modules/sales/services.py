@@ -16,7 +16,7 @@ from ..catalog.models import ClientType, Insurer
 from ..leads.models import Lead
 from ..opportunities import services as opp_services
 from ..opportunities.models import STATE_OPEN, Opportunity
-from ..users.models import Product, User
+from ..users.models import ROLE_ADMIN, Product, User
 from .models import (
     CANCEL_AFTER_BONUS,
     CANCEL_BEFORE_BONUS,
@@ -62,6 +62,7 @@ def create_sale(
     *,
     organization_id: str,
     actor_user_id: str,
+    actor_role: str,
     data: SaleInput,
     request_id: str | None = None,
 ) -> Sale:
@@ -103,6 +104,16 @@ def create_sale(
             raise BusinessError(
                 "mismatch", "Oportunidade não corresponde ao lead/produto", status=422
             )
+        if opportunity.owner_user_id != data.seller_user_id:
+            raise BusinessError(
+                "forbidden",
+                "A venda deve pertencer ao vendedor responsável pela oportunidade",
+                status=403,
+            )
+    if actor_role != ROLE_ADMIN and data.seller_user_id != actor_user_id:
+        raise BusinessError(
+            "forbidden", "Sem permissão para registrar em nome de outro", status=403
+        )
 
     now = now_utc()
     commission_amount = calc_commission(data.net_premium, data.commission_pct)
@@ -203,6 +214,15 @@ def edit_sale(
     changes = {k: v for k, v in changes.items() if k in _MUTABLE_FIELDS}
     if not changes:
         return sale
+
+    for field, model, label in (
+        ("insurer_id", Insurer, "Seguradora"),
+        ("client_type_id", ClientType, "Tipo de cliente"),
+    ):
+        if field in changes:
+            related = db.session.get(model, changes[field])
+            if related is None or related.organization_id != organization_id:
+                raise BusinessError("not_found", f"{label} não encontrado", status=404)
 
     is_admin = actor_role == "admin"
     is_owner = sale.seller_user_id == actor_user_id

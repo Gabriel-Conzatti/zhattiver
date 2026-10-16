@@ -1,5 +1,45 @@
 # Diário de Desenvolvimento
 
+## 2026-10-16 - Hardening de segurança
+
+### Realizado
+
+- Corrigidos controles de propriedade de oportunidade e replay de idempotência.
+- Corrigida normalização do IP no rate limit de login; Caddy não inclui a porta de origem.
+- Invalidação robusta de sessões após mudança de perfil/estado e rejeição de contas
+  desativadas.
+- Validada a organização para FKs de vendas, disponibilizações e tarefas de sinistros.
+- Segredos de produção e nomes de ambiente inválidos agora interrompem o boot.
+- Atualizadas dependências Python com CVEs reportadas.
+
+### Arquivos principais
+
+- `backend/app/core/session_security.py`
+- `backend/app/core/login_rate_limit.py`
+- `backend/app/modules/opportunities/services.py`
+- `backend/app/modules/sales/services.py`
+- `backend/app/modules/leads/routes.py`
+- `backend/app/modules/claims/services.py`
+- `backend/app/config.py`
+- `infra/caddy/Caddyfile`
+
+### Testes executados
+
+- `pytest -q` — 100 aprovados.
+- Ruff — aprovado.
+- `pip-audit -r requirements.txt` — nenhuma vulnerabilidade conhecida.
+
+### Resultado
+
+- Correções locais em `fix/security-hardening`; sem commit, push ou deploy de código.
+- SSH root por chave, fail2ban e regras UFW minimas aplicados e verificados na VPS.
+- Codigo em branch local; producao aguarda push/deploy para receber as correcoes da aplicacao.
+
+### Próximos passos
+
+- Aplicar hardening SSH e UFW mantendo acesso por chave validado.
+- Rodar configuração do Compose e fechar a verificação da VPS.
+
 ## 2026-10-16 - Perfil exclusivo de sinistros
 
 ### Realizado
