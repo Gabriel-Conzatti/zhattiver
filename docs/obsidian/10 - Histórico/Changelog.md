@@ -1,6 +1,6 @@
 # Changelog
 
-## [Não publicado] - Perfis combináveis no cadastro de usuários
+## [2026-10-16] - Perfis combináveis no cadastro de usuários
 
 ### Alterado
 
@@ -8,6 +8,12 @@
   **Perfis**.
 - Sinistros pode ser marcado junto de Vendedor ou SDR; o nível Consulta/Operação continua
   controlando a concessão enviada ao backend.
+- O nível de acesso a sinistros só aparece quando a função está marcada.
+
+### Publicado
+
+- Commit `ae39b79` publicado em produção. Alteração exclusiva de frontend: nenhuma
+  migration nova e o banco permanece em `b4c91e8d2f60`.
 
 ## [2026-10-15] - Catálogos e oficinas de sinistros
 

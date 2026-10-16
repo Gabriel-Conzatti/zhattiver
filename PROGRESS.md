@@ -7,6 +7,18 @@ Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de 
 
 **Etapa 10 — Módulo inicial de sinistros**
 
+### Perfis combináveis no cadastro de usuários — 16/10/2026
+
+- O cadastro de usuários reúne Vendedor, SDR, Administrador e Sinistros no seletor
+  **Perfis**; Sinistros é marcável junto de Vendedor ou SDR.
+- O nível Consulta/Operação só aparece quando Sinistros está selecionado.
+- Contrato do backend preservado: perfil comercial em `role` e função de sinistros em
+  `claims_access`, sem migration nova.
+- Validação: 46 testes frontend, 9 testes de sinistros no backend, ESLint, typecheck e
+  build aprovados.
+- Publicado em produção em 16/10/2026 com o commit `ae39b79`. O bundle servido confere com
+  o build validado e o banco permanece em `b4c91e8d2f60`.
+
 ### Catálogos, oficinas e autorização exclusiva — 15/10/2026
 
 - Ramos configurados: Auto, RE e RCO ONIBUS.

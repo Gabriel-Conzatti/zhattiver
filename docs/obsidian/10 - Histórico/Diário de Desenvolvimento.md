@@ -1,5 +1,39 @@
 # Diário de Desenvolvimento
 
+## 2026-10-16 - Perfis combináveis no cadastro de usuários
+
+### Realizado
+
+- O campo isolado "Acesso a sinistros" virou o seletor **Perfis**, reunindo Vendedor, SDR,
+  Administrador e Sinistros no mesmo grupo visual.
+- Vendedor e SDR permanecem mutuamente exclusivos; Sinistros é marcável junto de qualquer
+  um dos dois.
+- O nível Consulta/Operação só é exibido quando Sinistros está selecionado.
+- Contrato do backend preservado: o perfil comercial continua em `role` e a função de
+  sinistros continua em `claims_access`, sem migration nova.
+
+### Arquivos principais
+
+- `frontend/src/features/admin/AdminUsuariosPage.tsx`
+- `frontend/src/features/admin/AdminUsuariosPage.test.tsx`
+
+### Testes executados
+
+- `npm test -- --run` — 46 aprovados.
+- `pytest tests/test_admin_claims_access.py tests/test_claims.py` — 9 aprovados.
+- ESLint, typecheck e build — aprovados.
+
+### Resultado
+
+- Publicado em produção em 2026-10-16 com o commit `ae39b79`. Apenas o serviço `web` foi
+  recriado, porque a mudança é exclusiva de frontend.
+- Verificado em produção: `/api/v1/health` e SPA em 200, e o bundle servido
+  (`index-Nz4_WfOt.js`) corresponde ao build validado localmente.
+
+### Próximos passos
+
+- Homologar a combinação Vendedor + Sinistros com um usuário real.
+
 ## 2026-10-15 - Catálogos, oficinas e autorização de sinistros
 
 ### Realizado
