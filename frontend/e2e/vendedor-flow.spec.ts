@@ -32,6 +32,6 @@ test.describe('Fluxo vendedor — copiar mensagem', () => {
     await expect(page.getByRole('heading', { name: /Minhas metas de hoje/i })).toBeVisible();
     const goals = page.getByRole('complementary');
     await expect(goals).toContainText('Prospecção');
-    await expect(goals).toContainText('Follow-ups');
+    await expect(goals).toContainText('Acompanhamentos');
   });
 });

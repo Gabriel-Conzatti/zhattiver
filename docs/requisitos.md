@@ -184,7 +184,17 @@ Ver `Prompt_Lynk_Copilot.md` seção 21. Cada caso será coberto por teste autom
 - Sinistro pode ser independente ou ter vínculo opcional com lead, oportunidade e venda.
 - Ramos iniciais obrigatórios: Auto, RE e RCO ONIBUS.
 - Seguradoras iniciais obrigatórias: Allianz, Azul, Bradesco, HDI, Porto, Sura, Tokio,
-  Yelum, Zurich, Aliro, ESSOR/LIVONIUS, EZZE, Mapfre e Suhai.
+  Yelum, Yelum Affinity, Zurich, Aliro, ESSOR/LIVONIUS, EZZE, Mapfre e Suhai.
+- Abertura exige apenas: segurado (nome, CPF/CNPJ e telefone), dados do item conforme o
+  ramo (veículo: placa, modelo e ano; residencial: endereço e cobertura acionada),
+  seguradora, oficina opcional, tipo de atendimento (Apenas Terceiro, Apenas Segurado ou
+  Segurado e Terceiro), responsável e, opcionalmente, um terceiro vinculado. Não há mais
+  equipe nem previsão no sinistro.
+- Navegação: Dashboard (abertos, acompanhamentos do dia e pendências), Abertos, Fechados,
+  Oficinas (busca por nome/cidade e filtro por seguradora) e Infos (contatos, carro reserva
+  e observações por seguradora).
+- Atualizações do histórico podem ter a data ajustada, nunca para o futuro; eventos
+  gerados pelo sistema mantêm a data original.
 - Oficinas são cadastradas com nome, telefone opcional, endereço, responsável e uma ou
   mais seguradoras que as referenciam. A oficina só pode ser vinculada a um sinistro da
   seguradora correspondente.

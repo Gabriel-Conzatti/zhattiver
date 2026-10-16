@@ -11,6 +11,8 @@ from app.modules.catalog.models import Insurer
 from app.modules.claims import services
 from app.modules.claims.models import (
     CLAIM_STATUS_COMPLETED,
+    ITEM_TYPE_PROPERTY,
+    ITEM_TYPE_VEHICLE,
     ClaimBranch,
     ClaimTask,
 )
@@ -24,7 +26,6 @@ from app.modules.users.models import (
     ROLE_VENDEDOR,
     PermissionGrant,
     Product,
-    Team,
     User,
 )
 
@@ -38,10 +39,21 @@ def claims_data(app):
         db.session.flush()
 
         product = Product(organization_id=organization.id, name="Auto", slug="auto")
-        team = Team(organization_id=organization.id, name="Sinistros")
         branch = ClaimBranch(
             organization_id=organization.id,
             name="Auto",
+            item_type=ITEM_TYPE_VEHICLE,
+            is_active=True,
+        )
+        property_branch = ClaimBranch(
+            organization_id=organization.id,
+            name="RE",
+            item_type=ITEM_TYPE_PROPERTY,
+            is_active=True,
+        )
+        external_insurer = Insurer(
+            organization_id=external_organization.id,
+            name="Seguradora externa",
             is_active=True,
         )
         insurer = Insurer(
@@ -60,7 +72,15 @@ def claims_data(app):
             is_active=True,
         )
         db.session.add_all(
-            [product, team, branch, insurer, insurer_alpha, insurer_beta]
+            [
+                product,
+                branch,
+                property_branch,
+                insurer,
+                insurer_alpha,
+                insurer_beta,
+                external_insurer,
+            ]
         )
         db.session.flush()
 
@@ -170,7 +190,7 @@ def claims_data(app):
         completed = next(status for status in statuses if status.slug == CLAIM_STATUS_COMPLETED)
         return {
             "organization_id": str(organization.id),
-            "admin": {"email": admin.email},
+            "admin": {"email": admin.email, "id": str(admin.id)},
             "seller": {"email": seller.email, "id": str(seller.id)},
             "seller_without_claims": {
                 "email": seller_without_claims.email,
@@ -182,11 +202,12 @@ def claims_data(app):
             "unlinked_lead_id": str(unlinked_lead.id),
             "external_lead_id": str(external_lead.id),
             "opportunity_id": str(opportunity.id),
-            "team_id": str(team.id),
             "status_id": str(statuses[0].id),
             "completed_status_id": str(completed.id),
             "branch_id": str(branch.id),
+            "property_branch_id": str(property_branch.id),
             "insurer_id": str(insurer.id),
+            "external_insurer_id": str(external_insurer.id),
             "insurer_alpha_id": str(insurer_alpha.id),
             "insurer_beta_id": str(insurer_beta.id),
         }
@@ -213,12 +234,23 @@ def _logout(client):
 
 def _claim_payload(data, **overrides):
     payload = {
-        "status_id": data["status_id"],
         "branch_id": data["branch_id"],
         "insurer_id": data["insurer_id"],
         "opened_on": "2026-10-16",
         "indemnified_amount": "1250.50",
-        "parties": [{"role": "segurado", "name": "Pessoa de teste"}],
+        "service_type": "segurado",
+        "responsible_user_id": data["admin"]["id"],
+        "vehicle_plate": "abc-1d23",
+        "vehicle_model": "Onix",
+        "vehicle_year": 2022,
+        "parties": [
+            {
+                "role": "segurado",
+                "name": "Pessoa de teste",
+                "document": "123.456.789-09",
+                "phone": "(51) 99999-0000",
+            }
+        ],
     }
     payload.update(overrides)
     return payload
@@ -303,9 +335,7 @@ def test_claims_manager_operates_assignment_status_timeline_tasks_and_archive(
     assert claims_data["seller_without_claims"]["id"] not in {
         user["id"] for user in assignees.get_json()["users"]
     }
-    assert claims_data["team_id"] in {
-        team["id"] for team in assignees.get_json()["teams"]
-    }
+    assert "teams" not in assignees.get_json()
     created = client.post(
         "/api/v1/claims",
         headers=_csrf_headers(client),
@@ -313,18 +343,20 @@ def test_claims_manager_operates_assignment_status_timeline_tasks_and_archive(
     )
     assert created.status_code == 201, created.get_json()
     assert created.get_json()["indemnified_amount"] == "1250.50"
+    assert created.get_json()["vehicle_plate"] == "ABC1D23"
+    assert created.get_json()["status"] == "em_acompanhamento"
+    insured = created.get_json()["parties"][0]
+    assert insured["document"] == "12345678909"
+    assert insured["phone"] == "+5551999990000"
     claim_id = created.get_json()["id"]
 
     assigned = client.post(
         f"/api/v1/claims/{claim_id}/assign",
         headers=_csrf_headers(client),
-        json={
-            "responsible_user_id": claims_data["manager"]["id"],
-            "team_id": claims_data["team_id"],
-        },
+        json={"responsible_user_id": claims_data["manager"]["id"]},
     )
     assert assigned.status_code == 200
-    assert assigned.get_json()["team_id"] == claims_data["team_id"]
+    assert assigned.get_json()["responsible_user_id"] == claims_data["manager"]["id"]
 
     event = client.post(
         f"/api/v1/claims/{claim_id}/events",
@@ -395,7 +427,7 @@ def test_claims_reject_cross_tenant_links_invalid_dates_and_negative_amount(
     invalid_date = client.post(
         "/api/v1/claims",
         headers=headers,
-        json=_claim_payload(claims_data, expected_on="2026-10-15"),
+        json=_claim_payload(claims_data, concluded_on="2026-10-15"),
     )
     assert invalid_date.status_code == 422
     assert invalid_date.get_json()["error"]["code"] == "invalid_date"
@@ -470,7 +502,9 @@ def test_claims_manager_registers_workshop_and_links_it_to_claim(
 
     catalogs = client.get("/api/v1/claims/catalogs")
     assert catalogs.status_code == 200
-    assert {item["name"] for item in catalogs.get_json()["branches"]} == {"Auto"}
+    assert {
+        (item["name"], item["item_type"]) for item in catalogs.get_json()["branches"]
+    } == {("Auto", "vehicle"), ("RE", "property")}
     assert workshop["id"] in {
         item["id"] for item in catalogs.get_json()["workshops"]
     }
@@ -565,3 +599,235 @@ def test_claims_list_supports_search_status_and_pagination(client, claims_data):
     by_status = client.get("/api/v1/claims?status=em_acompanhamento&per_page=10")
     assert by_status.status_code == 200
     assert by_status.get_json()["total"] == 3
+
+
+def test_claim_opening_requires_insured_item_and_service_data(client, claims_data):
+    _login(client, claims_data["admin"])
+    headers = _csrf_headers(client)
+
+    without_document = _claim_payload(claims_data)
+    without_document["parties"] = [
+        {"role": "segurado", "name": "Sem CPF", "phone": "(51) 99999-0000"}
+    ]
+    response = client.post("/api/v1/claims", headers=headers, json=without_document)
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "missing_insured"
+
+    response = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data, vehicle_plate=None),
+    )
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "missing_item"
+
+    response = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data, service_type="apenas_vidros"),
+    )
+    assert response.status_code == 422
+
+    response = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data, responsible_user_id=None),
+    )
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "missing_responsible"
+
+    property_claim = _claim_payload(
+        claims_data,
+        branch_id=claims_data["property_branch_id"],
+        vehicle_plate=None,
+        vehicle_model=None,
+        vehicle_year=None,
+        property_address="Rua das Flores, 10 - Porto Alegre/RS",
+    )
+    response = client.post("/api/v1/claims", headers=headers, json=property_claim)
+    assert response.status_code == 422
+    assert response.get_json()["error"]["code"] == "missing_item"
+
+    property_claim["coverage"] = "Vendaval"
+    property_claim["service_type"] = "segurado_terceiro"
+    property_claim["parties"].append(
+        {"role": "terceiro", "name": "Vizinho", "phone": "(51) 98888-0000"}
+    )
+    response = client.post("/api/v1/claims", headers=headers, json=property_claim)
+    assert response.status_code == 201, response.get_json()
+    body = response.get_json()
+    assert body["coverage"] == "Vendaval"
+    assert body["has_third_party"] is True
+    assert {party["role"] for party in body["parties"]} == {"segurado", "terceiro"}
+
+
+def test_claims_list_splits_open_and_closed_with_summary(client, claims_data):
+    _login(client, claims_data["admin"])
+    headers = _csrf_headers(client)
+    open_claim = client.post(
+        "/api/v1/claims", headers=headers, json=_claim_payload(claims_data)
+    ).get_json()
+    closed_claim = client.post(
+        "/api/v1/claims",
+        headers=headers,
+        json=_claim_payload(claims_data, claim_number="FECHADO-1"),
+    ).get_json()
+    client.post(
+        f"/api/v1/claims/{closed_claim['id']}/status",
+        headers=headers,
+        json={"status_id": claims_data["completed_status_id"]},
+    )
+    for due_on in ("2026-11-20", "2026-11-05"):
+        client.post(
+            f"/api/v1/claims/{open_claim['id']}/tasks",
+            headers=headers,
+            json={"title": "Cobrar seguradora", "due_on": due_on},
+        )
+
+    opened = client.get("/api/v1/claims?state=open").get_json()
+    assert [item["id"] for item in opened["items"]] == [open_claim["id"]]
+    assert opened["items"][0]["insured_name"] == "Pessoa de teste"
+    assert opened["items"][0]["next_follow_up_on"] == "2026-11-05"
+    assert opened["items"][0]["is_closed"] is False
+
+    closed = client.get("/api/v1/claims?state=closed").get_json()
+    assert [item["id"] for item in closed["items"]] == [closed_claim["id"]]
+    assert closed["items"][0]["is_closed"] is True
+
+    by_insured = client.get("/api/v1/claims?q=pessoa%20de").get_json()
+    assert by_insured["total"] == 2
+    assert client.get("/api/v1/claims?state=qualquer").status_code == 422
+
+
+def test_claims_dashboard_counts_open_claims_and_follow_ups_of_the_day(
+    client, claims_data
+):
+    from app.core.time import today_local
+
+    _login(client, claims_data["manager"])
+    headers = _csrf_headers(client)
+    claim = client.post(
+        "/api/v1/claims", headers=headers, json=_claim_payload(claims_data)
+    ).get_json()
+    today = today_local()
+    for title, due_on in (
+        ("Ligar para o segurado", today.isoformat()),
+        ("Pendência atrasada", date(today.year - 1, 1, 2).isoformat()),
+        ("Retorno futuro", date(today.year + 1, 1, 2).isoformat()),
+    ):
+        client.post(
+            f"/api/v1/claims/{claim['id']}/tasks",
+            headers=headers,
+            json={"title": title, "due_on": due_on},
+        )
+
+    dashboard = client.get("/api/v1/claims/dashboard")
+    assert dashboard.status_code == 200
+    body = dashboard.get_json()
+    assert body["open_count"] == 1
+    assert body["today_count"] == 1
+    assert [item["title"] for item in body["items"]] == [
+        "Pendência atrasada",
+        "Ligar para o segurado",
+    ]
+    assert body["items"][0]["overdue"] is True
+    assert body["items"][1]["insured_name"] == "Pessoa de teste"
+
+    _logout(client)
+    _login(client, claims_data["seller_without_claims"])
+    assert client.get("/api/v1/claims/dashboard").status_code == 403
+
+
+def test_claim_history_accepts_and_adjusts_update_date(client, claims_data):
+    _login(client, claims_data["manager"])
+    headers = _csrf_headers(client)
+    claim = client.post(
+        "/api/v1/claims", headers=headers, json=_claim_payload(claims_data)
+    ).get_json()
+
+    created = client.post(
+        f"/api/v1/claims/{claim['id']}/events",
+        headers=headers,
+        json={
+            "description": "Seguradora retornou por telefone",
+            "occurred_at": "2026-10-10T09:30:00-03:00",
+        },
+    )
+    assert created.status_code == 200
+    note = next(event for event in created.get_json()["events"] if event["editable"])
+    assert note["occurred_at"].startswith("2026-10-10T12:30:00")
+
+    adjusted = client.patch(
+        f"/api/v1/claims/{claim['id']}/events/{note['id']}",
+        headers=headers,
+        json={"occurred_at": "2026-10-11T14:00:00"},
+    )
+    assert adjusted.status_code == 200
+    adjusted_note = next(
+        event for event in adjusted.get_json()["events"] if event["id"] == note["id"]
+    )
+    assert adjusted_note["occurred_at"].startswith("2026-10-11T17:00:00")
+
+    future = client.patch(
+        f"/api/v1/claims/{claim['id']}/events/{note['id']}",
+        headers=headers,
+        json={"occurred_at": "2999-01-01T10:00:00-03:00"},
+    )
+    assert future.status_code == 422
+    assert future.get_json()["error"]["code"] == "invalid_event_date"
+
+    system_event = next(
+        event for event in created.get_json()["events"] if not event["editable"]
+    )
+    locked = client.patch(
+        f"/api/v1/claims/{claim['id']}/events/{system_event['id']}",
+        headers=headers,
+        json={"occurred_at": "2026-10-11T14:00:00-03:00"},
+    )
+    assert locked.status_code == 409
+
+
+def test_insurer_profiles_are_read_by_claims_users_and_edited_by_managers(
+    client, claims_data
+):
+    _login(client, claims_data["manager"])
+    headers = _csrf_headers(client)
+    saved = client.put(
+        f"/api/v1/claims/insurers/{claims_data['insurer_id']}/profile",
+        headers=headers,
+        json={
+            "contacts": "Central 24h: 0800 000 0000",
+            "rental_car_contact": "Carro reserva: 0800 111 1111",
+            "notes": "Consultar franquia no portal do corretor.",
+        },
+    )
+    assert saved.status_code == 200, saved.get_json()
+    assert saved.get_json()["rental_car_contact"] == "Carro reserva: 0800 111 1111"
+    assert (
+        client.put(
+            f"/api/v1/claims/insurers/{claims_data['external_insurer_id']}/profile",
+            headers=headers,
+            json={"contacts": "Outra organização"},
+        ).status_code
+        == 422
+    )
+
+    _logout(client)
+    _login(client, claims_data["seller"])
+    listed = client.get("/api/v1/claims/insurers")
+    assert listed.status_code == 200
+    allianz = next(
+        item
+        for item in listed.get_json()["items"]
+        if item["insurer_id"] == claims_data["insurer_id"]
+    )
+    assert allianz["contacts"] == "Central 24h: 0800 000 0000"
+    assert claims_data["external_insurer_id"] not in {
+        item["insurer_id"] for item in listed.get_json()["items"]
+    }
+    forbidden = client.put(
+        f"/api/v1/claims/insurers/{claims_data['insurer_id']}/profile",
+        headers=_csrf_headers(client),
+        json={"notes": "Sem permissão"},
+    )
+    assert forbidden.status_code == 403

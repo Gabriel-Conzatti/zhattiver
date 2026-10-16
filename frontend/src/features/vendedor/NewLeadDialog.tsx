@@ -19,6 +19,7 @@ export function NewLeadDialog({ onClose, onSuccess }: Props) {
     product_id: '',
     city: '',
     state: '',
+    postal_code: '',
   });
   const productId = form.product_id || products.data?.items[0]?.id || '';
   const mutation = useMutation({
@@ -29,6 +30,7 @@ export function NewLeadDialog({ onClose, onSuccess }: Props) {
         product_id: productId,
         city: form.city.trim() || null,
         state: form.state.trim().toUpperCase() || null,
+        postal_code: form.postal_code.trim() || null,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['opportunities'] });
@@ -57,10 +59,10 @@ export function NewLeadDialog({ onClose, onSuccess }: Props) {
         <header className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h2 id="new-lead-title" className="text-lg font-semibold">
-              Novo lead
+              Novo cliente no funil
             </h2>
             <p className="mt-1 text-xs text-text-secondary">
-              O lead será criado diretamente na primeira etapa do seu funil.
+              O cliente será criado diretamente na primeira etapa do seu funil.
             </p>
           </div>
           <button type="button" aria-label="Fechar" onClick={onClose}>
@@ -113,7 +115,7 @@ export function NewLeadDialog({ onClose, onSuccess }: Props) {
                 ))}
               </select>
             </Field>
-            <div className="grid grid-cols-[1fr_88px] gap-3">
+            <div className="grid grid-cols-[1fr_88px_120px] gap-3">
               <Field label="Cidade">
                 <input
                   className="input"
@@ -127,6 +129,15 @@ export function NewLeadDialog({ onClose, onSuccess }: Props) {
                   value={form.state}
                   onChange={(event) => setForm({ ...form, state: event.target.value })}
                   maxLength={2}
+                />
+              </Field>
+              <Field label="CEP (opcional)">
+                <input
+                  className="input"
+                  value={form.postal_code}
+                  onChange={(event) => setForm({ ...form, postal_code: event.target.value })}
+                  inputMode="numeric"
+                  placeholder="00000-000"
                 />
               </Field>
             </div>

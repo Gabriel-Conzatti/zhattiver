@@ -16,7 +16,7 @@ def test_seed_e2e_creates_isolated_users_and_seller_availability(app, monkeypatc
     from app.modules.opportunities.services import _initial_stage
     from app.modules.orgs.models import Organization
     from app.modules.sales.models import STATE_REGISTERED, Sale
-    from app.modules.users.models import User
+    from app.modules.users.models import Product, User
 
     with app.app_context():
         organization = db.session.execute(
@@ -30,9 +30,19 @@ def test_seed_e2e_creates_isolated_users_and_seller_availability(app, monkeypatc
             .select_from(Availability)
             .where(Availability.organization_id == organization.id)
         ).scalar_one()
-        funnel = db.session.execute(
-            select(Funnel).where(Funnel.organization_id == organization.id)
+        auto = db.session.execute(
+            select(Product).where(
+                Product.organization_id == organization.id, Product.slug == "auto"
+            )
         ).scalar_one()
+        funnel = db.session.execute(
+            select(Funnel).where(
+                Funnel.organization_id == organization.id, Funnel.product_id == auto.id
+            )
+        ).scalar_one()
+        products = db.session.execute(
+            select(Product.name).where(Product.organization_id == organization.id)
+        ).scalars().all()
         initial_stage = _initial_stage(funnel.id)
         pending_sale = db.session.execute(
             select(Sale).where(Sale.organization_id == organization.id)
@@ -41,6 +51,7 @@ def test_seed_e2e_creates_isolated_users_and_seller_availability(app, monkeypatc
         assert {user.role for user in users} == {"admin", "sdr", "vendedor"}
         assert all(user.products for user in users if user.role != "admin")
         assert availability_count == 1
+        assert {"Vida", "Residência", "Frota", "Equipamentos Rural"} <= set(products)
         assert initial_stage.is_initial is True
         assert pending_sale.state == STATE_REGISTERED
         assert str(pending_sale.commission_amount) == "300.00"

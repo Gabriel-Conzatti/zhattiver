@@ -20,7 +20,7 @@ export function FollowupsPage() {
             <Headphones className="h-5 w-5 text-brand-cyan" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">Follow-ups</h1>
+            <h1 className="text-lg font-semibold">Acompanhamentos</h1>
             <p className="text-sm text-text-secondary">
               Após 24 horas sem atualização, o acompanhamento é programado para o próximo
               dia útil. Uma próxima ação já agendada evita lembretes duplicados.
@@ -31,12 +31,12 @@ export function FollowupsPage() {
 
       <section className="card overflow-hidden">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2 text-sm font-semibold">
-          <span>Follow-ups automáticos pendentes ({pending.length})</span>
+          <span>Acompanhamentos automáticos pendentes ({pending.length})</span>
           <span className="text-xs text-text-muted">Ordenados por última atualização</span>
         </header>
         {pending.length === 0 ? (
           <p className="p-6 text-sm text-text-secondary">
-            Nenhum follow-up pendente.
+            Nenhum acompanhamento pendente.
           </p>
         ) : (
           <ul className="divide-y divide-border">

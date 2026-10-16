@@ -12,6 +12,21 @@ API, worker e scheduler.
 
 ## Histórico
 
+### `e5b2a9c4d871` — ajustes de sinistros e do funil
+
+- Adiciona `item_type` a `claim_branches` (Auto e RCO ONIBUS = `vehicle`, RE = `property`),
+  `city` a `claim_workshops`, `document` a `claim_parties` e placa, modelo, ano, endereço e
+  cobertura a `claims`.
+- Cria `claim_insurer_profiles` (contatos, carro reserva e observações por seguradora).
+- Adiciona `leads.postal_code`, `import_rows.lead_id` e cria `lead_deletion_requests`.
+- Semeia a seguradora Yelum Affinity e os produtos Vida, Residência, Empresarial, Vida em
+  Grupo, Transporte, Responsabilidade Civil, Equipamentos Energia Solar, Equipamentos
+  Rural e Frota, cada um com funil padrão. O produto Auto existente (`slug=auto`) é
+  reaproveitado; itens já cadastrados com o mesmo nome ou slug não são duplicados.
+- Rollback: `flask --app wsgi:app db downgrade b4c91e8d2f60`. O downgrade remove as colunas
+  e tabelas novas, mas mantém produtos, funis e seguradoras semeados, que podem já ter
+  vínculos.
+
 ### `b4c91e8d2f60` — catálogos e oficinas de sinistros
 
 - Cria `claim_branches`, `claim_workshops` e `claim_workshop_insurers`.
@@ -65,5 +80,7 @@ API, worker e scheduler.
 - A migration deve ser executada em PostgreSQL 16 na CI/homologação antes da produção.
 - Para `b4c91e8d2f60`, validar três ramos, 14 seguradoras e o ciclo
   upgrade/downgrade/upgrade antes do deploy.
+- Para `e5b2a9c4d871`, validar o ciclo upgrade/downgrade/upgrade, a ausência de produtos
+  duplicados (`slug` e nome) e um funil por produto novo.
 - Após upgrade, validar login, troca de senha, recuperação por email, invalidação de uma
   segunda sessão e cadastro de meta geral/por produto.

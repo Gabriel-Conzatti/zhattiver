@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -15,6 +16,7 @@ EXPECTED_COLUMNS = {
     "document": ["cpf", "cnpj", "documento", "document"],
     "city": ["cidade", "city"],
     "state": ["uf", "estado", "state"],
+    "postal_code": ["cep"],
     "indicator": ["indicador", "indicado por", "indicator"],
     "notes": ["observacao", "observação", "notes", "nota"],
     "plate": ["placa", "plate"],
@@ -128,6 +130,15 @@ def parse_leads_file(filename: str, file_bytes: bytes) -> tuple[list[ParsedRow],
             except PhoneNormalizationError as exc:
                 errors.append(f"Telefone inválido: {exc}")
 
+        postal_code_raw = raw.get(resolved.get("postal_code") or "", "").strip() if resolved else ""
+        postal_code: str | None = None
+        if postal_code_raw:
+            digits = re.sub(r"\D", "", postal_code_raw)
+            if len(digits) == 8:
+                postal_code = f"{digits[:5]}-{digits[5:]}"
+            else:
+                errors.append("CEP deve ter 8 dígitos")
+
         normalized: dict | None = None
         if not errors:
             normalized = {
@@ -136,6 +147,7 @@ def parse_leads_file(filename: str, file_bytes: bytes) -> tuple[list[ParsedRow],
                 "document": raw.get(resolved.get("document") or "", "").strip() or None,
                 "city": raw.get(resolved.get("city") or "", "").strip() or None,
                 "state": (raw.get(resolved.get("state") or "", "").strip() or None) and raw.get(resolved.get("state") or "", "").strip().upper(),
+                "postal_code": postal_code,
                 "indicator_name": raw.get(resolved.get("indicator") or "", "").strip() or None,
                 "notes": raw.get(resolved.get("notes") or "", "").strip() or None,
                 "vehicle": {

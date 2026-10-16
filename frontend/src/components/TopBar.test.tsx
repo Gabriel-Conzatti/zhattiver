@@ -28,10 +28,10 @@ vi.mock('./NotificationBell', () => ({
   NotificationBell: () => <button type="button">Notificações</button>,
 }));
 
-function renderTopBar(action?: { label: string; onClick: () => void }) {
+function renderTopBar(newActions?: Array<{ label: string; onClick: () => void }>) {
   return render(
     <MemoryRouter>
-      <TopBar action={action}>
+      <TopBar newActions={newActions}>
         <span>Navegação</span>
       </TopBar>
     </MemoryRouter>,
@@ -49,7 +49,7 @@ describe('TopBar', () => {
 
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nova venda' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Novo lead' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Novo/ })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Página inicial' })).toHaveAttribute('href', '/sdr');
     expect(screen.getByRole('img', { name: 'Lynk' })).toBeVisible();
     expect(screen.queryByText('Lynk')).not.toBeInTheDocument();
@@ -59,13 +59,22 @@ describe('TopBar', () => {
     );
   });
 
-  it('executa a ação contextual configurada', () => {
-    const onClick = vi.fn();
-    renderTopBar({ label: 'Novo lead', onClick });
+  it('abre o menu Novo e executa a opção escolhida', () => {
+    const onLead = vi.fn();
+    const onSchedule = vi.fn();
+    renderTopBar([
+      { label: 'Novo lead de prospecção', onClick: onLead },
+      { label: 'Novo agendamento', onClick: onSchedule },
+    ]);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Novo lead' }));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Novo/ }));
+    expect(screen.getByRole('menuitem', { name: 'Novo lead de prospecção' })).toBeVisible();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Novo agendamento' }));
 
-    expect(onClick).toHaveBeenCalledOnce();
+    expect(onSchedule).toHaveBeenCalledOnce();
+    expect(onLead).not.toHaveBeenCalled();
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
   it('executa o logout', () => {

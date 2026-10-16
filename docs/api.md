@@ -101,20 +101,55 @@ Cada endpoint terá documentação detalhada (parâmetros, corpo, códigos) quan
 
 - `GET /api/v1/claims/statuses` — estados disponíveis da organização.
 - `POST/PATCH /api/v1/claims/statuses` — configuração de estados pelo administrador.
-- `GET /api/v1/claims` — lista paginada e filtrável por busca, status, responsável,
-  seguradora e atraso.
-- `GET /api/v1/claims/assignees` — responsáveis e equipes da organização para atribuição.
-- `POST /api/v1/claims` — cadastro por administrador ou concessão `claims.manage`.
+- `GET /api/v1/claims` — lista paginada e filtrável por busca (segurado, placa,
+  seguradora, ramo e número), status, situação (`state=open|closed`), responsável e
+  seguradora. Cada item traz `insured_name` e `next_follow_up_on` (próximo acompanhamento
+  em aberto).
+- `GET /api/v1/claims/dashboard` — sinistros em aberto, acompanhamentos agendados para
+  hoje e lista de acompanhamentos do dia e atrasados.
+- `GET /api/v1/claims/assignees` — responsáveis da organização para atribuição.
+- `POST /api/v1/claims` — cadastro por administrador ou concessão `claims.manage`. Exige
+  segurado com nome, CPF/CNPJ e telefone, `service_type`
+  (`terceiro|segurado|segurado_terceiro`), responsável e os dados do item conforme o ramo
+  (`vehicle`: placa, modelo e ano; `property`: endereço e cobertura). Status e data de
+  abertura são opcionais (padrão: primeiro status não terminal e data atual).
 - `GET /api/v1/claims/{id}` — detalhe com participantes, eventos e tarefas.
 - `PATCH /api/v1/claims/{id}` — edição por administrador ou concessão `claims.manage`.
-- `POST /api/v1/claims/{id}/assign` — atribuição de responsável e equipe.
+- `POST /api/v1/claims/{id}/assign` — atribuição de responsável.
 - `POST /api/v1/claims/{id}/status` — alteração de status.
-- `GET/POST /api/v1/claims/{id}/events` — consulta e registro de acompanhamento.
+- `GET/POST /api/v1/claims/{id}/events` — consulta e registro de atualização; aceita
+  `occurred_at` opcional, que não pode estar no futuro.
+- `PATCH /api/v1/claims/{id}/events/{event_id}` — ajusta `occurred_at` de uma atualização
+  registrada manualmente (`event_type=note`); eventos do sistema retornam `409`.
 - `POST /api/v1/claims/{id}/parties` — inclusão de participante.
 - `GET/POST /api/v1/claims/{id}/tasks` — consulta e criação de pendência.
 - `PATCH /api/v1/claims/{id}/tasks/{task_id}` — conclusão ou reabertura de pendência.
 - `POST /api/v1/claims/{id}/archive` — arquivamento com motivo.
+- `POST /api/v1/claims/workshops`, `PATCH /api/v1/claims/workshops/{id}` e
+  `POST /api/v1/claims/workshops/{id}/archive` — cadastro, edição (inclui `city`) e
+  arquivamento de oficinas.
+- `GET /api/v1/claims/insurers` — seguradoras ativas com contatos, contato de carro
+  reserva e observações da equipe de sinistros.
+- `PUT /api/v1/claims/insurers/{insurer_id}/profile` — grava essas informações
+  (administrador ou `claims.manage`).
 
 O vendedor consulta somente sinistros ligados a lead, oportunidade ou venda do seu escopo
 comercial. Valores de indenização são omitidos sem perfil administrador, `claims.manage`
 ou concessão `claims.view_financial`.
+
+# Leads, importações e agendamentos
+
+- `POST /api/v1/leads` e `PATCH /api/v1/leads/{id}` — aceitam `postal_code` opcional
+  (8 dígitos, gravado como `00000-000`). O `PATCH` também aceita `phones`, que substitui os
+  telefones respeitando a regra de duplicidade (`409 duplicate_lead`).
+- `GET /api/v1/leads` — cada item traz `released` quando o lead já foi disponibilizado.
+- `POST /api/v1/leads/{id}/deletion-request` — SDR/admin excluem o lead: ele é arquivado e
+  vai para avaliação do administrador. Leads com oportunidade retornam `409 lead_in_use`.
+- `GET /api/v1/lead-deletion-requests` — pendências de avaliação (somente admin).
+- `POST /api/v1/lead-deletion-requests/{id}/approve|reject` — confirma a exclusão ou
+  restaura o lead.
+- `POST /api/v1/imports/{id}/discard` — descarta lote ainda em revisão. Depois de
+  confirmado, as linhas trazem `lead_id` e `lead_state` para exclusão individual.
+- `POST /api/v1/schedules` — aceita `lead_id` ou `new_lead { name, phone, postal_code?,
+  city?, state? }` (exatamente um). O novo cliente passa pela validação de telefone
+  duplicado (`409 duplicate_lead` com o lead existente em `details`).

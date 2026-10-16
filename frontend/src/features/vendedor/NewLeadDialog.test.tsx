@@ -46,6 +46,7 @@ describe('NewLeadDialog', () => {
     });
     fireEvent.change(screen.getByLabelText('Cidade'), { target: { value: 'Porto Alegre' } });
     fireEvent.change(screen.getByLabelText('UF'), { target: { value: 'rs' } });
+    fireEvent.change(screen.getByLabelText('CEP (opcional)'), { target: { value: '90010-000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Criar no funil' }));
 
     await waitFor(() =>
@@ -55,6 +56,7 @@ describe('NewLeadDialog', () => {
         product_id: 'product-1',
         city: 'Porto Alegre',
         state: 'RS',
+        postal_code: '90010-000',
       }),
     );
     expect(onSuccess).toHaveBeenCalledOnce();

@@ -11,7 +11,7 @@ const NAV = [
   { to: '/prospeccao', label: 'Prospecção' },
   { to: '/agendamentos', label: 'Agendamentos' },
   { to: '/funil', label: 'Funil' },
-  { to: '/followups', label: 'Follow-ups' },
+  { to: '/followups', label: 'Acompanhamentos' },
 ];
 
 export function VendedorLayout() {
@@ -25,7 +25,7 @@ export function VendedorLayout() {
 
   return (
     <div className="min-h-screen">
-      <TopBar action={{ label: 'Novo lead', onClick: () => setShowNewLead(true) }}>
+      <TopBar newActions={[{ label: 'Novo cliente no funil', onClick: () => setShowNewLead(true) }]}>
         <div className="flex lg:justify-center">
           <NavPill items={navItems} />
         </div>

@@ -3,6 +3,40 @@
 Registro vivo do que foi implementado, o que está verificado e o que ainda falta.
 Datas em `America/Sao_Paulo`. Só marque como "verificado" o que foi testado de verdade.
 
+## Ajustes de sinistros e do funil — 16/10/2026 (não publicado)
+
+Sinistros:
+
+- Abertura reduzida ao essencial: segurado (nome, CPF/CNPJ, telefone), item por ramo
+  (placa/modelo/ano ou endereço + cobertura), seguradora, oficina opcional com cadastro na
+  hora, tipo de atendimento selecionável, responsável e terceiro opcional.
+- Removidos equipe e previsão do sinistro (colunas antigas mantidas no banco, sem uso).
+- Yelum Affinity adicionada às seguradoras.
+- Navegação Dashboard/Abertos/Fechados/Oficinas/Infos; listas resumidas com segurado,
+  status, seguradora, tipo de atendimento, ramo e próximo acompanhamento, abrindo o
+  cadastro completo ao clicar.
+- Histórico com data ajustável nas atualizações manuais; perfil de cada seguradora com
+  contatos, carro reserva e observações.
+
+Funil de vendas:
+
+- "Follow-ups" renomeado para "Acompanhamentos" na interface.
+- Botão laranja "Novo" no cabeçalho com as opções do perfil (cliente no funil; lead de
+  prospecção; agendamento).
+- Importação descartável durante a revisão; após confirmar, exclusão lead a lead com
+  avaliação do administrador em Importações.
+- CEP opcional em leads, importação, agendamento e cliente direto no funil.
+- SDR edita o perfil do lead (inclusive telefones, com checagem de duplicidade) e vê a
+  situação "Disponibilizado".
+- Agendamento pode ser cadastrado com cliente novo, bloqueando telefone já existente.
+- Produtos Vida, Residência, Empresarial, Vida em Grupo, Transporte, Responsabilidade
+  Civil, Equipamentos Energia Solar, Equipamentos Rural e Frota semeados com funil padrão.
+- Corrigida a deduplicação da notificação de lead disponibilizado, que usava o id antes
+  do flush e só notificava a primeira disponibilização.
+
+Validação local: 132 testes backend e 57 frontend; Ruff, ESLint, typecheck e build
+aprovados.
+
 ## Hardening de segurança — 16/10/2026
 
 - Bloqueado o reaproveitamento de oportunidade e chave idempotente de outro vendedor;

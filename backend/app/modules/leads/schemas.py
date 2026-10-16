@@ -19,6 +19,7 @@ class LeadCreate(BaseModel):
     document: str | None = Field(default=None, max_length=20)
     city: str | None = Field(default=None, max_length=120)
     state: str | None = Field(default=None, max_length=2)
+    postal_code: str | None = Field(default=None, max_length=12)
     indicator_name: str | None = Field(default=None, max_length=200)
     notes: str | None = None
     origin_id: str | None = None
@@ -38,13 +39,22 @@ class LeadUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=200)
     kind: str | None = None
-    document: str | None = None
-    city: str | None = None
-    state: str | None = None
-    indicator_name: str | None = None
+    phones: list[str] | None = Field(default=None, min_length=1, max_length=5)
+    document: str | None = Field(default=None, max_length=20)
+    city: str | None = Field(default=None, max_length=120)
+    state: str | None = Field(default=None, max_length=2)
+    postal_code: str | None = Field(default=None, max_length=12)
+    indicator_name: str | None = Field(default=None, max_length=200)
     notes: str | None = None
     origin_id: str | None = None
     client_type_id: str | None = None
+
+    @field_validator("kind")
+    @classmethod
+    def _kind(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("pf", "pj"):
+            raise ValueError("kind deve ser 'pf' ou 'pj'")
+        return v
 
 
 class LeadPhoneOut(BaseModel):
@@ -60,6 +70,7 @@ class LeadOut(BaseModel):
     document: str | None
     city: str | None
     state: str | None
+    postal_code: str | None
     indicator_name: str | None
     notes: str | None
     origin_id: str | None
@@ -78,6 +89,7 @@ class LeadListItem(BaseModel):
     state: str | None
     phones: list[str] = Field(default_factory=list)
     archived: bool = False
+    released: bool = False
 
 
 class LeadListResponse(BaseModel):

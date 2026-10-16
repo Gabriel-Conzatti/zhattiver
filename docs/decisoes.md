@@ -38,6 +38,13 @@ Cada linha registra: **requisito** (documento) → **decisão técnica** → **h
 | Função de sinistros acumulável ou exclusiva | Manter o perfil comercial (`vendedor` ou `sdr`) com `claims.read`/`claims.manage` quando houver acúmulo; usar o perfil-base `sinistros` quando o usuário não puder acessar nenhum módulo comercial | Preserva as permissões comerciais existentes e garante negação centralizada por padrão para a equipe exclusiva de sinistros. |
 | Catálogos do sinistro | Ramo e seguradora usam IDs de catálogos da organização; o sinistro preserva também o nome como fotografia histórica | Permite configuração e integridade sem reescrever o histórico quando um catálogo muda. |
 | Oficinas referenciadas | Oficina pertence à organização e se relaciona N:N com seguradoras; só pode ser escolhida para seguradora vinculada | Impede indicação de oficina não referenciada pela seguradora do sinistro. |
+| Dados do item por ramo | Cada ramo indica `item_type` (`vehicle` ou `property`); o formulário e a validação usam esse tipo em vez do nome do ramo | Ramo renomeado continua exigindo os dados corretos. |
+| "Número" na abertura do sinistro | Interpretado como telefone do segurado; o número do sinistro segue opcional | Hipótese provisória — confirmar com a operação. |
+| Coberturas residenciais | Lista inicial: Vendaval, Incêndio, Danos elétricos, Responsabilidade Civil e "Outra" com texto livre | A referência listava exemplos; a opção livre evita bloquear coberturas não previstas. |
+| "Data de acompanhamento" | Próxima pendência em aberto do sinistro (menor vencimento) | Os acompanhamentos agendados já são as tarefas do sinistro. |
+| Botão "Novo" do cabeçalho | Mostra somente as opções permitidas ao perfil: vendedor cria cliente no funil; SDR cria lead de prospecção ou agendamento | Mantém as permissões existentes; admin continua com o menu lateral. |
+| Exclusão de leads | Durante a revisão, a importação inteira pode ser descartada. Depois de confirmada, a exclusão é individual: o lead é arquivado e vai para avaliação do administrador, que confirma ou restaura. Lead com oportunidade não pode ser excluído | Preserva o histórico (arquivamento em vez de exclusão) e não interrompe atendimentos em curso. |
+| Exclusão pela prospecção | O botão de arquivar do SDR passou a enviar o lead para a mesma avaliação; o admin continua arquivando direto | O arquivamento direto exigia concessão que o SDR não possui. |
 
 ## Escolhas visuais
 

@@ -25,8 +25,12 @@ import { AgendamentosPage } from '@/features/vendedor/AgendamentosPage';
 import { FunilPage } from '@/features/vendedor/FunilPage';
 import { FollowupsPage } from '@/features/vendedor/FollowupsPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
-import { SinistrosPage } from '@/features/sinistros/SinistrosPage';
 import { SinistrosLayout } from '@/features/sinistros/SinistrosLayout';
+import { SinistrosModule } from '@/features/sinistros/SinistrosModule';
+import { SinistrosDashboard } from '@/features/sinistros/SinistrosDashboard';
+import { SinistrosListPage } from '@/features/sinistros/SinistrosListPage';
+import { OficinasPage } from '@/features/sinistros/OficinasPage';
+import { SeguradorasPage } from '@/features/sinistros/SeguradorasPage';
 
 import { RequireAuth } from './RequireAuth';
 import { useAuth } from './AuthProvider';
@@ -42,6 +46,17 @@ export function App() {
     );
   }
 
+  const claimsReadOnly = !user?.grants.includes('claims.manage');
+  const claimsPages = (
+    <>
+      <Route index element={<SinistrosDashboard />} />
+      <Route path="abertos" element={<SinistrosListPage state="open" />} />
+      <Route path="fechados" element={<SinistrosListPage state="closed" />} />
+      <Route path="oficinas" element={<OficinasPage />} />
+      <Route path="infos" element={<SeguradorasPage />} />
+    </>
+  );
+
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to={homeFor(user.role)} replace /> : <LoginPage />} />
@@ -54,8 +69,10 @@ export function App() {
           <Route path="/followups" element={<FollowupsPage />} />
           <Route
             path="/sinistros"
-            element={<SinistrosPage readOnly={!user?.grants.includes('claims.manage')} />}
-          />
+            element={<SinistrosModule basePath="/sinistros" readOnly={claimsReadOnly} />}
+          >
+            {claimsPages}
+          </Route>
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -67,12 +84,10 @@ export function App() {
           <Route path="importacoes" element={<ImportacoesPage />} />
           <Route
             path="sinistros"
-            element={
-              <SinistrosPage
-                readOnly={!user?.grants.includes('claims.manage')}
-              />
-            }
-          />
+            element={<SinistrosModule basePath="/sdr/sinistros" readOnly={claimsReadOnly} />}
+          >
+            {claimsPages}
+          </Route>
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
@@ -90,13 +105,15 @@ export function App() {
           <Route path="cross-sell" element={<AdminCrossSellPage />} />
           <Route path="auditoria" element={<AdminAuditPage />} />
           <Route path="configuracoes" element={<AdminConfiguracoesPage />} />
-          <Route path="sinistros" element={<SinistrosPage />} />
+          <Route path="sinistros" element={<SinistrosModule basePath="/admin/sinistros" />}>
+            {claimsPages}
+          </Route>
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route element={<RequireAuth roles={['sinistros']} />}>
         <Route path="/area-sinistros" element={<SinistrosLayout />}>
-          <Route index element={<SinistrosPage />} />
+          <Route element={<SinistrosModule />}>{claimsPages}</Route>
           <Route path="perfil" element={<ProfilePage />} />
         </Route>
       </Route>

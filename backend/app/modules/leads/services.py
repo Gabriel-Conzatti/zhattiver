@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -10,7 +11,16 @@ from ...core.errors import BusinessError
 from ...core.phones import PhoneNormalizationError, normalize_phone
 from ...core.time import now_utc
 from ...extensions import db
-from .models import KINDS, Lead, LeadPhone, Vehicle
+from .models import (
+    DELETION_APPROVED,
+    DELETION_PENDING,
+    DELETION_REJECTED,
+    KINDS,
+    Lead,
+    LeadDeletionRequest,
+    LeadPhone,
+    Vehicle,
+)
 
 
 @dataclass
@@ -21,11 +31,22 @@ class LeadInput:
     document: str | None = None
     city: str | None = None
     state: str | None = None
+    postal_code: str | None = None
     indicator_name: str | None = None
     notes: str | None = None
     origin_id: str | None = None
     client_type_id: str | None = None
     vehicles: list[dict] | None = None
+
+
+def normalize_postal_code(raw: str | None) -> str | None:
+    """CEP é opcional; quando informado, precisa ter 8 dígitos (formato 00000-000)."""
+    digits = re.sub(r"\D", "", raw or "")
+    if not digits:
+        return None
+    if len(digits) != 8:
+        raise BusinessError("invalid_postal_code", "CEP deve ter 8 dígitos", status=422)
+    return f"{digits[:5]}-{digits[5:]}"
 
 
 def _normalize_phones(raws: Iterable[str]) -> list[tuple[str, str]]:
@@ -52,7 +73,10 @@ def _normalize_phones(raws: Iterable[str]) -> list[tuple[str, str]]:
 
 
 def find_duplicate_by_phones(
-    *, organization_id: str, e164_phones: Iterable[str]
+    *,
+    organization_id: str,
+    e164_phones: Iterable[str],
+    exclude_lead_id: str | None = None,
 ) -> Lead | None:
     phones = list(e164_phones)
     if not phones:
@@ -66,7 +90,18 @@ def find_duplicate_by_phones(
         )
         .limit(1)
     )
+    if exclude_lead_id:
+        stmt = stmt.where(Lead.id != exclude_lead_id)
     return db.session.execute(stmt).scalar_one_or_none()
+
+
+def _raise_duplicate(duplicate: Lead) -> None:
+    raise BusinessError(
+        "duplicate_lead",
+        "Já existe lead com esse telefone",
+        status=409,
+        details={"lead_id": str(duplicate.id), "lead_name": duplicate.name},
+    )
 
 
 def create_lead(
@@ -92,12 +127,7 @@ def create_lead(
         e164_phones=[e164 for e164, _ in phones],
     )
     if duplicate is not None:
-        raise BusinessError(
-            "duplicate_lead",
-            "Já existe lead com esse telefone",
-            status=409,
-            details={"lead_id": str(duplicate.id), "lead_name": duplicate.name},
-        )
+        _raise_duplicate(duplicate)
 
     lead = Lead(
         organization_id=organization_id,
@@ -106,6 +136,7 @@ def create_lead(
         document=(data.document or "").strip() or None,
         city=(data.city or "").strip() or None,
         state=(data.state or "").upper().strip() or None,
+        postal_code=normalize_postal_code(data.postal_code),
         indicator_name=(data.indicator_name or "").strip() or None,
         notes=data.notes,
         origin_id=data.origin_id,
@@ -157,6 +188,122 @@ def create_lead(
         request_id=request_id,
     )
     return lead
+
+
+def replace_phones(*, organization_id: str, lead: Lead, raws: list[str]) -> list[str]:
+    """Substitui os telefones do lead, mantendo a regra de duplicidade (RN-076..078)."""
+    phones = _normalize_phones(raws)
+    if not phones:
+        raise BusinessError("missing_phone", "Informe pelo menos um telefone", status=422)
+    duplicate = find_duplicate_by_phones(
+        organization_id=organization_id,
+        e164_phones=[e164 for e164, _ in phones],
+        exclude_lead_id=str(lead.id),
+    )
+    if duplicate is not None:
+        _raise_duplicate(duplicate)
+    current = {
+        phone.phone_e164: phone
+        for phone in db.session.execute(
+            select(LeadPhone).where(LeadPhone.lead_id == lead.id)
+        ).scalars()
+    }
+    wanted = {e164 for e164, _ in phones}
+    for e164, phone in current.items():
+        if e164 not in wanted:
+            db.session.delete(phone)
+    db.session.flush()
+    for idx, (e164, original) in enumerate(phones):
+        phone = current.get(e164)
+        if phone is None:
+            db.session.add(
+                LeadPhone(
+                    organization_id=organization_id,
+                    lead_id=lead.id,
+                    phone_e164=e164,
+                    original=original,
+                    is_primary=idx == 0,
+                )
+            )
+        else:
+            phone.is_primary = idx == 0
+    return [e164 for e164, _ in phones]
+
+
+def request_deletion(
+    *,
+    organization_id: str,
+    actor_user_id: str,
+    lead: Lead,
+    reason: str | None,
+    import_batch_id: str | None = None,
+    request_id: str | None = None,
+) -> LeadDeletionRequest:
+    """Arquiva o lead e o envia para avaliação do administrador."""
+    from ..opportunities.models import Opportunity
+
+    if lead.archived_at is not None:
+        raise BusinessError("archived_lead", "Lead já está arquivado", status=409)
+    if db.session.execute(
+        select(Opportunity.id).where(
+            Opportunity.organization_id == organization_id,
+            Opportunity.lead_id == lead.id,
+        )
+    ).first():
+        raise BusinessError(
+            "lead_in_use",
+            "Lead já possui atendimento no funil e não pode ser excluído",
+            status=409,
+        )
+    deletion = LeadDeletionRequest(
+        organization_id=organization_id,
+        lead_id=lead.id,
+        import_batch_id=import_batch_id,
+        requested_by=actor_user_id,
+        reason=(reason or "").strip() or None,
+        status=DELETION_PENDING,
+    )
+    db.session.add(deletion)
+    lead.archived_at = now_utc()
+    db.session.flush()
+    audit_record(
+        organization_id=organization_id,
+        actor_user_id=actor_user_id,
+        entity_type="lead",
+        entity_id=str(lead.id),
+        action="deletion_request",
+        after={"deletion_request_id": str(deletion.id), "import_batch_id": import_batch_id},
+        reason=deletion.reason,
+        request_id=request_id,
+    )
+    return deletion
+
+
+def review_deletion(
+    *,
+    organization_id: str,
+    actor_user_id: str,
+    deletion: LeadDeletionRequest,
+    approve: bool,
+    request_id: str | None = None,
+) -> None:
+    if deletion.status != DELETION_PENDING:
+        raise BusinessError("already_reviewed", "Solicitação já avaliada", status=409)
+    lead = db.session.get(Lead, deletion.lead_id)
+    deletion.status = DELETION_APPROVED if approve else DELETION_REJECTED
+    deletion.reviewed_by = actor_user_id
+    deletion.reviewed_at = now_utc()
+    if not approve and lead is not None:
+        lead.archived_at = None
+    audit_record(
+        organization_id=organization_id,
+        actor_user_id=actor_user_id,
+        entity_type="lead",
+        entity_id=str(deletion.lead_id),
+        action="deletion_approved" if approve else "deletion_rejected",
+        after={"deletion_request_id": str(deletion.id)},
+        request_id=request_id,
+    )
 
 
 def archive_lead(

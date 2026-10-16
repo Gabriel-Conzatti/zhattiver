@@ -44,6 +44,7 @@ class DirectLeadRequest(BaseModel):
     product_id: str
     city: str | None = Field(default=None, max_length=120)
     state: str | None = Field(default=None, max_length=2)
+    postal_code: str | None = Field(default=None, max_length=12)
 
 
 def _serialize_opportunity(
@@ -101,6 +102,7 @@ def create_direct_lead():
                 phones=[payload.phone],
                 city=payload.city,
                 state=payload.state,
+                postal_code=payload.postal_code,
             ),
             request_id=getattr(g, "request_id", None),
         )
@@ -476,7 +478,7 @@ def get_opportunity(opp_id: str):
 def my_followups():
     ctx = load_context()
     if ctx.role == ROLE_SDR:
-        raise BusinessError("forbidden", "SDR não tem follow-ups", status=403)
+        raise BusinessError("forbidden", "SDR não tem acompanhamentos", status=403)
 
     pending = services.compute_pending_followups(
         organization_id=ctx.organization_id, user_id=ctx.user_id

@@ -10,12 +10,14 @@ from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
 from ..leads import services as lead_services
+from ..leads.models import DELETION_PENDING, Lead, LeadDeletionRequest
 from ..users.models import ROLE_ADMIN, ROLE_SDR
 from .models import (
     ROW_STATUS_DUPLICATE,
     ROW_STATUS_ERROR,
     ROW_STATUS_OK,
     STATUS_CONFIRMED,
+    STATUS_DISCARDED,
     STATUS_REVIEWING,
     TYPE_LEADS,
     ImportBatch,
@@ -185,6 +187,23 @@ def get_batch(batch_id: str):
     rows = db.session.execute(
         select(ImportRow).where(ImportRow.batch_id == batch.id).order_by(ImportRow.line_no).limit(500)
     ).scalars().all()
+    lead_ids = [row.lead_id for row in rows if row.lead_id]
+    archived: set[str] = set()
+    pending_deletion: set[str] = set()
+    if lead_ids:
+        archived = set(
+            db.session.execute(
+                select(Lead.id).where(Lead.id.in_(lead_ids), Lead.archived_at.is_not(None))
+            ).scalars()
+        )
+        pending_deletion = set(
+            db.session.execute(
+                select(LeadDeletionRequest.lead_id).where(
+                    LeadDeletionRequest.lead_id.in_(lead_ids),
+                    LeadDeletionRequest.status == DELETION_PENDING,
+                )
+            ).scalars()
+        )
     return jsonify(
         {
             "id": str(batch.id),
@@ -203,6 +222,14 @@ def get_batch(batch_id: str):
                     "payload": r.payload,
                     "normalized": r.normalized,
                     "duplicate_of_lead_id": r.duplicate_of_lead_id,
+                    "lead_id": str(r.lead_id) if r.lead_id else None,
+                    "lead_state": None
+                    if not r.lead_id
+                    else "deletion_pending"
+                    if r.lead_id in pending_deletion
+                    else "archived"
+                    if r.lead_id in archived
+                    else "active",
                 }
                 for r in rows
             ],
@@ -221,6 +248,8 @@ def confirm_batch(batch_id: str):
         raise BusinessError("not_found", "Lote não encontrado", status=404)
     if batch.status == STATUS_CONFIRMED:
         return jsonify({"status": batch.status, "created": 0}), 200
+    if batch.status == STATUS_DISCARDED:
+        raise BusinessError("discarded_batch", "Importação descartada", status=409)
 
     rows = db.session.execute(
         select(ImportRow).where(
@@ -234,7 +263,7 @@ def confirm_batch(batch_id: str):
     for row in rows:
         data = row.normalized or {}
         try:
-            lead_services.create_lead(
+            lead = lead_services.create_lead(
                 organization_id=ctx.organization_id,
                 actor_user_id=ctx.user_id,
                 data=lead_services.LeadInput(
@@ -243,12 +272,14 @@ def confirm_batch(batch_id: str):
                     document=data.get("document"),
                     city=data.get("city"),
                     state=data.get("state"),
+                    postal_code=data.get("postal_code"),
                     indicator_name=data.get("indicator_name"),
                     notes=data.get("notes"),
                     vehicles=[data["vehicle"]] if data.get("vehicle") and any(data["vehicle"].values()) else [],
                 ),
                 request_id=getattr(g, "request_id", None),
             )
+            row.lead_id = lead.id
             created += 1
         except BusinessError as exc:
             failed += 1
@@ -269,3 +300,35 @@ def confirm_batch(batch_id: str):
     )
     db.session.commit()
     return jsonify({"status": batch.status, "created": created, "failed": failed})
+
+
+@bp.post("/imports/<batch_id>/discard")
+@login_required
+def discard_batch(batch_id: str):
+    """Descarta a importação ainda em revisão; nenhum lead foi criado nesse estágio."""
+    _require_sdr_or_admin()
+    ctx = load_context()
+    batch = db.session.get(ImportBatch, batch_id)
+    if batch is None or batch.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Lote não encontrado", status=404)
+    if batch.status != STATUS_REVIEWING:
+        raise BusinessError(
+            "invalid_state",
+            "Somente importações em revisão podem ser descartadas; "
+            "exclua os leads importados um a um",
+            status=409,
+        )
+    batch.status = STATUS_DISCARDED
+    batch.completed_at = now_utc()
+    record(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        entity_type="import_batch",
+        entity_id=str(batch.id),
+        action="discard",
+        before={"status": STATUS_REVIEWING},
+        after={"status": STATUS_DISCARDED},
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"id": str(batch.id), "status": batch.status})

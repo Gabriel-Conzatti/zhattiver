@@ -14,7 +14,7 @@ from ..core.auth import hash_password
 from ..core.time import now_utc
 from ..extensions import db
 from ..modules.catalog.models import ClientType, Insurer, Origin
-from ..modules.claims.models import ClaimBranch
+from ..modules.claims.models import ITEM_TYPE_PROPERTY, ITEM_TYPE_VEHICLE, ClaimBranch
 from ..modules.funnel.models import Funnel, FunnelStage
 from ..modules.leads.models import Availability, Lead, LeadPhone
 from ..modules.opportunities.models import LossReason, NextActionType
@@ -39,9 +39,25 @@ DEFAULT_INSURERS = [
     "EZZE",
     "Mapfre",
     "Suhai",
+    "Yelum Affinity",
 ]
-DEFAULT_CLAIM_BRANCHES = ["Auto", "RE", "RCO ONIBUS"]
-DEFAULT_PRODUCTS = [("Seguro Automóvel", "auto")]
+DEFAULT_CLAIM_BRANCHES = [
+    ("Auto", ITEM_TYPE_VEHICLE),
+    ("RE", ITEM_TYPE_PROPERTY),
+    ("RCO ONIBUS", ITEM_TYPE_VEHICLE),
+]
+DEFAULT_PRODUCTS = [
+    ("Seguro Automóvel", "auto"),
+    ("Vida", "vida"),
+    ("Residência", "residência"),
+    ("Empresarial", "empresarial"),
+    ("Vida em Grupo", "vida-em-grupo"),
+    ("Transporte", "transporte"),
+    ("Responsabilidade Civil", "responsabilidade-civil"),
+    ("Equipamentos Energia Solar", "equipamentos-energia-solar"),
+    ("Equipamentos Rural", "equipamentos-rural"),
+    ("Frota", "frota"),
+]
 DEFAULT_LOSS_REASONS = [
     "Preço",
     "Renovou com concorrente",
@@ -374,7 +390,7 @@ def _seed_defaults(organization_id: str) -> None:
         ).scalar_one_or_none()
         if exists is None:
             db.session.add(Insurer(organization_id=organization_id, name=name))
-    for name in DEFAULT_CLAIM_BRANCHES:
+    for name, item_type in DEFAULT_CLAIM_BRANCHES:
         exists = db.session.execute(
             select(ClaimBranch).where(
                 ClaimBranch.organization_id == organization_id,
@@ -386,6 +402,7 @@ def _seed_defaults(organization_id: str) -> None:
                 ClaimBranch(
                     organization_id=organization_id,
                     name=name,
+                    item_type=item_type,
                     is_active=True,
                 )
             )

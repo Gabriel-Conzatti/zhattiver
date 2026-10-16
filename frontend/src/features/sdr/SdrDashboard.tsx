@@ -7,6 +7,7 @@ import {
   DashboardMetricCard,
   DashboardPanelMessage,
 } from '@/components/DashboardUi';
+import { importStatusLabel } from '@/features/imports/importStatus';
 import { importsApi, leads } from '@/lib/api';
 
 export function SdrDashboard() {
@@ -115,7 +116,7 @@ export function SdrDashboard() {
               <ImportDetail label="Arquivo" value={latestImport.filename} />
               <ImportDetail label="Linhas" value={String(latestImport.rows_total)} />
               <ImportDetail label="Duplicidades" value={String(latestImport.rows_duplicate)} />
-              <ImportDetail label="Situação" value={importStatus(latestImport.status)} />
+              <ImportDetail label="Situação" value={importStatusLabel(latestImport.status)} />
             </div>
           ) : (
             <DashboardPanelMessage>Nenhuma importação realizada ainda.</DashboardPanelMessage>
@@ -133,14 +134,4 @@ function ImportDetail({ label, value }: { label: string; value: string }) {
       <div className="mt-1 truncate text-sm font-medium text-white" title={value}>{value}</div>
     </div>
   );
-}
-
-function importStatus(status: 'pending' | 'reviewing' | 'confirmed' | 'failed') {
-  const labels = {
-    pending: 'Pendente',
-    reviewing: 'Em revisão',
-    confirmed: 'Confirmada',
-    failed: 'Falhou',
-  };
-  return labels[status];
 }

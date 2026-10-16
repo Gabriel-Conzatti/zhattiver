@@ -159,7 +159,7 @@ export function VendedorDashboard() {
         </PanelCard>
 
         <PanelCard
-          title="Follow-ups"
+          title="Acompanhamentos"
           icon={RefreshCw}
           action={
             <Link to="/followups" className="text-xs font-semibold text-[#7dd3fc] transition hover:text-white">
@@ -175,16 +175,16 @@ export function VendedorDashboard() {
               />
               {followupsQuery.isLoading ? (
                 <div className="p-3">
-                  <DashboardPanelMessage kind="loading">Carregando follow-ups…</DashboardPanelMessage>
+                  <DashboardPanelMessage kind="loading">Carregando acompanhamentos…</DashboardPanelMessage>
                 </div>
               ) : followupsQuery.isError ? (
                 <div className="p-3">
                   <DashboardPanelMessage kind="error" onRetry={() => void followupsQuery.refetch()}>
-                    Não foi possível carregar os follow-ups.
+                    Não foi possível carregar os acompanhamentos.
                   </DashboardPanelMessage>
                 </div>
               ) : pendingFollowups.length === 0 ? (
-                <p className="px-3 py-8 text-sm text-[#9bb2c9]">Nenhum follow-up pendente no momento.</p>
+                <p className="px-3 py-8 text-sm text-[#9bb2c9]">Nenhum acompanhamento pendente no momento.</p>
               ) : (
                 pendingFollowups.map((followup) => {
                   const idle = idleLabel(followup.last_relevant_at);
@@ -202,7 +202,7 @@ export function VendedorDashboard() {
                       <div className="flex justify-end">
                         <Link
                           to="/followups"
-                          aria-label={`Atualizar follow-up de ${followup.lead_name ?? 'lead sem nome'}`}
+                          aria-label={`Atualizar acompanhamento de ${followup.lead_name ?? 'lead sem nome'}`}
                           className="rounded-md border border-[#16314d] p-1.5 text-[#7dd3fc] transition hover:border-[#00CBFF] hover:text-white"
                         >
                           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -242,7 +242,7 @@ export function VendedorDashboard() {
                 target={goals?.schedules.target ?? 0}
               />
               <GoalBar
-                label="Follow-ups"
+                label="Acompanhamentos"
                 icon={RefreshCw}
                 tone="orange"
                 done={goals?.followups.done ?? 0}

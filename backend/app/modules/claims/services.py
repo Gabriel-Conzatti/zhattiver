@@ -1,18 +1,21 @@
 from __future__ import annotations
 
+import re
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import or_, select
 
 from ...core.audit import record
 from ...core.errors import BusinessError
-from ...core.time import now_utc, today_local
+from ...core.phones import PhoneNormalizationError, normalize_phone
+from ...core.time import DEFAULT_TZ, now_utc, today_local
 from ...extensions import db
 from ..catalog.models import Insurer
 from ..leads.models import Lead
 from ..opportunities.models import Opportunity
 from ..sales.models import Sale
-from ..users.models import ROLE_ADMIN, PermissionGrant, Team, User
+from ..users.models import ROLE_ADMIN, PermissionGrant, User
 from .models import (
     CLAIM_STATUS_CLOSED,
     CLAIM_STATUS_COMPLETED,
@@ -20,6 +23,10 @@ from .models import (
     CLAIM_STATUS_INSURER,
     CLAIM_STATUS_THIRD_PARTY,
     CLAIM_STATUS_VERIFY,
+    ITEM_TYPE_PROPERTY,
+    ITEM_TYPE_VEHICLE,
+    SERVICE_TYPE_BOTH,
+    SERVICE_TYPE_THIRD_PARTY,
     Claim,
     ClaimBranch,
     ClaimEvent,
@@ -37,6 +44,11 @@ DEFAULT_STATUSES = (
     ("Concluído", CLAIM_STATUS_COMPLETED, True),
     ("Finalizado", CLAIM_STATUS_CLOSED, True),
 )
+PARTY_INSURED = "segurado"
+PARTY_THIRD = "terceiro"
+# Tolerância para relógios levemente adiantados ao registrar atualização no histórico.
+EVENT_FUTURE_TOLERANCE = timedelta(minutes=5)
+
 
 def ensure_default_statuses(organization_id: str) -> list[ClaimStatus]:
     statuses = list(
@@ -150,6 +162,99 @@ def resolve_claim_catalogs(
     return branch, insurer, workshop
 
 
+def initial_status(organization_id: str) -> ClaimStatus:
+    statuses = ensure_default_statuses(organization_id)
+    return next((status for status in statuses if not status.is_terminal), statuses[0])
+
+
+def normalize_document(value: str | None) -> str | None:
+    digits = re.sub(r"\D", "", value or "")
+    if not digits:
+        return None
+    if len(digits) not in (11, 14):
+        raise BusinessError(
+            "invalid_document", "CPF/CNPJ deve ter 11 ou 14 dígitos", status=422
+        )
+    return digits
+
+
+def normalize_party_phone(value: str | None) -> str | None:
+    if not value or not value.strip():
+        return None
+    try:
+        return normalize_phone(value)
+    except PhoneNormalizationError as exc:
+        raise BusinessError("invalid_phone", f"Telefone inválido: {exc}", status=422) from exc
+
+
+def normalize_item_fields(data: dict) -> dict:
+    """Normaliza os dados do item segurado presentes em `data`."""
+    result: dict = {}
+    if "vehicle_plate" in data:
+        plate = re.sub(r"[^A-Z0-9]", "", (data["vehicle_plate"] or "").upper())
+        result["vehicle_plate"] = plate or None
+    if "vehicle_model" in data:
+        result["vehicle_model"] = (data["vehicle_model"] or "").strip() or None
+    if "vehicle_year" in data:
+        result["vehicle_year"] = data["vehicle_year"]
+    if "property_address" in data:
+        result["property_address"] = (data["property_address"] or "").strip() or None
+    if "coverage" in data:
+        result["coverage"] = (data["coverage"] or "").strip() or None
+    return result
+
+
+def has_third_party_service(service_type: str | None) -> bool:
+    return service_type in (SERVICE_TYPE_THIRD_PARTY, SERVICE_TYPE_BOTH)
+
+
+def _validate_opening(data: dict, item: dict, branch: ClaimBranch) -> None:
+    insured = next(
+        (party for party in data.get("parties", []) if party["role"] == PARTY_INSURED),
+        None,
+    )
+    if insured is None or not insured.get("document") or not insured.get("phone"):
+        raise BusinessError(
+            "missing_insured",
+            "Informe nome, CPF/CNPJ e telefone do segurado",
+            status=422,
+        )
+    if not data.get("service_type"):
+        raise BusinessError(
+            "missing_service_type", "Informe o tipo de atendimento", status=422
+        )
+    if not data.get("responsible_user_id"):
+        raise BusinessError(
+            "missing_responsible", "Informe o responsável pelo sinistro", status=422
+        )
+    if branch.item_type == ITEM_TYPE_VEHICLE and not (
+        item.get("vehicle_plate") and item.get("vehicle_model") and item.get("vehicle_year")
+    ):
+        raise BusinessError(
+            "missing_item", "Informe placa, modelo e ano do veículo", status=422
+        )
+    if branch.item_type == ITEM_TYPE_PROPERTY and not (
+        item.get("property_address") and item.get("coverage")
+    ):
+        raise BusinessError(
+            "missing_item",
+            "Informe o endereço e a cobertura acionada",
+            status=422,
+        )
+
+
+def _party(organization_id: str, claim_id: str | None, data: dict) -> ClaimParty:
+    return ClaimParty(
+        organization_id=organization_id,
+        claim_id=claim_id,
+        role=data["role"],
+        name=data["name"].strip(),
+        document=normalize_document(data.get("document")),
+        phone=normalize_party_phone(data.get("phone")),
+        notes=data.get("notes"),
+    )
+
+
 def create_claim(
     *,
     organization_id: str,
@@ -157,20 +262,27 @@ def create_claim(
     data: dict,
     request_id: str | None,
 ) -> Claim:
-    status = get_status(data["status_id"], organization_id)
+    status = (
+        get_status(data["status_id"], organization_id)
+        if data.get("status_id")
+        else initial_status(organization_id)
+    )
     branch, insurer, workshop = resolve_claim_catalogs(data, organization_id)
+    item = normalize_item_fields(data)
+    _validate_opening(data, item, branch)
     validate_links(data, organization_id)
+    data = {**data, "opened_on": data.get("opened_on") or today_local()}
     validate_dates(data)
     amount = data.get("indemnified_amount")
     if amount is not None and Decimal(str(amount)) < 0:
         raise BusinessError("invalid_amount", "Valor indenizado não pode ser negativo", status=422)
+    parties = [_party(organization_id, None, party) for party in data.get("parties", [])]
     claim = Claim(
         organization_id=organization_id,
         status_id=status.id,
         branch_id=branch.id,
         insurer_id=insurer.id,
         workshop_id=workshop.id if workshop else None,
-        team_id=data.get("team_id"),
         responsible_user_id=data.get("responsible_user_id"),
         lead_id=data.get("lead_id"),
         opportunity_id=data.get("opportunity_id"),
@@ -178,30 +290,23 @@ def create_claim(
         claim_number=(data.get("claim_number") or "").strip() or None,
         branch=branch.name,
         insurer=insurer.name,
-        service_type=(data.get("service_type") or "").strip() or None,
-        has_third_party=data.get("has_third_party", False),
+        service_type=data.get("service_type"),
+        has_third_party=has_third_party_service(data.get("service_type"))
+        or any(party.role == PARTY_THIRD for party in parties),
         workshop=workshop.name if workshop else None,
         opened_on=data["opened_on"],
-        expected_on=data.get("expected_on"),
         concluded_on=data.get("concluded_on"),
         closed_on=data.get("closed_on"),
         indemnified_on=data.get("indemnified_on"),
         indemnified_amount=amount,
         notes=(data.get("notes") or "").strip() or None,
+        **item,
     )
     db.session.add(claim)
     db.session.flush()
-    for party in data.get("parties", []):
-        db.session.add(
-            ClaimParty(
-                organization_id=organization_id,
-                claim_id=claim.id,
-                role=party["role"],
-                name=party["name"],
-                phone=party.get("phone"),
-                notes=party.get("notes"),
-            )
-        )
+    for party in parties:
+        party.claim_id = claim.id
+        db.session.add(party)
     add_event(
         claim=claim,
         organization_id=organization_id,
@@ -225,7 +330,6 @@ def create_claim(
 def validate_links(data: dict, organization_id: str) -> None:
     checks = (
         ("responsible_user_id", User, "Usuário responsável"),
-        ("team_id", Team, "Equipe"),
         ("lead_id", Lead, "Lead"),
         ("opportunity_id", Opportunity, "Oportunidade"),
         ("sale_id", Sale, "Venda"),
@@ -278,7 +382,6 @@ def validate_dates(data: dict, claim: Claim | None = None) -> None:
     if opened_on is None:
         return
     for field, label in (
-        ("expected_on", "previsão"),
         ("concluded_on", "conclusão"),
         ("closed_on", "encerramento"),
         ("indemnified_on", "indenização"),
@@ -301,6 +404,7 @@ def add_event(
     description: str,
     request_id: str | None = None,
     payload: dict | None = None,
+    occurred_at: datetime | None = None,
 ) -> ClaimEvent:
     event = ClaimEvent(
         organization_id=organization_id,
@@ -309,7 +413,7 @@ def add_event(
         event_type=event_type,
         description=description,
         payload=payload,
-        occurred_at=now_utc(),
+        occurred_at=validate_event_time(occurred_at) if occurred_at else now_utc(),
     )
     db.session.add(event)
     db.session.flush()
@@ -323,6 +427,47 @@ def add_event(
         request_id=request_id,
     )
     return event
+
+
+def validate_event_time(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=DEFAULT_TZ)
+    if value > now_utc() + EVENT_FUTURE_TOLERANCE:
+        raise BusinessError(
+            "invalid_event_date",
+            "A data da atualização não pode estar no futuro",
+            status=422,
+        )
+    return value.astimezone(UTC)
+
+
+def change_event_time(
+    *,
+    claim: Claim,
+    event: ClaimEvent,
+    occurred_at: datetime,
+    organization_id: str,
+    actor_user_id: str,
+    request_id: str | None,
+) -> None:
+    if event.event_type != "note":
+        raise BusinessError(
+            "event_not_editable",
+            "Somente atualizações registradas manualmente podem ter a data ajustada",
+            status=409,
+        )
+    before = event.occurred_at.isoformat()
+    event.occurred_at = validate_event_time(occurred_at)
+    record(
+        organization_id=organization_id,
+        actor_user_id=actor_user_id,
+        entity_type="claim_event",
+        entity_id=str(event.id),
+        action="change_date",
+        before={"claim_id": str(claim.id), "occurred_at": before},
+        after={"claim_id": str(claim.id), "occurred_at": event.occurred_at.isoformat()},
+        request_id=request_id,
+    )
 
 
 def change_status(
@@ -366,28 +511,16 @@ def assign_claim(
     organization_id: str,
     actor_user_id: str,
     responsible_user_id: str | None,
-    team_id: str | None,
     request_id: str | None,
 ) -> None:
-    validate_links(
-        {
-            "responsible_user_id": responsible_user_id,
-            "team_id": team_id,
-        },
-        organization_id,
-    )
+    validate_links({"responsible_user_id": responsible_user_id}, organization_id)
     before = {
         "responsible_user_id": str(claim.responsible_user_id)
         if claim.responsible_user_id
         else None,
-        "team_id": str(claim.team_id) if claim.team_id else None,
     }
     claim.responsible_user_id = responsible_user_id
-    claim.team_id = team_id
-    after = {
-        "responsible_user_id": responsible_user_id,
-        "team_id": team_id,
-    }
+    after = {"responsible_user_id": responsible_user_id}
     add_event(
         claim=claim,
         organization_id=organization_id,
@@ -417,14 +550,9 @@ def add_party(
     data: dict,
     request_id: str | None,
 ) -> ClaimParty:
-    party = ClaimParty(
-        organization_id=organization_id,
-        claim_id=claim.id,
-        role=data["role"],
-        name=data["name"],
-        phone=data.get("phone"),
-        notes=data.get("notes"),
-    )
+    party = _party(organization_id, claim.id, data)
+    if party.role == PARTY_THIRD:
+        claim.has_third_party = True
     db.session.add(party)
     db.session.flush()
     add_event(

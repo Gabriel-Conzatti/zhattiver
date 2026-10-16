@@ -37,6 +37,16 @@ CLAIM_STATUSES = (
     CLAIM_STATUS_CLOSED,
 )
 
+SERVICE_TYPE_THIRD_PARTY = "terceiro"
+SERVICE_TYPE_INSURED = "segurado"
+SERVICE_TYPE_BOTH = "segurado_terceiro"
+SERVICE_TYPES = (SERVICE_TYPE_THIRD_PARTY, SERVICE_TYPE_INSURED, SERVICE_TYPE_BOTH)
+
+# Define quais dados do item segurado o ramo exige na abertura.
+ITEM_TYPE_VEHICLE = "vehicle"
+ITEM_TYPE_PROPERTY = "property"
+ITEM_TYPES = (ITEM_TYPE_VEHICLE, ITEM_TYPE_PROPERTY)
+
 
 class ClaimBranch(db.Model, TimestampMixin, ArchivableMixin):
     __tablename__ = "claim_branches"
@@ -44,6 +54,7 @@ class ClaimBranch(db.Model, TimestampMixin, ArchivableMixin):
     id: Mapped[str] = uuid_pk()
     organization_id: Mapped[str] = uuid_fk("organizations.id")
     name: Mapped[str] = mapped_column(String(80), nullable=False)
+    item_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     __table_args__ = (
@@ -76,11 +87,32 @@ class ClaimWorkshop(db.Model, TimestampMixin, ArchivableMixin):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
     address: Mapped[str] = mapped_column(String(500), nullable=False)
+    city: Mapped[str | None] = mapped_column(String(120), nullable=True)
     responsible_name: Mapped[str] = mapped_column(String(200), nullable=False)
     insurers = relationship(Insurer, secondary=claim_workshop_insurers)
 
     __table_args__ = (
         Index("ix_claim_workshops_org_name", "organization_id", "name", unique=True),
+    )
+
+
+class ClaimInsurerProfile(db.Model, TimestampMixin):
+    """Informações operacionais da seguradora usadas pela equipe de sinistros."""
+
+    __tablename__ = "claim_insurer_profiles"
+
+    id: Mapped[str] = uuid_pk()
+    organization_id: Mapped[str] = uuid_fk("organizations.id")
+    insurer_id: Mapped[str] = uuid_fk("insurers.id", ondelete="CASCADE")
+    contacts: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rental_car_contact: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_by: Mapped[str | None] = uuid_fk("users.id", nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "organization_id", "insurer_id", name="uq_claim_insurer_profiles_org_insurer"
+        ),
     )
 
 
@@ -121,6 +153,11 @@ class Claim(db.Model, TimestampMixin, ArchivableMixin):
     service_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     has_third_party: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     workshop: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    vehicle_plate: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    vehicle_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    vehicle_year: Mapped[int | None] = mapped_column(nullable=True)
+    property_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    coverage: Mapped[str | None] = mapped_column(String(120), nullable=True)
     opened_on: Mapped[date] = mapped_column(Date, nullable=False)
     expected_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     concluded_on: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -155,6 +192,7 @@ class ClaimParty(db.Model, TimestampMixin):
     claim_id: Mapped[str] = uuid_fk("claims.id", ondelete="CASCADE")
     role: Mapped[str] = mapped_column(String(30), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    document: Mapped[str | None] = mapped_column(String(20), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 

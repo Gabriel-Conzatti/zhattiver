@@ -4,14 +4,15 @@ from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
 from sqlalchemy import func, select
 
+from ...core.audit import record
 from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import now_utc
 from ...extensions import db
 from ..catalog.models import Origin
-from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, Team
+from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR, Product, Team, User
 from . import services
-from .models import Availability, Lead, LeadPhone
+from .models import DELETION_PENDING, Availability, Lead, LeadDeletionRequest, LeadPhone
 from .schemas import (
     AvailabilityCreate,
     AvailabilityOut,
@@ -36,42 +37,6 @@ def _paging() -> tuple[int, int]:
     except ValueError:
         per_page = 25
     return page, per_page
-
-
-def _serialize_list_item(lead: Lead) -> LeadListItem:
-    return LeadListItem(
-        id=str(lead.id),
-        name=lead.name,
-        kind=lead.kind,
-        city=lead.city,
-        state=lead.state,
-        phones=[p.phone_e164 for p in lead.phones],
-        archived=lead.archived_at is not None,
-    )
-
-
-def _serialize_full(lead: Lead) -> LeadOut:
-    return LeadOut(
-        id=str(lead.id),
-        kind=lead.kind,
-        name=lead.name,
-        document=lead.document,
-        city=lead.city,
-        state=lead.state,
-        indicator_name=lead.indicator_name,
-        notes=lead.notes,
-        origin_id=str(lead.origin_id) if lead.origin_id else None,
-        client_type_id=str(lead.client_type_id) if lead.client_type_id else None,
-        archived_at=lead.archived_at,
-        created_at=lead.created_at,
-        updated_at=lead.updated_at,
-        phones=[
-            LeadPhoneOut(
-                phone_e164=p.phone_e164, original=p.original, is_primary=p.is_primary
-            )
-            for p in sorted(lead.phones, key=lambda x: not x.is_primary)
-        ],
-    )
 
 
 @bp.get("/leads")
@@ -100,12 +65,22 @@ def list_leads():
     leads = db.session.execute(stmt).scalars().all()
     lead_ids = [lead.id for lead in leads]
     phones_by_lead: dict[str, list[LeadPhone]] = {}
+    released: set[str] = set()
     if lead_ids:
         rows = db.session.execute(
             select(LeadPhone).where(LeadPhone.lead_id.in_(lead_ids))
         ).scalars().all()
         for p in rows:
             phones_by_lead.setdefault(p.lead_id, []).append(p)
+        released = set(
+            db.session.execute(
+                select(Availability.lead_id).where(
+                    Availability.organization_id == ctx.organization_id,
+                    Availability.lead_id.in_(lead_ids),
+                    Availability.archived_at.is_(None),
+                )
+            ).scalars()
+        )
 
     items = [
         LeadListItem(
@@ -116,6 +91,7 @@ def list_leads():
             state=lead.state,
             phones=[p.phone_e164 for p in phones_by_lead.get(lead.id, [])],
             archived=lead.archived_at is not None,
+            released=lead.id in released,
         )
         for lead in leads
     ]
@@ -142,6 +118,7 @@ def create_lead():
             document=payload.document,
             city=payload.city,
             state=payload.state,
+            postal_code=payload.postal_code,
             indicator_name=payload.indicator_name,
             notes=payload.notes,
             origin_id=payload.origin_id,
@@ -172,19 +149,32 @@ def update_lead(lead_id: str):
         raise BusinessError("forbidden", "Sem permissão para editar", status=403)
     lead = _load_org_lead(lead_id, ctx.organization_id)
     payload = LeadUpdate.model_validate(request.get_json(silent=True) or {})
-    before = {
-        "name": lead.name,
-        "city": lead.city,
-        "state": lead.state,
-        "kind": lead.kind,
-    }
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    if "name" in changes and not (changes["name"] or "").strip():
+        raise BusinessError("invalid_name", "Nome é obrigatório", status=422)
+    if "kind" in changes and changes["kind"] is None:
+        raise BusinessError("invalid_kind", "Tipo de pessoa inválido", status=422)
+    for field, value in (
+        ("origin_id", changes.get("origin_id")),
+        ("client_type_id", changes.get("client_type_id")),
+    ):
+        if value:
+            _ensure_catalog_item(field, value, ctx.organization_id)
+    before = _audit_snapshot(lead)
+    phones = changes.pop("phones", None)
+    if phones is not None:
+        services.replace_phones(
+            organization_id=ctx.organization_id, lead=lead, raws=phones
+        )
+    if "postal_code" in changes:
+        changes["postal_code"] = services.normalize_postal_code(changes["postal_code"])
+    for field, value in changes.items():
         if isinstance(value, str):
             value = value.strip() or None
             if field == "state" and value:
                 value = value.upper()
         setattr(lead, field, value)
-    from ...core.audit import record
+    db.session.flush()
 
     record(
         organization_id=ctx.organization_id,
@@ -193,12 +183,7 @@ def update_lead(lead_id: str):
         entity_id=str(lead.id),
         action="update",
         before=before,
-        after={
-            "name": lead.name,
-            "city": lead.city,
-            "state": lead.state,
-            "kind": lead.kind,
-        },
+        after=_audit_snapshot(lead),
         request_id=getattr(g, "request_id", None),
     )
     db.session.commit()
@@ -222,6 +207,107 @@ def archive_lead(lead_id: str):
     )
     db.session.commit()
     return ("", 204)
+
+
+@bp.post("/leads/<lead_id>/deletion-request")
+@login_required
+def request_lead_deletion(lead_id: str):
+    """SDR/admin excluem um lead; o administrador avalia a exclusão depois."""
+    ctx = load_context()
+    if ctx.role not in (ROLE_ADMIN, ROLE_SDR):
+        raise BusinessError("forbidden", "Somente admin/SDR excluem leads", status=403)
+    lead = _load_org_lead(lead_id, ctx.organization_id)
+    body = request.get_json(silent=True) or {}
+    deletion = services.request_deletion(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        lead=lead,
+        reason=(body.get("reason") or "")[:500] or None,
+        import_batch_id=_imported_batch_id(lead.id, ctx.organization_id),
+        request_id=getattr(g, "request_id", None),
+    )
+    from ..notifications.services import notify_admins
+
+    notify_admins(
+        organization_id=ctx.organization_id,
+        kind="lead_deletion_requested",
+        title=f"Exclusão de lead para avaliar: {lead.name}",
+        entity_type="lead",
+        entity_id=str(lead.id),
+        link_path="/admin/importacoes",
+        dedup_key=f"lead_deletion:{deletion.id}",
+    )
+    db.session.commit()
+    return jsonify({"id": str(deletion.id), "status": deletion.status}), 201
+
+
+@bp.get("/lead-deletion-requests")
+@login_required
+def list_deletion_requests():
+    ctx = load_context()
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente admin avalia exclusões", status=403)
+    status = request.args.get("status", DELETION_PENDING)
+    rows = db.session.execute(
+        select(LeadDeletionRequest, Lead, User)
+        .join(Lead, Lead.id == LeadDeletionRequest.lead_id)
+        .join(User, User.id == LeadDeletionRequest.requested_by)
+        .where(
+            LeadDeletionRequest.organization_id == ctx.organization_id,
+            LeadDeletionRequest.status == status,
+        )
+        .order_by(LeadDeletionRequest.created_at.desc())
+        .limit(200)
+    ).all()
+    lead_ids = [lead.id for _, lead, _ in rows]
+    phones: dict[str, list[str]] = {}
+    if lead_ids:
+        for phone in db.session.execute(
+            select(LeadPhone).where(LeadPhone.lead_id.in_(lead_ids))
+        ).scalars():
+            phones.setdefault(phone.lead_id, []).append(phone.phone_e164)
+    return jsonify(
+        {
+            "items": [
+                {
+                    "id": str(deletion.id),
+                    "lead_id": str(lead.id),
+                    "lead_name": lead.name,
+                    "phones": phones.get(lead.id, []),
+                    "import_batch_id": str(deletion.import_batch_id)
+                    if deletion.import_batch_id
+                    else None,
+                    "requested_by_name": requester.name,
+                    "reason": deletion.reason,
+                    "status": deletion.status,
+                    "created_at": deletion.created_at.isoformat(),
+                }
+                for deletion, lead, requester in rows
+            ]
+        }
+    )
+
+
+@bp.post("/lead-deletion-requests/<request_id>/<decision>")
+@login_required
+def review_deletion_request(request_id: str, decision: str):
+    ctx = load_context()
+    if ctx.role != ROLE_ADMIN:
+        raise BusinessError("forbidden", "Somente admin avalia exclusões", status=403)
+    if decision not in ("approve", "reject"):
+        raise BusinessError("not_found", "Ação inválida", status=404)
+    deletion = db.session.get(LeadDeletionRequest, request_id)
+    if deletion is None or deletion.organization_id != ctx.organization_id:
+        raise BusinessError("not_found", "Solicitação não encontrada", status=404)
+    services.review_deletion(
+        organization_id=ctx.organization_id,
+        actor_user_id=ctx.user_id,
+        deletion=deletion,
+        approve=decision == "approve",
+        request_id=getattr(g, "request_id", None),
+    )
+    db.session.commit()
+    return jsonify({"id": str(deletion.id), "status": deletion.status})
 
 
 # ---- Availabilities ----------------------------------------------------------
@@ -273,13 +359,13 @@ def release_lead():
         released_at=now_utc(),
     )
     db.session.add(avail)
-    from ...core.audit import record
+    db.session.flush()
 
     record(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
         entity_type="availability",
-        entity_id=None,
+        entity_id=str(avail.id),
         action="release",
         after={"lead_id": str(lead.id), "product_id": payload.product_id},
         request_id=getattr(g, "request_id", None),
@@ -359,6 +445,44 @@ def list_availabilities():
 
 # ---- Helpers ----------------------------------------------------------------
 
+def _ensure_catalog_item(field: str, value: str, organization_id: str) -> None:
+    from ..catalog.models import ClientType
+
+    model = Origin if field == "origin_id" else ClientType
+    if not db.session.scalar(
+        select(model.id).where(model.id == value, model.organization_id == organization_id)
+    ):
+        raise BusinessError("not_found", "Configuração não encontrada", status=404)
+
+
+def _audit_snapshot(lead: Lead) -> dict:
+    return {
+        "name": lead.name,
+        "kind": lead.kind,
+        "document": lead.document,
+        "city": lead.city,
+        "state": lead.state,
+        "postal_code": lead.postal_code,
+        "phones": sorted(
+            db.session.execute(
+                select(LeadPhone.phone_e164).where(LeadPhone.lead_id == lead.id)
+            ).scalars()
+        ),
+    }
+
+
+def _imported_batch_id(lead_id: str, organization_id: str) -> str | None:
+    from ..imports.models import ImportRow
+
+    batch_id = db.session.scalar(
+        select(ImportRow.batch_id).where(
+            ImportRow.organization_id == organization_id,
+            ImportRow.lead_id == lead_id,
+        )
+    )
+    return str(batch_id) if batch_id else None
+
+
 def _load_org_lead(lead_id: str, organization_id: str) -> Lead:
     lead = db.session.get(Lead, lead_id)
     if lead is None or lead.organization_id != organization_id:
@@ -378,6 +502,7 @@ def _full_response(lead_id: str) -> dict:
         document=lead.document,
         city=lead.city,
         state=lead.state,
+        postal_code=lead.postal_code,
         indicator_name=lead.indicator_name,
         notes=lead.notes,
         origin_id=str(lead.origin_id) if lead.origin_id else None,

@@ -24,6 +24,7 @@ class Lead(db.Model, TimestampMixin, ArchivableMixin):
     document: Mapped[str | None] = mapped_column(String(20), nullable=True)
     city: Mapped[str | None] = mapped_column(String(120), nullable=True)
     state: Mapped[str | None] = mapped_column(CHAR(2), nullable=True)
+    postal_code: Mapped[str | None] = mapped_column(String(9), nullable=True)
     indicator_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     origin_id: Mapped[str | None] = uuid_fk("origins.id", nullable=True)
@@ -33,6 +34,37 @@ class Lead(db.Model, TimestampMixin, ArchivableMixin):
     __table_args__ = (
         Index("ix_leads_org_name", "organization_id", "name"),
         Index("ix_leads_org_state_city", "organization_id", "state", "city"),
+    )
+
+
+DELETION_PENDING = "pending"
+DELETION_APPROVED = "approved"
+DELETION_REJECTED = "rejected"
+
+
+class LeadDeletionRequest(db.Model, TimestampMixin):
+    """Exclusão de lead solicitada pela operação e avaliada pelo administrador.
+
+    O lead fica arquivado enquanto a solicitação está pendente; a rejeição o restaura.
+    """
+
+    __tablename__ = "lead_deletion_requests"
+
+    id: Mapped[str] = uuid_pk()
+    organization_id: Mapped[str] = uuid_fk("organizations.id")
+    lead_id: Mapped[str] = uuid_fk("leads.id", ondelete="CASCADE")
+    import_batch_id: Mapped[str | None] = uuid_fk("import_batches.id", nullable=True)
+    requested_by: Mapped[str] = uuid_fk("users.id")
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=DELETION_PENDING)
+    reviewed_by: Mapped[str | None] = uuid_fk("users.id", nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True
+    )
+
+    __table_args__ = (
+        Index("ix_lead_deletion_requests_org_status", "organization_id", "status"),
+        Index("ix_lead_deletion_requests_lead", "lead_id"),
     )
 
 

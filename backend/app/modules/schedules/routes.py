@@ -4,13 +4,14 @@ from datetime import date
 
 from flask import Blueprint, g, jsonify, request
 from flask_login import login_required
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 
 from ...core.authz import load_context
 from ...core.errors import BusinessError
 from ...core.time import today_local
 from ...extensions import db
+from ..leads import services as lead_services
 from ..leads.models import Lead, LeadPhone
 from ..users.models import ROLE_ADMIN, ROLE_SDR, ROLE_VENDEDOR
 from . import services
@@ -20,14 +21,29 @@ from .rules import ScheduleView, contact_limit_on, evaluate_schedule, window_ope
 bp = Blueprint("schedules", __name__)
 
 
+class NewScheduleLead(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=1, max_length=40)
+    postal_code: str | None = Field(default=None, max_length=12)
+    city: str | None = Field(default=None, max_length=120)
+    state: str | None = Field(default=None, max_length=2)
+
+
 class ScheduleCreate(BaseModel):
-    lead_id: str
+    lead_id: str | None = None
+    new_lead: NewScheduleLead | None = None
     product_id: str
     coverage_end_date: date
     owner_user_id: str | None = None
     date_confirmed: bool = True
     origin_id: str | None = None
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def _one_lead(self) -> ScheduleCreate:
+        if bool(self.lead_id) == bool(self.new_lead):
+            raise ValueError("Informe um lead existente ou os dados de um novo cliente")
+        return self
 
 
 class ScheduleResolve(BaseModel):
@@ -123,10 +139,26 @@ def create_schedule():
     if ctx.role not in (ROLE_ADMIN, ROLE_SDR):
         raise BusinessError("forbidden", "Somente admin/SDR", status=403)
     payload = ScheduleCreate.model_validate(request.get_json(silent=True) or {})
+    lead_id = payload.lead_id
+    if payload.new_lead is not None:
+        # Agendamento do zero: o telefone não pode existir na base (RN-076..078).
+        lead_id = lead_services.create_lead(
+            organization_id=ctx.organization_id,
+            actor_user_id=ctx.user_id,
+            data=lead_services.LeadInput(
+                name=payload.new_lead.name,
+                phones=[payload.new_lead.phone],
+                postal_code=payload.new_lead.postal_code,
+                city=payload.new_lead.city,
+                state=payload.new_lead.state,
+                origin_id=payload.origin_id,
+            ),
+            request_id=getattr(g, "request_id", None),
+        ).id
     schedule = services.create_schedule(
         organization_id=ctx.organization_id,
         actor_user_id=ctx.user_id,
-        lead_id=payload.lead_id,
+        lead_id=lead_id,
         product_id=payload.product_id,
         coverage_end_date=payload.coverage_end_date,
         owner_user_id=payload.owner_user_id,

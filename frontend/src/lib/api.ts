@@ -14,6 +14,7 @@ export interface LeadListItem {
   state: string | null;
   phones: string[];
   archived: boolean;
+  released: boolean;
 }
 
 export interface LeadListResponse {
@@ -36,6 +37,7 @@ export interface LeadFull {
   document: string | null;
   city: string | null;
   state: string | null;
+  postal_code: string | null;
   indicator_name: string | null;
   notes: string | null;
   origin_id: string | null;
@@ -53,11 +55,28 @@ export interface CreateLeadInput {
   document?: string | null;
   city?: string | null;
   state?: string | null;
+  postal_code?: string | null;
   indicator_name?: string | null;
   notes?: string | null;
   origin_id?: string | null;
   client_type_id?: string | null;
   vehicles?: Array<{ plate?: string | null; model?: string | null; year?: number | null }>;
+}
+
+export type UpdateLeadInput = Partial<
+  Omit<CreateLeadInput, 'vehicles' | 'kind'> & { kind: 'pf' | 'pj' }
+>;
+
+export interface LeadDeletionRequest {
+  id: string;
+  lead_id: string;
+  lead_name: string;
+  phones: string[];
+  import_batch_id: string | null;
+  requested_by_name: string;
+  reason: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
 }
 
 export interface Availability {
@@ -98,7 +117,18 @@ export interface ClaimStatus {
   is_terminal: boolean;
 }
 
-export interface ClaimListItem {
+export type ClaimServiceType = 'terceiro' | 'segurado' | 'segurado_terceiro';
+export type ClaimItemType = 'vehicle' | 'property';
+
+export interface ClaimItemFields {
+  vehicle_plate: string | null;
+  vehicle_model: string | null;
+  vehicle_year: number | null;
+  property_address: string | null;
+  coverage: string | null;
+}
+
+export interface ClaimListItem extends ClaimItemFields {
   id: string;
   status_id: string;
   branch_id: string;
@@ -106,7 +136,9 @@ export interface ClaimListItem {
   workshop_id: string | null;
   status: string | null;
   status_name: string | null;
-  team_id: string | null;
+  is_closed: boolean;
+  insured_name: string | null;
+  next_follow_up_on: string | null;
   responsible_user_id: string | null;
   lead_id: string | null;
   opportunity_id: string | null;
@@ -118,7 +150,6 @@ export interface ClaimListItem {
   has_third_party: boolean;
   workshop: string | null;
   opened_on: string;
-  expected_on: string | null;
   concluded_on: string | null;
   closed_on: string | null;
   indemnified_on: string | null;
@@ -133,19 +164,56 @@ export interface ClaimWorkshop {
   name: string;
   phone: string | null;
   address: string;
+  city: string | null;
   responsible_name: string;
   insurer_ids: string[];
 }
 
+export interface ClaimWorkshopInput {
+  name: string;
+  phone?: string | null;
+  address: string;
+  city?: string | null;
+  responsible_name: string;
+  insurer_ids: string[];
+}
+
+export interface ClaimBranch extends CatalogItem {
+  item_type: ClaimItemType | null;
+}
+
 export interface ClaimCatalogs {
-  branches: CatalogItem[];
+  branches: ClaimBranch[];
   insurers: CatalogItem[];
   workshops: ClaimWorkshop[];
 }
 
+export interface ClaimParty {
+  id: string;
+  role: string;
+  name: string;
+  document: string | null;
+  phone: string | null;
+  notes: string | null;
+}
+
+export interface ClaimPartyInput {
+  role: string;
+  name: string;
+  document?: string;
+  phone?: string;
+  notes?: string;
+}
+
 export interface ClaimDetail extends ClaimListItem {
-  parties: Array<{ id: string; role: string; name: string; phone: string | null; notes: string | null }>;
-  events: Array<{ id: string; event_type: string; description: string; occurred_at: string }>;
+  parties: ClaimParty[];
+  events: Array<{
+    id: string;
+    event_type: string;
+    description: string;
+    occurred_at: string;
+    editable: boolean;
+  }>;
   tasks: Array<{
     id: string;
     title: string;
@@ -156,21 +224,58 @@ export interface ClaimDetail extends ClaimListItem {
   }>;
 }
 
+export interface ClaimDashboard {
+  today: string;
+  open_count: number;
+  today_count: number;
+  items: Array<{
+    task_id: string;
+    claim_id: string;
+    title: string;
+    due_on: string;
+    priority: string;
+    overdue: boolean;
+    insured_name: string | null;
+    insurer: string;
+    claim_number: string | null;
+    status_name: string | null;
+  }>;
+}
+
+export interface ClaimInsurerProfile {
+  insurer_id: string;
+  name: string;
+  contacts: string | null;
+  rental_car_contact: string | null;
+  notes: string | null;
+  updated_at: string | null;
+}
+
+export type ClaimCreateInput = Partial<ClaimItemFields> & {
+  branch_id: string;
+  insurer_id: string;
+  workshop_id?: string | null;
+  opened_on?: string;
+  claim_number?: string;
+  responsible_user_id: string;
+  service_type: ClaimServiceType;
+  notes?: string;
+  parties: ClaimPartyInput[];
+};
+
 export const claims = {
   statuses: () => api<{ items: ClaimStatus[] }>('/claims/statuses'),
   catalogs: () => api<ClaimCatalogs>('/claims/catalogs'),
+  dashboard: () => api<ClaimDashboard>('/claims/dashboard'),
   assignees: () =>
-    api<{
-      users: Array<{ id: string; name: string }>;
-      teams: Array<{ id: string; name: string }>;
-    }>('/claims/assignees'),
+    api<{ users: Array<{ id: string; name: string }> }>('/claims/assignees'),
   list: (
     params: {
       q?: string;
       status?: string;
+      state?: 'open' | 'closed';
       responsible_user_id?: string;
       insurer?: string;
-      overdue?: boolean;
       page?: number;
       per_page?: number;
     } = {},
@@ -178,11 +283,11 @@ export const claims = {
     const qs = new URLSearchParams();
     if (params.q) qs.set('q', params.q);
     if (params.status) qs.set('status', params.status);
+    if (params.state) qs.set('state', params.state);
     if (params.responsible_user_id) {
       qs.set('responsible_user_id', params.responsible_user_id);
     }
     if (params.insurer) qs.set('insurer', params.insurer);
-    if (params.overdue) qs.set('overdue', 'true');
     if (params.page) qs.set('page', String(params.page));
     if (params.per_page) qs.set('per_page', String(params.per_page));
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
@@ -194,33 +299,19 @@ export const claims = {
     }>(`/claims${suffix}`);
   },
   get: (id: string) => api<ClaimDetail>(`/claims/${id}`),
-  update: (id: string, input: { branch_id?: string; insurer_id?: string; workshop_id?: string | null; responsible_user_id?: string | null; claim_number?: string | null; expected_on?: string | null; concluded_on?: string | null; indemnified_on?: string | null; indemnified_amount?: string | null; notes?: string | null }) =>
-    api<ClaimDetail>(`/claims/${id}`, { method: 'PATCH', body: input }),
-  create: (input: {
-    status_id: string;
-    branch_id: string;
-    insurer_id: string;
-    workshop_id?: string | null;
-    opened_on: string;
-    claim_number?: string;
-    team_id?: string | null;
-    responsible_user_id?: string | null;
-    service_type?: string;
-    has_third_party?: boolean;
-    expected_on?: string | null;
-    indemnified_on?: string | null;
-    indemnified_amount?: string | null;
-    notes?: string;
-    parties?: Array<{ role: string; name: string; phone?: string; notes?: string }>;
-  }) => api<ClaimDetail>('/claims', { method: 'POST', body: input }),
+  create: (input: ClaimCreateInput) =>
+    api<ClaimDetail>('/claims', { method: 'POST', body: input }),
   changeStatus: (id: string, status_id: string) =>
     api<ClaimDetail>(`/claims/${id}/status`, { method: 'POST', body: { status_id } }),
-  assign: (
-    id: string,
-    input: { responsible_user_id: string | null; team_id?: string | null },
-  ) => api<ClaimDetail>(`/claims/${id}/assign`, { method: 'POST', body: input }),
-  addEvent: (id: string, description: string) =>
-    api<ClaimDetail>(`/claims/${id}/events`, { method: 'POST', body: { description } }),
+  assign: (id: string, input: { responsible_user_id: string | null }) =>
+    api<ClaimDetail>(`/claims/${id}/assign`, { method: 'POST', body: input }),
+  addEvent: (id: string, input: { description: string; occurred_at?: string }) =>
+    api<ClaimDetail>(`/claims/${id}/events`, { method: 'POST', body: input }),
+  updateEventDate: (claimId: string, eventId: string, occurred_at: string) =>
+    api<ClaimDetail>(`/claims/${claimId}/events/${eventId}`, {
+      method: 'PATCH',
+      body: { occurred_at },
+    }),
   addTask: (id: string, input: { title: string; due_on?: string; priority?: string }) =>
     api<{ id: string; title: string }>(`/claims/${id}/tasks`, { method: 'POST', body: input }),
   updateTask: (claimId: string, taskId: string, done: boolean) =>
@@ -228,31 +319,25 @@ export const claims = {
       method: 'PATCH',
       body: { done },
     }),
-  addParty: (
-    id: string,
-    input: { role: string; name: string; phone?: string; notes?: string },
-  ) => api<{ id: string }>(`/claims/${id}/parties`, { method: 'POST', body: input }),
+  addParty: (id: string, input: ClaimPartyInput) =>
+    api<{ id: string }>(`/claims/${id}/parties`, { method: 'POST', body: input }),
   archive: (id: string, reason: string) =>
     api<void>(`/claims/${id}/archive`, { method: 'POST', body: { reason } }),
-  createWorkshop: (input: {
-    name: string;
-    phone?: string;
-    address: string;
-    responsible_name: string;
-    insurer_ids: string[];
-  }) => api<ClaimWorkshop>('/claims/workshops', { method: 'POST', body: input }),
-  updateWorkshop: (
-    id: string,
-    input: Partial<{
-      name: string;
-      phone: string | null;
-      address: string;
-      responsible_name: string;
-      insurer_ids: string[];
-    }>,
-  ) => api<ClaimWorkshop>(`/claims/workshops/${id}`, { method: 'PATCH', body: input }),
+  createWorkshop: (input: ClaimWorkshopInput) =>
+    api<ClaimWorkshop>('/claims/workshops', { method: 'POST', body: input }),
+  updateWorkshop: (id: string, input: Partial<ClaimWorkshopInput>) =>
+    api<ClaimWorkshop>(`/claims/workshops/${id}`, { method: 'PATCH', body: input }),
   archiveWorkshop: (id: string) =>
     api<void>(`/claims/workshops/${id}/archive`, { method: 'POST' }),
+  insurerProfiles: () => api<{ items: ClaimInsurerProfile[] }>('/claims/insurers'),
+  saveInsurerProfile: (
+    insurerId: string,
+    input: Pick<ClaimInsurerProfile, 'contacts' | 'rental_car_contact' | 'notes'>,
+  ) =>
+    api<ClaimInsurerProfile>(`/claims/insurers/${insurerId}/profile`, {
+      method: 'PUT',
+      body: input,
+    }),
 };
 
 export const leads = {
@@ -266,8 +351,23 @@ export const leads = {
   },
   create: (input: CreateLeadInput) =>
     api<LeadFull>('/leads', { method: 'POST', body: input }),
+  get: (id: string) => api<LeadFull>(`/leads/${id}`),
+  update: (id: string, input: UpdateLeadInput) =>
+    api<LeadFull>(`/leads/${id}`, { method: 'PATCH', body: input }),
   archive: (id: string, reason?: string) =>
     api<void>(`/leads/${id}/archive`, { method: 'POST', body: { reason } }),
+  requestDeletion: (id: string, reason?: string) =>
+    api<{ id: string; status: string }>(`/leads/${id}/deletion-request`, {
+      method: 'POST',
+      body: { reason },
+    }),
+  deletionRequests: () =>
+    api<{ items: LeadDeletionRequest[] }>('/lead-deletion-requests'),
+  reviewDeletion: (id: string, decision: 'approve' | 'reject') =>
+    api<{ id: string; status: string }>(`/lead-deletion-requests/${id}/${decision}`, {
+      method: 'POST',
+      body: {},
+    }),
   release: (leadId: string, productId: string, originId?: string) =>
     api<{ id: string; already_open: boolean }>('/availabilities', {
       method: 'POST',
@@ -285,7 +385,7 @@ export const leads = {
 export interface ImportBatchSummary {
   id: string;
   type: string;
-  status: 'pending' | 'reviewing' | 'confirmed' | 'failed';
+  status: 'pending' | 'reviewing' | 'confirmed' | 'failed' | 'discarded';
   filename: string;
   rows_total: number;
   rows_ok: number;
@@ -303,6 +403,8 @@ export interface ImportBatchDetail extends ImportBatchSummary {
     payload: Record<string, string>;
     normalized: Record<string, unknown> | null;
     duplicate_of_lead_id: string | null;
+    lead_id: string | null;
+    lead_state: 'active' | 'archived' | 'deletion_pending' | null;
   }>;
 }
 
@@ -329,6 +431,8 @@ export const importsApi = {
     api<{ status: string; created: number; failed: number }>(`/imports/${id}/confirm`, {
       method: 'POST',
     }),
+  discard: (id: string) =>
+    api<{ id: string; status: string }>(`/imports/${id}/discard`, { method: 'POST' }),
 };
 
 // -------------------- Etapa 4: oportunidades e agendamentos ------------------
@@ -362,6 +466,7 @@ export interface DirectLeadInput {
   product_id: string;
   city?: string | null;
   state?: string | null;
+  postal_code?: string | null;
 }
 
 export interface DailyGoals {
@@ -501,7 +606,14 @@ export const schedules = {
     return api<{ items: Schedule[]; today: string }>(`/schedules${suffix}`);
   },
   create: (input: {
-    lead_id: string;
+    lead_id?: string;
+    new_lead?: {
+      name: string;
+      phone: string;
+      postal_code?: string | null;
+      city?: string | null;
+      state?: string | null;
+    };
     product_id: string;
     coverage_end_date: string;
     owner_user_id?: string | null;

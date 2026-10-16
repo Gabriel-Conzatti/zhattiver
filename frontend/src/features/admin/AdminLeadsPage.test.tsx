@@ -1,8 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AdminLeadsPage } from './AdminLeadsPage';
+
+vi.mock('@/app/AuthProvider', () => ({
+  useAuth: () => ({ user: { id: 'admin-1', role: 'admin', grants: [] } }),
+}));
 
 vi.mock('@/lib/api', () => ({
   leads: {
@@ -27,7 +32,9 @@ describe('AdminLeadsPage', () => {
     });
     render(
       <QueryClientProvider client={queryClient}>
-        <AdminLeadsPage />
+        <MemoryRouter>
+          <AdminLeadsPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 

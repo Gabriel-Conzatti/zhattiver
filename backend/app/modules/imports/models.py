@@ -17,7 +17,14 @@ STATUS_PENDING = "pending"
 STATUS_REVIEWING = "reviewing"
 STATUS_CONFIRMED = "confirmed"
 STATUS_FAILED = "failed"
-BATCH_STATUSES = (STATUS_PENDING, STATUS_REVIEWING, STATUS_CONFIRMED, STATUS_FAILED)
+STATUS_DISCARDED = "discarded"
+BATCH_STATUSES = (
+    STATUS_PENDING,
+    STATUS_REVIEWING,
+    STATUS_CONFIRMED,
+    STATUS_FAILED,
+    STATUS_DISCARDED,
+)
 
 
 class ImportBatch(db.Model, TimestampMixin):
@@ -59,6 +66,7 @@ class ImportRow(db.Model, TimestampMixin):
     errors: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ROW_STATUS_OK)
     duplicate_of_lead_id: Mapped[str | None] = uuid_fk("leads.id", nullable=True)
+    lead_id: Mapped[str | None] = uuid_fk("leads.id", nullable=True)
 
     __table_args__ = (
         Index("ix_import_rows_batch_status", "batch_id", "status"),

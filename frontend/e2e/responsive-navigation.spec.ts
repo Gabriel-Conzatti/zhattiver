@@ -41,15 +41,20 @@ test.describe('Navegação responsiva', () => {
     await login(page, 'vendedor');
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole('button', { name: 'Nova venda' })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Novo lead' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo lead' })).toBeVisible();
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Novo cliente no funil' }).click();
+    await expect(page.getByRole('heading', { name: 'Novo cliente no funil' })).toBeVisible();
     await expectNoPageOverflow(page);
   });
 
-  test('SDR não recebe controle inerte', async ({ page }) => {
+  test('SDR usa o menu Novo para cadastrar agendamento', async ({ page }) => {
     await login(page, 'sdr');
     await expect(page).toHaveURL(/\/sdr$/);
     await expect(page.getByRole('button', { name: 'Nova venda' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Novo', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Novo agendamento' }).click();
+    await expect(page).toHaveURL(/\/sdr\/agendamentos$/);
+    await expect(page.getByRole('heading', { name: 'Novo agendamento' })).toBeVisible();
     await expectNoPageOverflow(page);
   });
 });

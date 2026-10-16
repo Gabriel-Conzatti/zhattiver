@@ -45,7 +45,7 @@ export function AdminAusenciasPage() {
     mutationFn: () => admin.transfer(transfer),
     onSuccess: (data) => {
       setFeedback(
-        `Transferidos: ${data.schedules} agendamento(s), ${data.next_actions} follow-up(s), ${data.opportunities} oportunidade(s).`,
+        `Transferidos: ${data.schedules} agendamento(s), ${data.next_actions} acompanhamento(s), ${data.opportunities} oportunidade(s).`,
       );
     },
     onError: (err) => setFeedback((err as Error).message),
@@ -124,7 +124,7 @@ export function AdminAusenciasPage() {
 
         <h3 className="mt-6 text-sm font-semibold">Transferir carteira</h3>
         <p className="text-xs text-text-secondary">
-          Move agendamentos ativos e follow-ups do vendedor de origem para o destino.
+          Move agendamentos ativos e acompanhamentos do vendedor de origem para o destino.
         </p>
         <div className="mt-2 space-y-2">
           <select
@@ -165,7 +165,7 @@ export function AdminAusenciasPage() {
               checked={transfer.include_next_actions}
               onChange={(e) => setTransfer({ ...transfer, include_next_actions: e.target.checked })}
             />
-            Follow-ups / próximas ações
+            Acompanhamentos / próximas ações
           </label>
           <label className="flex items-center gap-2 text-xs text-text-secondary">
             <input

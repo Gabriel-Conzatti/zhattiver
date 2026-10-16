@@ -175,7 +175,7 @@ def transfer_workload(
             kind="transfer",
             title="Novas responsabilidades transferidas para você",
             body=(
-                f"{result.schedules} agendamento(s), {result.next_actions} follow-up(s), "
+                f"{result.schedules} agendamento(s), {result.next_actions} acompanhamento(s), "
                 f"{result.opportunities} oportunidade(s)"
             ),
             entity_type="transfer",

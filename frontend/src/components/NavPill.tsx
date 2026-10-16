@@ -8,11 +8,12 @@ interface Item {
 
 interface Props {
   items: Item[];
+  label?: string;
 }
 
-export function NavPill({ items }: Props) {
+export function NavPill({ items, label = 'Navegação principal' }: Props) {
   return (
-    <nav className="nav-pill w-max" aria-label="Navegação principal">
+    <nav className="nav-pill w-max" aria-label={label}>
       {items.map((item) => (
         <NavLink key={item.to} to={item.to} end={item.end} className="inline-flex shrink-0">
           {({ isActive }) => (

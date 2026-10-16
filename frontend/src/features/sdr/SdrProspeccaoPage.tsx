@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
-import { Archive, CheckCircle2, PhoneCall, Send } from 'lucide-react';
+import { Archive, CheckCircle2, Pencil, PhoneCall, Send, Trash2 } from 'lucide-react';
 
+import { useAuth } from '@/app/AuthProvider';
 import { catalog, leads } from '@/lib/api';
 import { formatPhone } from '@/lib/format';
 import { ApiRequestError } from '@/lib/http';
+import { LeadEditDialog } from './LeadEditDialog';
 
 const leadSchema = z.object({
   name: z.string().trim().min(1, 'Nome obrigatório'),
@@ -17,6 +20,11 @@ const leadSchema = z.object({
     .transform((v) => v.split(/[,;\n]/g).map((x) => x.trim()).filter(Boolean)),
   city: z.string().trim().optional(),
   state: z.string().trim().max(2, 'UF com 2 letras').optional(),
+  postal_code: z
+    .string()
+    .trim()
+    .refine((v) => !v || v.replace(/\D/g, '').length === 8, 'CEP com 8 dígitos')
+    .optional(),
   indicator_name: z.string().trim().optional(),
   origin_id: z.string().optional(),
   client_type_id: z.string().optional(),
@@ -26,7 +34,9 @@ type LeadFormValues = z.infer<typeof leadSchema>;
 
 export function SdrProspeccaoPage() {
   const qc = useQueryClient();
+  const location = useLocation();
   const [search, setSearch] = useState('');
+  const [editingLead, setEditingLead] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error' | 'warn'; text: string } | null>(
     null,
   );
@@ -46,8 +56,14 @@ export function SdrProspeccaoPage() {
     register,
     handleSubmit,
     reset,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<LeadFormValues>({ defaultValues: { name: '', phones: '' as unknown as string[] } });
+
+  // Atalho "Novo lead de prospecção" do cabeçalho.
+  useEffect(() => {
+    if ((location.state as { focusNew?: boolean } | null)?.focusNew) setFocus('name');
+  }, [location.key, location.state, setFocus]);
 
   const createMutation = useMutation({
     mutationFn: async (values: LeadFormValues) => {
@@ -57,6 +73,7 @@ export function SdrProspeccaoPage() {
         phones: parsed.phones,
         city: parsed.city || null,
         state: parsed.state ? parsed.state.toUpperCase() : null,
+        postal_code: parsed.postal_code || null,
         indicator_name: parsed.indicator_name || null,
         origin_id: parsed.origin_id || null,
         client_type_id: parsed.client_type_id || null,
@@ -64,7 +81,14 @@ export function SdrProspeccaoPage() {
     },
     onSuccess: () => {
       setFeedback({ tone: 'success', text: 'Lead cadastrado' });
-      reset({ name: '', phones: '' as unknown as string[], city: '', state: '', indicator_name: '' });
+      reset({
+        name: '',
+        phones: '' as unknown as string[],
+        city: '',
+        state: '',
+        postal_code: '',
+        indicator_name: '',
+      });
       qc.invalidateQueries({ queryKey: ['leads'] });
     },
     onError: (err) => {
@@ -112,13 +136,18 @@ export function SdrProspeccaoPage() {
               {...register('phones' as never)}
             />
           </Field>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-[1fr_72px_120px] gap-3">
             <Field label="Cidade">
               <input className="input" {...register('city')} />
             </Field>
             <Field label="UF" error={errors.state?.message}>
               <input className="input uppercase" maxLength={2} {...register('state')} />
             </Field>
+            <Field label="CEP (opcional)" error={errors.postal_code?.message}>
+              <input className="input" inputMode="numeric" {...register('postal_code')} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
             <Field label="Origem">
               <select className="input" {...register('origin_id')}>
                 <option value="">—</option>
@@ -129,8 +158,6 @@ export function SdrProspeccaoPage() {
                 ))}
               </select>
             </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <Field label="Indicado por">
               <input className="input" {...register('indicator_name')} />
             </Field>
@@ -194,20 +221,21 @@ export function SdrProspeccaoPage() {
                 <th className="px-4 py-2 text-left">Nome</th>
                 <th className="px-4 py-2 text-left">Telefones</th>
                 <th className="px-4 py-2 text-left">Cidade / UF</th>
+                <th className="px-4 py-2 text-left">Situação</th>
                 <th className="px-4 py-2 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {listQuery.isLoading && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-text-secondary">
+                  <td colSpan={5} className="py-8 text-center text-text-secondary">
                     Carregando…
                   </td>
                 </tr>
               )}
               {!listQuery.isLoading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-text-secondary">
+                  <td colSpan={5} className="py-8 text-center text-text-secondary">
                     Nenhum lead cadastrado ainda.
                   </td>
                 </tr>
@@ -231,10 +259,18 @@ export function SdrProspeccaoPage() {
                   <td className="px-4 py-2 text-text-secondary">
                     {[lead.city, lead.state].filter(Boolean).join(' — ') || '—'}
                   </td>
+                  <td className="px-4 py-2">
+                    {lead.released ? (
+                      <span className="badge bg-brand-cyan/20 text-brand-cyan">Disponibilizado</span>
+                    ) : (
+                      <span className="text-xs text-text-muted">Cadastrado</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-right">
                     <ReleaseButton
                       leadId={lead.id}
                       productId={primaryProduct || null}
+                      onEdit={() => setEditingLead(lead.id)}
                       onFeedback={setFeedback}
                     />
                   </td>
@@ -244,6 +280,9 @@ export function SdrProspeccaoPage() {
           </table>
         </div>
       </section>
+      {editingLead && (
+        <LeadEditDialog leadId={editingLead} onClose={() => setEditingLead(null)} />
+      )}
     </div>
   );
 }
@@ -251,12 +290,16 @@ export function SdrProspeccaoPage() {
 function ReleaseButton({
   leadId,
   productId,
+  onEdit,
   onFeedback,
 }: {
   leadId: string;
   productId: string | null;
+  onEdit: () => void;
   onFeedback: (f: { tone: 'success' | 'error' | 'warn'; text: string }) => void;
 }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const qc = useQueryClient();
   const mut = useMutation({
     mutationFn: () => leads.release(leadId, productId!),
@@ -269,10 +312,17 @@ function ReleaseButton({
     },
     onError: (err) => onFeedback({ tone: 'error', text: (err as Error).message }),
   });
+  // Admin arquiva direto; a exclusão pedida pelo SDR vai para avaliação do admin.
   const archiveMut = useMutation({
-    mutationFn: () => leads.archive(leadId),
+    mutationFn: async () => {
+      if (isAdmin) await leads.archive(leadId);
+      else await leads.requestDeletion(leadId);
+    },
     onSuccess: () => {
-      onFeedback({ tone: 'success', text: 'Lead arquivado' });
+      onFeedback({
+        tone: 'success',
+        text: isAdmin ? 'Lead arquivado' : 'Lead excluído e enviado para avaliação do administrador',
+      });
       qc.invalidateQueries({ queryKey: ['leads'] });
     },
     onError: (err) => onFeedback({ tone: 'error', text: (err as Error).message }),
@@ -288,18 +338,22 @@ function ReleaseButton({
       >
         <Send className="h-4 w-4" /> Disponibilizar
       </button>
+      <button type="button" className="btn-ghost" aria-label="Editar lead" onClick={onEdit}>
+        <Pencil className="h-4 w-4" />
+      </button>
       <button
         type="button"
         className="btn-ghost"
-        aria-label="Arquivar"
+        aria-label={isAdmin ? 'Arquivar' : 'Excluir lead'}
         disabled={archiveMut.isPending}
         onClick={() => {
-          if (window.confirm('Arquivar este lead? Ele sai da lista de prospecção ativa.')) {
-            archiveMut.mutate();
-          }
+          const question = isAdmin
+            ? 'Arquivar este lead? Ele sai da lista de prospecção ativa.'
+            : 'Excluir este lead? A exclusão será avaliada pelo administrador.';
+          if (window.confirm(question)) archiveMut.mutate();
         }}
       >
-        <Archive className="h-4 w-4" />
+        {isAdmin ? <Archive className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
       </button>
     </div>
   );

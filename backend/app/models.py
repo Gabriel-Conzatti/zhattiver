@@ -19,6 +19,7 @@ from .modules.claims.models import (  # noqa: F401
     ClaimBranch,
     ClaimDocument,
     ClaimEvent,
+    ClaimInsurerProfile,
     ClaimParty,
     ClaimStatus,
     ClaimTask,
@@ -31,6 +32,7 @@ from .modules.imports.models import ImportBatch, ImportRow  # noqa: F401
 from .modules.leads.models import (  # noqa: F401
     Availability,
     Lead,
+    LeadDeletionRequest,
     LeadPhone,
     LeadProduct,
     LeadTag,
@@ -73,6 +75,7 @@ __all__ = [
     "ImportRow",
     "Insurer",
     "Lead",
+    "LeadDeletionRequest",
     "LeadPhone",
     "LeadProduct",
     "LeadTag",
